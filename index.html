@@ -31,6 +31,9 @@
                            grow close to the margins without dragging headline text off-screen,
                            since headlines don't all sit near the icon's own centre (Empathy's
                            starts almost at the hero's left edge) */
+    --hero-top:var(--nav-h); /* where the hero starts. On mobile the sub-menu
+                                gets its own band under the nav, so the hero
+                                drops below both — see fit(). */
     --bottom-band:0px; /* reserved space below the hero for a stacked copy/highlight row —
                            only non-zero on mobile, see the breakpoint below and fit() in JS */
 
@@ -91,7 +94,7 @@
     height:100vh;
   }
   .hero-stage{
-    position:absolute; left:0; right:0; top:var(--nav-h); bottom:var(--bottom-band);
+    position:absolute; left:0; right:0; top:var(--hero-top); bottom:var(--bottom-band);
   }
   .hero{
     /* Centred with left/top:50% + translate(-50%,-50%) rather than grid
@@ -143,6 +146,14 @@
     vector-effect:non-scaling-stroke;
     stroke-linejoin:round;
   }
+  .nav-menu{
+    display:none;                      /* desktop uses the text links instead */
+    background:none; border:0; padding:0; margin:0;
+    width:27px; height:27px; cursor:pointer; flex:none;
+  }
+  .nav-menu svg{ display:block; width:100%; height:100%; }
+  .nav-menu path{ fill:var(--ink-footer); }
+  .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
   .nav-links{display:flex; align-items:center; gap:30px}
   .nav-links a{
     font-size:14px; line-height:17px; letter-spacing:.14px;
@@ -516,21 +527,22 @@
    * ------------------------------------------------------------------ */
   @media (max-width: 767px){
     :root{
-      --nav-h:clamp(72px,11vh,96px);
+      --nav-h:clamp(72px,11vh,92px);
       --edge-x:clamp(16px,5.5vw,24px);
+      --hero-top:calc(var(--nav-h) + 44px);   /* nav bar + sub-menu row */
       --bottom-band:clamp(150px,28vh,210px);
     }
-    /* The sub-menu takes the top slot on mobile, so the nav bar is stripped
-       back to just the logo — and only during the intro, where the sub-menu
-       is faded out and that slot would otherwise be empty. render() fades
-       the two against each other (see isMobile there). */
-    .nav{ height:auto; top:clamp(18px,4vh,28px); }
+    /* The nav persists through the whole experience now rather than trading
+       places with the sub-menu, so it keeps a full bar and the sub-menu is
+       pushed into its own band underneath. --hero-top clears both. */
+    .nav{ top:0; height:var(--nav-h); }
+    .nav-menu{ display:block; }
     /* mobile is fully sticky — the logo is the only nav there, so hiding it
        would leave the content pages with no way back */
     .nav.is-hidden{ transform:none; }
     .nav-links{ display:none; }
     .submenu{
-      left:0; right:0; top:clamp(18px,4vh,28px);
+      left:0; right:0; top:calc(var(--nav-h) + 8px);
       width:auto; padding:0 var(--edge-x);
       flex-direction:row; flex-wrap:wrap;
       /* the base rule stacks these in a left-aligned column; as a row it
@@ -598,6 +610,12 @@
     <a href="#">About</a>
     <a href="#">Thinking</a>
   </nav>
+  <!-- mobile only: Figma's 2x2 mark, four 9px squares in a 27px box -->
+  <button class="nav-menu" type="button" aria-label="Open menu">
+    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
+      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
+    </svg>
+  </button>
 </header>
 
 
@@ -998,9 +1016,12 @@
 
   function fit(){
     const mobile = isMobile = innerWidth <= MOBILE;
-    const navH    = mobile ? clamp(innerHeight * .11, 72, 96) : clamp(innerHeight * .17, 90, 140);
+    const navH    = mobile ? clamp(innerHeight * .11, 72, 92) : clamp(innerHeight * .17, 90, 140);
+    // mobile reserves a 44px band under the nav for the sub-menu row; the hero
+    // starts below both (mirrors --hero-top in the stylesheet)
+    const topBand = mobile ? navH + 44 : navH;
     const bottomH = mobile ? clamp(innerHeight * .28, 150, 210) : 0;
-    const heightFit = (innerHeight - navH - bottomH) / 900;
+    const heightFit = (innerHeight - topBand - bottomH) / 900;
     // --s fits the whole 1440-wide hero, so headline text (positioned all
     // over that canvas — Empathy's starts almost at its left edge) always
     // stays safely on screen. See --icon-boost below for making the icon
@@ -1039,7 +1060,7 @@
        edge sits half its scaled height above it. Measured at the intro
        scale, not the locked one, so the enlarged square's top edge still
        lands exactly on the line the copy is spaced against. */
-    const stageTop = navH, stageBottom = innerHeight - bottomH;
+    const stageTop = topBand, stageBottom = innerHeight - bottomH;
     const iconCentreY = stageTop + (stageBottom - stageTop) / 2;
     const iconTopY = iconCentreY - (ICON_H * finalS * boost * introScale) / 2;
     /* .intro-bounds spans from the logo's bottom to the square's parked top
@@ -1200,13 +1221,10 @@
     submenuEl.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
     // on mobile the logo shares the sub-menu's slot, so it rides the intro
     // ramp out as the sub-menu comes in; on desktop it just stays put
-    if (isMobile){
-      // ...but once the page starts scrolling the sub-menu leaves with the
-      // scene, so the logo has to come back or mobile loses its nav entirely
-      const navOp = Math.max(introOp, releaseT);
-      navEl.style.opacity       = navOp.toFixed(3);
-      navEl.style.pointerEvents = navOp > 0.85 ? "auto" : "none";
-    } else if (navEl.style.opacity){
+    // The nav is permanent on both breakpoints now — it used to cross-fade
+    // with the sub-menu on mobile because they shared the same slot, and
+    // they no longer do.
+    if (navEl.style.opacity){
       navEl.style.opacity = navEl.style.pointerEvents = "";
     }
 

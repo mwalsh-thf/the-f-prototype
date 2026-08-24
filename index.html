@@ -6,7 +6,7 @@
 <title>The Frameworks — Homepage scrolling prototype (V3)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
   :root{
     /* --- Figma tokens --- */
@@ -432,7 +432,7 @@
   .contact-head, .contact-cta{
     display:block;
     font-size:clamp(30px,4.03vw,62px);
-    font-weight:400;
+    font-weight:300;                   /* Geist Light, as in Figma */
     line-height:1.2;
     letter-spacing:-1px;
   }
@@ -440,13 +440,26 @@
   .contact-cta{
     color:var(--f-red); text-decoration:none;
     width:max-content; max-width:100%;
-    transition:opacity .3s ease;
   }
-  .contact-cta:hover{ opacity:.72; }
   .contact-cta:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
-  /* the arrow is a shade smaller than the text and rides slightly high, as
-     it does in the design */
-  .contact-arrow{ font-size:.82em; display:inline-block; vertical-align:.06em; }
+  /* Measured off the Figma frame: 30x31px against 58px type, so .53em square,
+     its top sitting on the ascender rather than the cap. Drawn rather than
+     using ↗, whose glyph has a solid head — this is a stroked diagonal with
+     an open corner bracket. */
+  .contact-arrow{
+    display:inline-block;
+    width:.53em; height:.53em;
+    margin-left:.12em;
+    vertical-align:.22em;
+    fill:none; stroke:currentColor; stroke-width:2;
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+  }
+  /* the invitation is the movement — the arrow steps out to the right */
+  .contact-cta:hover .contact-arrow,
+  .contact-cta:focus-visible .contact-arrow{ transform:translateX(.16em); }
+  @media (prefers-reduced-motion: reduce){
+    .contact-arrow{ transition:none }
+  }
 
   /* ------------------------------------------------------------------ *
    * Footer — now real page content at the end of the document, no rule
@@ -563,7 +576,7 @@
     :root{
       --nav-h:clamp(72px,11vh,92px);
       --edge-x:clamp(16px,5.5vw,24px);
-      --hero-top:calc(var(--nav-h) + 56px);   /* nav bar + sub-menu band */
+      --hero-top:calc(var(--nav-h) + 78px);   /* nav bar + sub-menu band */
       --bottom-band:clamp(150px,28vh,210px);
     }
     /* The nav persists through the whole experience now rather than trading
@@ -585,7 +598,8 @@
       /* Fills the whole band under the nav and centres itself in it, rather
          than hanging a fixed 8px off the nav — that left it crowding the bar
          with all the slack below. */
-      left:0; right:0; top:var(--nav-h); height:56px; align-items:center;
+      /* sits low in the band — more air under the nav, closer to the icon */
+      left:0; right:0; top:calc(var(--nav-h) + 42px); height:auto;
       width:auto; padding:0 var(--edge-x);
       flex-direction:row; flex-wrap:wrap;
       /* the base rule stacks these in a left-aligned column; as a row it
@@ -888,7 +902,7 @@
 
   <section class="contact reveal" aria-label="Contact">
     <h2 class="contact-head">Fancy a challenge?</h2>
-    <a class="contact-cta" href="mailto:hello@theframeworks.com">Let’s talk<span class="contact-arrow" aria-hidden="true">↗</span></a>
+    <a class="contact-cta" href="mailto:hello@theframeworks.com">Let’s talk<svg class="contact-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
   </section>
 
   <footer class="footer">
@@ -1077,9 +1091,9 @@
   function fit(){
     const mobile = isMobile = innerWidth <= MOBILE;
     const navH    = mobile ? clamp(innerHeight * .11, 72, 92) : clamp(innerHeight * .17, 90, 140);
-    // mobile reserves a 56px band under the nav for the sub-menu row; the hero
+    // mobile reserves a 78px band under the nav for the sub-menu row; the hero
     // starts below both (mirrors --hero-top in the stylesheet)
-    const topBand = mobile ? navH + 56 : navH;
+    const topBand = mobile ? navH + 78 : navH;
     const bottomH = mobile ? clamp(innerHeight * .28, 150, 210) : 0;
     const heightFit = (innerHeight - topBand - bottomH) / 900;
     // --s fits the whole 1440-wide hero, so headline text (positioned all

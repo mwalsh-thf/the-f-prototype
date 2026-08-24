@@ -428,10 +428,12 @@
     font-size:10px; line-height:17px; letter-spacing:.6px; color:var(--ink-footer);
   }
   .footer > div{flex:1 1 0; min-width:0}
-  .footer .muted{color:var(--mid-grey)}
-  .footer a{ color:inherit; text-decoration:none; }
+  /* Only the links are grey — the year, the employee-owned line and the
+     address all sit at full footer ink, as in Figma. Grey comes from being a
+     link rather than from a modifier class, so it can't drift apart again. */
+  .footer a{ color:var(--mid-grey); text-decoration:none; }
   .footer a:hover{ color:var(--f-red); }
-  .footer .links a{ color:var(--mid-grey); margin-right:14px; }
+  .footer .links a{ margin-right:14px; }
 
   /* ------------------------------------------------------------------ *
    * Hint
@@ -836,12 +838,12 @@
   <footer class="footer">
     <div>
       <p>© The Frameworks Ltd</p><p>&nbsp;</p>
-      <p class="muted">1989–2026</p>
+      <p>1989–2026</p>
       <p class="links"><a href="#">FAQs</a><a href="#">Legal</a><a href="#">Cookies</a></p>
     </div>
-    <div><p>We own it</p><p>&nbsp;</p><p class="muted">Proudly employee-owned<br>since 2024</p></div>
-    <div><p>Office</p><p>&nbsp;</p><p class="muted">7th Floor, Fora Building<br>21-33 Great Eastern Street<br>London EC2A 3EJ</p></div>
-    <div><p>Contact</p><p>&nbsp;</p><p class="muted"><a href="mailto:hello@theframeworks.com">hello@theframeworks.com</a><br><a href="#">LinkedIn</a></p></div>
+    <div><p>We own it</p><p>&nbsp;</p><p>Proudly employee-owned<br>since 2024</p></div>
+    <div><p>Office</p><p>&nbsp;</p><p>7th Floor, Fora Building<br>21-33 Great Eastern Street<br>London EC2A 3EJ</p></div>
+    <div><p>Contact</p><p>&nbsp;</p><p><a href="mailto:hello@theframeworks.com">hello@theframeworks.com</a><br><a href="#">LinkedIn</a></p></div>
   </footer>
 </main>
 

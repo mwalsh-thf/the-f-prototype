@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Frameworks — Homepage scrolling prototype (V3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* --- Figma tokens --- */
+    --black:#272727;
+    --mid-grey:#8F8F8F;
+    --silver:#92928F;
+    --f-red:#F45944;
+    --bg:#F8F8F8;
+    --ink-footer:#1F1F1F;
+
+    /* --- layout --- */
+    --nav-h:clamp(90px,17vh,140px); /* nav height — literally Figma's 140px at any normal desktop
+                                        height (17vh only dips below 140 once the viewport is
+                                        shorter than ~825px), so chrome stays faithful while still
+                                        degrading gracefully on short windows */
+    --edge-x:clamp(24px,6.9vw,100px); /* left/right edge padding — Figma's 100px at any width
+                                          ≥1450px, only compresses to avoid overflow on narrow ones */
+    --hw:1440px; --hh:900px; /* hero (icon + headlines) canvas — exactly Figma's "Clarity" section */
+    --cell:200px;     /* icon grid cell */
+    --s:1;            /* hero scale, set by JS to fit the space below the nav — see fit() */
+    --icon-boost:1;   /* extra scale applied to the icon alone on mobile (see fit()) — lets it
+                           grow close to the margins without dragging headline text off-screen,
+                           since headlines don't all sit near the icon's own centre (Empathy's
+                           starts almost at the hero's left edge) */
+    --bottom-band:0px; /* reserved space below the hero for a stacked copy/highlight row —
+                           only non-zero on mobile, see the breakpoint below and fit() in JS */
+
+    /* --- motion --- */
+    --ease-out-expo:cubic-bezier(.16,1,.3,1);
+    --ease-in-expo:cubic-bezier(.7,0,.84,0);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  /* Reserve the scrollbar track at all times. The document is locked while
+     the experience runs and unlocked afterwards, and without this the
+     scrollbar appearing at that moment would shift the whole layout. */
+  html{ scrollbar-gutter:stable; }
+  body{
+    background:var(--bg);
+    color:var(--black);
+    font-family:"Geist","Geist Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+    /* The page really does scroll now that there's content under the
+       experience — but only once the experience has run its course. Until
+       then the document is genuinely locked, not just ignored by the input
+       handlers: swallowing wheel events alone still leaves a draggable
+       scrollbar (and lets the browser restore a previous scroll position),
+       either of which slides the content up over a running experience.
+       `released` is added by JS at the end of Momentum, removed on the way
+       back up. */
+    overflow:hidden;
+    touch-action:none;
+  }
+  body.released{ overflow:visible; touch-action:pan-y; }
+
+  /* ------------------------------------------------------------------ *
+   * Stage
+   * ------------------------------------------------------------------
+   * Chrome (nav, submenu, copy, project highlight) is positioned
+   * directly against the real viewport edges with Figma's own pixel
+   * offsets (100px sides, 50px below the nav, 59px off the bottom) —
+   * so it's full-width and responsive, yet lands in the exact spot
+   * Figma puts it at any normal desktop size. Only the icon + headline
+   * composition — the piece whose *internal* geometry has to stay
+   * exactly proportional (the KEYS grid, the headline offsets) — is
+   * scaled as its own unit, aspect-fit and centred into the space left
+   * below the nav. #scene is the one element JS moves/fades for the
+   * footer release; being a plain full-viewport container, transforming
+   * it carries every child along together.
+   * ------------------------------------------------------------------ */
+  .scene{
+    position:fixed; inset:0;
+    will-change:transform,opacity;
+  }
+  /* Released, the experience is no longer pinned: it becomes a normal
+     100vh block at the top of the document and scrolls up and out, with
+     the work grid following it down the page rather than sliding over
+     the top of it. .page-spacer is what reserves its place in flow. */
+  body.released .scene{
+    position:absolute; top:0; left:0; right:0; bottom:auto;
+    height:100vh;
+  }
+  .hero-stage{
+    position:absolute; left:0; right:0; top:var(--nav-h); bottom:var(--bottom-band);
+  }
+  .hero{
+    /* Centred with left/top:50% + translate(-50%,-50%) rather than grid
+       place-items:center — grid's overflow-centering isn't reliable once
+       the 1440×900 box (its real, pre-transform layout size) is bigger
+       than the stage in both dimensions, which is true at nearly every
+       normal screen size; it was collapsing to a top-left flush placement
+       instead of true centering, which is what "stuck in the corner" was.
+       This percentage + transform combo centers deterministically no
+       matter how much the box overflows. */
+    position:absolute; left:50%; top:50%;
+    width:var(--hw); height:var(--hh);
+    transform:translate(-50%,-50%) scale(var(--s));
+    transform-origin:center center;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Nav
+   * ------------------------------------------------------------------ */
+  /* Fixed at document level rather than inside .scene: the scene scrolls
+     away with the page once the experience is done, and the nav has to
+     outlive it. Deliberately transparent — content passes underneath it
+     rather than being masked by a bar. */
+  .nav{
+    position:fixed; left:0; top:0; width:100%; height:var(--nav-h);
+    box-sizing:border-box;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 var(--edge-x);
+    z-index:40;
+    transition:transform .38s var(--ease-out-expo);
+  }
+  /* Semi-sticky: on desktop the bar gets out of the way while you're reading
+     downwards and comes straight back the moment you scroll up. */
+  .nav.is-hidden{ transform:translateY(-100%); }
+  /* The box is square and larger than the F itself because the morphed
+     states are wider than the F — it has to hold the widest one. The
+     negative margin is always a quarter of the width, cancelling the extra
+     on the left so the F sits on the same margin line at any size; wider
+     states then grow out around it. Sized up twice from the original 40×40:
+     40 → 46 → 55.2 → 52.44. flex:none because the nav is a flex row, and without it
+     the mark is a shrinkable item that gets squashed on narrow viewports. */
+  .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
+  .logo-mark{width:100%;height:100%;display:block;overflow:visible}
+  .logo-mark polygon{
+    fill:var(--ink-footer);
+    /* same seam treatment as the centre icon — see .tile polygon */
+    stroke:var(--ink-footer);
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;
+  }
+  .nav-links{display:flex; align-items:center; gap:30px}
+  .nav-links a{
+    font-size:14px; line-height:17px; letter-spacing:.14px;
+    color:var(--mid-grey); text-decoration:none; white-space:nowrap;
+    transition:color .35s ease;
+  }
+  .nav-links a:hover{color:var(--black)}
+
+  /* ------------------------------------------------------------------ *
+   * Sub-menu — always exactly 50px below the nav, Figma's own offset.
+   * ------------------------------------------------------------------ */
+  .submenu{
+    position:absolute; left:var(--edge-x); top:calc(var(--nav-h) + 50px);
+    width:min(287px,34vw);
+    display:flex; flex-direction:column; gap:15px; align-items:flex-start;
+    z-index:6;
+  }
+  .submenu button{
+    font:inherit; font-size:15px; line-height:1.2; letter-spacing:-.3px;
+    background:none; border:0; padding:0; margin:0;
+    color:var(--mid-grey); cursor:pointer; text-align:left;
+    transition:color .5s var(--ease-out-expo), opacity .5s ease;
+  }
+  .submenu button:hover{color:var(--black)}
+  .submenu button[aria-current="true"]{color:var(--f-red)}
+  .submenu button[aria-current="true"]:hover{color:var(--f-red)}
+  .submenu button[disabled]{opacity:.45; cursor:default; color:var(--silver)}
+  .submenu button[disabled]:hover{color:var(--silver)}
+  .submenu button:focus-visible{outline:1px solid var(--f-red); outline-offset:4px}
+
+  /* ------------------------------------------------------------------ *
+   * Headlines — one absolutely positioned block per state,
+   * each at the exact x/y from the Figma frames.
+   * ------------------------------------------------------------------ */
+  .headline{
+    position:absolute;
+    font-size:200px; line-height:1.15; letter-spacing:-4px;
+    color:var(--black); white-space:nowrap;
+    z-index:3; opacity:0; visibility:hidden;
+    pointer-events:none;
+    will-change:transform,opacity;
+  }
+  @supports (text-box: trim-both cap alphabetic){
+    .headline{ text-box: trim-both cap alphabetic; }
+  }
+  @supports not (text-box: trim-both cap alphabetic){
+    .headline{ margin-top:-68px; }   /* cap-height fallback */
+  }
+
+  /* ------------------------------------------------------------------ *
+   * The icon — locked dead centre of the section, 800×600.
+   * Redrawn as 10 right-triangles (half of a 200px cell each) on a grid
+   * with a 100px step, instead of V1's 4 squares + 2 triangles — the
+   * finer-grained pieces are what let it reshape into Empathy's and
+   * Momentum's silhouettes, not just translate 4 rigid blocks around.
+   * ------------------------------------------------------------------ */
+  .icon{
+    position:absolute; left:320px; top:150px;
+    width:800px; height:600px;
+    transform:scale(var(--icon-boost));
+    z-index:2; pointer-events:none;
+  }
+  .icon:focus-visible{outline:1px solid var(--f-red); outline-offset:12px}
+  .tile{
+    position:absolute; left:0; top:0;
+    pointer-events:auto; cursor:pointer;
+    width:var(--cell); height:var(--cell);
+    transform-origin:50% 50%;
+    will-change:transform;
+    backface-visibility:hidden;
+    display:block;
+    overflow:visible; /* the seam-hiding stroke below sits half outside the
+                         200×200 box, so it must not be clipped */
+  }
+  /* Each tile is its own SVG with its own anti-aliasing pass, so two that
+     meet exactly edge-to-edge leave a faint seam — neither edge reaches
+     full opacity along the join. The fix is to bleed each triangle a hair
+     outwards, but the bleed has to be a constant number of *screen* pixels:
+     expressed in viewBox units it scales with the icon, which ranged from
+     0.4px on a locked phone to 1.3px on the enlarged desktop intro — the
+     latter being the overhang that showed on the outer silhouette.
+     non-scaling-stroke pins the stroke to 1 CSS px at every scale, so the
+     shape always gains exactly 0.5px: two neighbours overlap by a full
+     pixel (no seam) while a free edge overhangs by half a one (invisible).
+     Round joins because a miter on these 45° corners spikes ~1.3px. */
+  .tile polygon{
+    fill:var(--f-red);
+    stroke:var(--f-red);
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Body copy + project highlight
+   * ------------------------------------------------------------------ */
+  .copy{
+    position:absolute; left:var(--edge-x); bottom:59px;
+    width:min(287px,34vw);
+    font-size:15px; line-height:1.2; letter-spacing:-.3px; color:var(--black);
+    z-index:6;
+  }
+  /* Momentum's column is narrower in Figma (211px vs the usual 287px).
+     This lives in CSS rather than as an inline style on the <p> so the
+     mobile breakpoint's .copy width can actually override it — inline
+     styles beat every stylesheet rule, media queries included, which is
+     exactly what was making Momentum's copy ignore the mobile width. */
+  .copy[data-state="4"]{ width:min(211px,34vw); }
+  .highlight{
+    position:absolute; right:var(--edge-x); bottom:59px;
+    width:182px; height:155px;
+    z-index:6;
+    cursor:pointer;
+  }
+  /* .hi-inner exists so a mobile-only transform:scale() (see the
+     breakpoint below) has somewhere to live that isn't fought every
+     frame by the JS-driven parallax, which sets .highlight's own inline
+     transform directly — inline styles beat any stylesheet rule. */
+  .hi-inner{ position:absolute; inset:0; }
+  .highlight .thumb{
+    position:absolute; left:76px; top:0;
+    width:106px; height:106px; overflow:hidden;
+    clip-path:inset(0 0 0 0);
+    /* bottom-right anchor: the box grows up and to the left on hover,
+       so its bottom edge never shifts and the caption below stays put */
+    transform-origin:bottom right;
+    transition:transform .5s cubic-bezier(.4,0,.2,1);
+  }
+  .highlight .thumb img{
+    position:absolute; max-width:none; object-fit:cover; pointer-events:none;
+  }
+  .highlight:hover .thumb{
+    transform:scale(1.22);
+  }
+  .highlight .cap{
+    position:absolute; right:4px; bottom:0; width:178px;
+    text-align:right; font-size:15px; line-height:1.2; letter-spacing:-.3px;
+    color:var(--mid-grey);
+  }
+  .highlight .cap .proj{
+    color:var(--mid-grey);
+    transition:color .5s cubic-bezier(.4,0,.2,1);
+  }
+  .highlight:hover .cap .proj{
+    color:var(--f-red);
+  }
+
+  /* copy + highlight are driven every frame from JS (opacity/translate),
+     so no CSS transition here — it would fight the rAF updates. */
+  .fade{
+    opacity:0; visibility:hidden; pointer-events:none;
+    will-change:transform,opacity;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * The page below the experience
+   * ------------------------------------------------------------------
+   * .scene is fixed, so the document needs a viewport-tall spacer standing
+   * in for it. The spacer is transparent and pointer-events:none, letting
+   * clicks through to the icon and sub-menu beneath while the experience is
+   * still running; everything after it paints on an opaque background and
+   * simply scrolls up over the top.
+   * ------------------------------------------------------------------ */
+  /* .page sits above .scene so its content scrolls over nothing, but it also
+     spans the first viewport — where the experience lives. Left interactive
+     it swallows every click aimed at the sub-menu and icon underneath, so the
+     container is transparent to pointer events and only its real content
+     takes them back. */
+  .page{ position:relative; z-index:5; pointer-events:none; }
+  .page-spacer{ height:100vh; }
+  .page > section, .page > footer{
+    background:var(--bg); position:relative; pointer-events:auto;
+  }
+
+  .work{ padding:clamp(60px,9vh,110px) var(--edge-x) 0; }
+  /* Figma sets this at ~38px regular on the 1440 frame — measured by matching
+     the rendered string width (473px) rather than eyeballed. It's an <h2>, so
+     the browser's default bold has to be overridden explicitly; that inherited
+     bold was what made the type read wrong. */
+  .work-head{
+    font-size:clamp(24px,2.64vw,40px);
+    font-weight:400;
+    line-height:1.2; letter-spacing:-.4px;
+    margin-bottom:clamp(36px,5vh,60px);
+  }
+  /* Gaps measured off the Figma grid rather than guessed: 135px between the
+     columns and ~103px between rows on the 1440 frame. Both scale on vw so
+     the proportions hold as the container narrows — the row gap keys off
+     width too, since it's the grid it belongs to, not the viewport height. */
+  .work-grid{ display:flex; flex-direction:column; gap:clamp(64px,7.2vw,104px); }
+  .work-row{ display:flex; gap:clamp(24px,9.4vw,136px); align-items:flex-start; }
+  /* Figma's rows alternate a wide and a narrow card. Measured off the current
+     1240 grid: each pair plus the 135px gap fills the container exactly
+     (712+393, 393+711, 711+393 = 1105/1104 + gap). The earlier 817 figures
+     came from an older frame and over-widened rows 2 and 3. */
+  .work-row.a > :nth-child(1){ flex:712 1 0 } .work-row.a > :nth-child(2){ flex:393 1 0 }
+  .work-row.b > :nth-child(1){ flex:393 1 0 } .work-row.b > :nth-child(2){ flex:711 1 0 }
+  .work-row.c > :nth-child(1){ flex:711 1 0 } .work-row.c > :nth-child(2){ flex:393 1 0 }
+
+  .card{ display:block; text-decoration:none; color:inherit; }
+  .card-img{
+    display:block; width:100%; height:auto;
+    background:var(--mid-grey);
+  }
+  .card-meta{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:20px;
+    margin-top:clamp(16px,2vh,25px);
+  }
+  .card-kicker{ font-size:15px; line-height:1.2; color:var(--mid-grey); }
+  .card-title{
+    font-size:clamp(16px,1.4vw,19px); line-height:1.3; letter-spacing:-.3px;
+    margin-top:8px; transition:color .4s cubic-bezier(.4,0,.2,1);
+  }
+  .card:hover .card-title{ color:var(--f-red); }
+  .card-tag{
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,monospace;
+    font-size:10px; letter-spacing:.6px; color:var(--ink-footer);
+    white-space:nowrap; padding-top:2px;
+  }
+  /* narrow cards stack the tag under the title instead of beside it */
+  .card.stack .card-meta{ display:block }
+  .card.stack .card-tag{ margin-top:10px }
+
+  /* cards lift in as they arrive; .in is added by an IntersectionObserver,
+     and the left card of each row is given a head start over the right */
+  .reveal{
+    opacity:0; transform:translateY(28px);
+    transition:opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+  }
+  .reveal.in{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .reveal{ opacity:1; transform:none; transition:none }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Logo wall — ticks along on its own, drag to scrub, lets go and resumes
+   * ------------------------------------------------------------------ */
+  .logos{
+    padding:clamp(70px,11vh,130px) 0;
+    overflow:hidden;
+    cursor:grab;
+    user-select:none; -webkit-user-select:none;
+    touch-action:pan-y;   /* vertical page scroll still works over the strip */
+  }
+  .logos.dragging{ cursor:grabbing; }
+  .logos-track{ display:flex; width:max-content; will-change:transform; }
+  .logos-set{ display:flex; align-items:center; }
+  /* Each logo gets an identical box and is contained within it, so wordmarks
+     of different proportions read at the same optical size instead of the
+     tallest one dominating. */
+  /* Sized so the tallest source (100px) is still being scaled *down* at the
+     largest box — the supplied logos are only ~182×80 PNGs, so going past
+     that would just magnify their pixels. */
+  .logos-set img{
+    display:block;
+    width:clamp(160px,14vw,200px);
+    height:clamp(50px,4.6vw,66px);
+    object-fit:contain; object-position:center;
+    margin-right:clamp(44px,5.4vw,84px);
+    pointer-events:none;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Footer — now real page content at the end of the document, no rule
+   * ------------------------------------------------------------------ */
+  .footer{
+    display:flex; gap:30px; align-items:flex-start;
+    padding:clamp(40px,7vh,100px) var(--edge-x) clamp(50px,8vh,110px);
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.6px; color:var(--ink-footer);
+  }
+  .footer > div{flex:1 1 0; min-width:0}
+  .footer .muted{color:var(--mid-grey)}
+  .footer a{ color:inherit; text-decoration:none; }
+  .footer a:hover{ color:var(--f-red); }
+  .footer .links a{ color:var(--mid-grey); margin-right:14px; }
+
+  /* ------------------------------------------------------------------ *
+   * Hint
+   * ------------------------------------------------------------------ */
+  .hint{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
+    font-size:10px; letter-spacing:.6px; text-transform:uppercase;
+    font-family:"Geist Mono",ui-monospace,monospace;
+    color:var(--mid-grey); opacity:.65; z-index:9;
+    transition:opacity .6s ease;
+    pointer-events:none;
+  }
+  .hint.hide{opacity:0}
+
+  /* ------------------------------------------------------------------ *
+   * Intro — the top of the homepage, before the scroll experience locks
+   * ------------------------------------------------------------------
+   * Occupies scroll units -1..0 (see INTRO_MIN in the script). At -1 the
+   * page reads as a normal hero: nav, this copy block, and just the top
+   * sliver of the Clarity icon peeking up from the bottom edge. Scrolling
+   * down slides the icon up into its locked, centred position while this
+   * block fades out and the sub-menu / headline / body copy fade in.
+   * Sizes are Figma's own (74.842px headline, 23.497px sub, 8.703px dot,
+   * 122/34.8/47.5/48px vertical rhythm) expressed as clamps so they hold
+   * exactly at 1440×900 and degrade gracefully either side of it.
+   * ------------------------------------------------------------------ */
+  /* The copy is centred in the band between the bottom of the logo and the
+     parked top edge of the square, so the space above it and below it is
+     always equal — a fixed offset off either end can't do that, because the
+     block's own height changes with the viewport. Both bounds come from
+     fit(): --intro-top-bound is the measured logo bottom, --intro-icon-top
+     is the JS park constant, so neither can drift out of sync. */
+  .intro-bounds{
+    position:absolute; left:0; right:0;
+    top:var(--intro-top-bound, var(--nav-h));
+    bottom:calc(100% - var(--intro-icon-top, 87.5%));
+    display:flex; align-items:center;
+    pointer-events:none;
+    z-index:7;
+  }
+  .intro{
+    position:relative;
+    margin-left:var(--edge-x);
+    width:min(711px,58vw);
+    pointer-events:auto;
+    will-change:transform,opacity;
+  }
+  .intro-dot{
+    display:block; width:8.703px; height:8.703px;
+    background:var(--f-red);
+    margin-bottom:clamp(16px,3.9vh,34.8px);
+  }
+  .intro-title{
+    font-weight:300;
+    font-size:clamp(36px,5.2vw,74.842px);
+    line-height:1.15; letter-spacing:-.02em;
+    color:var(--black);
+    margin-bottom:clamp(22px,5.3vh,47.5px);
+  }
+  .intro-sub{
+    font-weight:300;
+    font-size:clamp(16px,1.632vw,23.497px);
+    line-height:1.15; letter-spacing:-.02em;
+    color:#373636;
+    width:min(526.5px,44vw);
+    margin-bottom:clamp(22px,5.3vh,48px);
+  }
+  .intro-scroll{
+    font-size:15px; line-height:1.2; letter-spacing:-.3px;
+    color:var(--f-red);
+  }
+  @supports (text-box: trim-both cap alphabetic){
+    .intro-title,.intro-sub,.intro-scroll{ text-box: trim-both cap alphabetic; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    /* handled in JS: reduced-motion snaps scrollDisplay straight to target
+       and skips tile/parallax easing, see REDUCE below */
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Mobile (≤767px)
+   * ------------------------------------------------------------------
+   * The scroll-driven animation itself is unchanged (touch already drove
+   * it — TOUCH_SENSITIVITY etc.) — this is purely a layout reflow. The
+   * desktop nav bar (logo + Work/Services/About/Thinking) is dropped and
+   * the sub-menu takes its place as a horizontal row at the very top,
+   * matching the tested design; body copy and the project highlight move
+   * from independent corner-anchored blocks into a tighter shared band at
+   * the bottom, freeing up the vertical space in between for the icon.
+   * --nav-h and --bottom-band are read by fit() in JS too (same numbers,
+   * duplicated there rather than measured, to keep the calc synchronous
+   * with paint) — if you tune the clamp()s here, update fit()'s mobile
+   * branch to match.
+   * ------------------------------------------------------------------ */
+  @media (max-width: 767px){
+    :root{
+      --nav-h:clamp(72px,11vh,96px);
+      --edge-x:clamp(16px,5.5vw,24px);
+      --bottom-band:clamp(150px,28vh,210px);
+    }
+    /* The sub-menu takes the top slot on mobile, so the nav bar is stripped
+       back to just the logo — and only during the intro, where the sub-menu
+       is faded out and that slot would otherwise be empty. render() fades
+       the two against each other (see isMobile there). */
+    .nav{ height:auto; top:clamp(18px,4vh,28px); }
+    /* mobile is fully sticky — the logo is the only nav there, so hiding it
+       would leave the content pages with no way back */
+    .nav.is-hidden{ transform:none; }
+    .nav-links{ display:none; }
+    .submenu{
+      left:0; right:0; top:clamp(18px,4vh,28px);
+      width:auto; padding:0 var(--edge-x);
+      flex-direction:row; flex-wrap:wrap;
+      /* the base rule stacks these in a left-aligned column; as a row it
+         needs re-centring on both axes, or the items sit flush left and
+         leave the leftover width as a gap on the right */
+      justify-content:center; align-items:center; align-content:center;
+      text-align:center;
+      gap:10px clamp(10px,3vw,18px);
+    }
+    .submenu button{ font-size:clamp(11px,3.4vw,14px); }
+    .copy, .copy[data-state="4"]{
+      width:min(210px,42vw);
+      font-size:13px;
+    }
+    .hi-inner{
+      /* scaled so .cap's font-size (15px × .867 ≈ 13px) matches .copy's
+         mobile font-size — the thumbnail shrinks proportionally with it.
+         Lives on .hi-inner, not .highlight itself, because .highlight's
+         transform is owned by the JS parallax every frame (see above). */
+      transform:scale(.867);
+      transform-origin:bottom right;
+    }
+    .footer{ flex-wrap:wrap; row-gap:24px; }
+    .footer > div{ flex:1 1 45%; }
+    /* the 712/393-style pairs are unreadable side by side at this width, so
+       each card takes the full column and the reveal plays top-then-bottom */
+    .work-row{ flex-direction:column; gap:clamp(40px,6vh,64px); align-items:stretch; }
+    /* the desktop ratios size the main axis, which is now vertical — reset
+       them or each card gets sized by its image instead of the column */
+    .work-row > *{ flex:none !important; width:100%; }
+    .work-head{ font-size:clamp(22px,6.4vw,28px); }
+    .card-title{ font-size:16px; }
+    .card-meta{ display:block }
+    .card-tag{ margin-top:8px }
+    .intro{ width:auto; margin-right:var(--edge-x); }
+    .intro-title{ font-size:clamp(34px,9.2vw,52px); }
+    .intro-sub{ font-size:clamp(15px,4.1vw,19px); width:min(420px,88vw); }
+  }
+</style>
+</head>
+<body>
+<!-- ---------- Nav: outside .scene so it stays put once the page scrolls ---------- -->
+<header class="nav">
+  <a class="logo" href="#" aria-label="The Frameworks — home">
+    <!-- The mark is the same 10 triangles as the centre icon, so it can
+         morph between the F and each scroll state. viewBox spans the union
+         of every state (x 0→800) and of the F (y -100→700); at 40×40 the F
+         lands at exactly the 20×40 the static logo used to be. -->
+    <svg class="logo-mark" id="logoMark" viewBox="0 -100 800 800" aria-hidden="true">
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+      <polygon points="0,0 200,0 0,200"></polygon>
+    </svg>
+  </a>
+  <nav class="nav-links">
+    <a href="#">Work</a>
+    <a href="#">Services</a>
+    <a href="#">About</a>
+    <a href="#">Thinking</a>
+  </nav>
+</header>
+
+
+<div class="scene" id="scene">
+
+
+    <!-- ---------- Intro: the top of the page, before the scroll locks ---------- -->
+    <div class="intro-bounds">
+      <div class="intro" id="intro">
+        <span class="intro-dot" aria-hidden="true"></span>
+        <h1 class="intro-title">The smartest route from B to B</h1>
+        <p class="intro-sub">We’re The Frameworks. A B2B brand and marketing agency that gets businesses closer to the people who matter most.</p>
+        <p class="intro-scroll">Scroll ↓</p>
+      </div>
+    </div>
+
+    <!-- ---------- Sub-menu ---------- -->
+    <div class="submenu" id="submenu" role="tablist" aria-label="Our approach">
+      <button type="button" data-state="0" aria-current="true">Clarity</button>
+      <button type="button" data-state="1" aria-current="false">Proximity</button>
+      <button type="button" data-state="2" aria-current="false">Imagination</button>
+      <button type="button" data-state="3" aria-current="false">Empathy</button>
+      <button type="button" data-state="4" aria-current="false">Momentum</button>
+    </div>
+
+    <!-- ---------- Icon + headlines: the one piece that needs to stay an
+         internally-exact scaled unit — aspect-fit and centred below the nav. --------- -->
+    <div class="hero-stage">
+      <div class="hero" id="hero">
+
+        <!-- ---------- Headlines ---------- -->
+        <div class="headline" data-state="0" style="left:164px; top:275px"><span>Clarity</span></div>
+        <div class="headline" data-state="1" style="left:494px; top:128px"><span>Proximity</span></div>
+        <div class="headline" data-state="2" style="left:191px; top:408px"><span>Imagination</span></div>
+        <div class="headline" data-state="3" style="left:83px; top:350px"><span>Empathy</span></div>
+        <div class="headline" data-state="4" style="left:263px; top:379px"><span>Momentum</span></div>
+
+        <!-- ---------- The icon: 10 right-triangles, half of a 200px cell each ---------- -->
+        <div class="icon" id="icon" role="button" tabindex="0" aria-label="Next section">
+          <svg class="tile" data-tile="0" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="1" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="2" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="3" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="4" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="5" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="6" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="7" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="8" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+          <svg class="tile" data-tile="9" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true"><polygon points="0,0 200,0 0,200"></polygon></svg>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------- Body copy ---------- -->
+    <p class="copy fade" data-state="0">Technical offers, complex supply chain and multi-stakeholder audiences – the B2B world is complicated. And we love it. We cut through complexity to uncover powerful propositions that match your goals with your audience’s challenges.</p>
+    <p class="copy fade" data-state="1">AI is shifting buyer journeys, making LLMs a major stakeholder. We have the expertise and tools to help you harness this opportunity to connect with customers in new ways, ensuring you’re included in those conversations and showing up on your terms.</p>
+    <p class="copy fade" data-state="2">Brands still need to capture human hearts and minds. There’s no substitute for big, bold ideas, whipsmart messaging and unforgettable digital experiences. Our creativity has been bringing brands to life - and life to brands - for more than three decades.</p>
+    <p class="copy fade" data-state="3">Every B2B challenge is really about people. No matter how complex or technical it is on paper, we don’t ever lose sight of your audience. What speaks to them. What worries them. What matters most to them. Then, we design experiences to reach them.</p>
+    <p class="copy fade" data-state="4">The rules are changing every day; there is no final destination. Just increasing pressure to move people to move products and above all, move the needle. We’re committed to using human and technological innovation to move your business forward.</p>
+
+    <!-- ---------- Project highlights ---------- -->
+    <div class="highlight fade" data-state="0">
+      <div class="hi-inner">
+        <div class="thumb">
+          <img src="assets/clarity-ust.png"
+               alt="" width="265" height="266"
+               style="width:265px;height:266px;left:-80px;top:-68px;mix-blend-mode:multiply">
+        </div>
+        <div class="cap">Related work:<br><span class="proj">UST ↗</span></div>
+      </div>
+    </div>
+    <div class="highlight fade" data-state="1">
+      <div class="hi-inner">
+        <div class="thumb">
+          <img src="assets/proximity-adaptive-ai.png"
+               alt="" width="106" height="106"
+               style="width:106px;height:106px;left:0;top:0"
+               onerror="this.style.display='none'">
+        </div>
+        <div class="cap">Related work:<br><span class="proj">Adaptive AI ↗</span></div>
+      </div>
+    </div>
+    <div class="highlight fade" data-state="2">
+      <div class="hi-inner">
+        <div class="thumb">
+          <img src="assets/imagination-report.png"
+               alt="" width="196" height="137"
+               style="width:196px;height:137px;left:calc(50% - 10px);top:calc(50% - 11.5px);transform:translate(-50%,-50%)"
+               onerror="this.style.display='none'">
+        </div>
+        <div class="cap">Related work:<br><span class="proj">Imagination Report ↗</span></div>
+      </div>
+    </div>
+    <div class="highlight fade" data-state="3">
+      <div class="hi-inner">
+        <div class="thumb">
+          <svg viewBox="0 0 81 81" width="81" height="81" aria-hidden="true"
+               style="position:absolute;left:calc(50% + 0.5px);top:calc(50% + 0.5px);transform:translate(-50%,-50%)">
+            <path d="M19.2857 0V19.2857H0V38.5714C21.2991 38.5714 38.5714 21.2991 38.5714 0H19.2857Z" fill="#272727"/>
+            <path d="M61.7163 0H42.4305C42.4305 21.2991 59.7028 38.5714 81.002 38.5714V19.2857H61.7163V0Z" fill="#272727"/>
+            <path d="M81.002 42.4305C59.7028 42.4305 42.4305 59.7028 42.4305 81.002H61.7163V61.7163H81.002V42.4305Z" fill="#272727"/>
+            <path d="M0 42.4305V61.7163H19.2857V81.002H38.5714C38.5714 59.7028 21.2991 42.4305 0 42.4305Z" fill="#272727"/>
+            <path d="M40.4948 50.1468C45.8204 50.1468 50.1376 45.8295 50.1376 40.5039C50.1376 35.1783 45.8204 30.8611 40.4948 30.8611C35.1692 30.8611 30.8519 35.1783 30.8519 40.5039C30.8519 45.8295 35.1692 50.1468 40.4948 50.1468Z" fill="#272727"/>
+          </svg>
+        </div>
+        <div class="cap">Related work:<br><span class="proj">RAIFF ↗</span></div>
+      </div>
+    </div>
+    <div class="highlight fade" data-state="4">
+      <div class="hi-inner">
+        <div class="thumb">
+          <svg viewBox="0 0 106 106" width="106" height="106" aria-hidden="true" style="position:absolute;left:0;top:0">
+            <circle cx="52.5" cy="52.5" r="37.5" fill="#272727"/>
+          </svg>
+        </div>
+        <div class="cap">Related work:<br><span class="proj">Startech ↗</span></div>
+      </div>
+    </div>
+
+</div>
+
+<main class="page" id="page">
+  <!-- stands in for the fixed .scene above; see .page-spacer -->
+  <div class="page-spacer" aria-hidden="true"></div>
+
+  <section class="work">
+    <h2 class="work-head">Selected work and thinking</h2>
+    <div class="work-grid">
+
+      <div class="work-row a">
+        <a class="card reveal" href="#">
+          <img class="card-img" src="assets/work-startech.svg" width="712" height="443" alt="Startech — hello yellow">
+          <div class="card-meta">
+            <div>
+              <p class="card-kicker">Case study</p>
+              <p class="card-title">Startech</p>
+            </div>
+            <p class="card-tag">Visual identity, Brand, Strategy, Award-winning</p>
+          </div>
+        </a>
+        <a class="card stack reveal" href="#">
+          <img class="card-img" src="assets/work-raiff.jpg" width="1100" height="1052" alt="Responsible AI Future Foundation">
+          <div class="card-meta">
+            <div>
+              <p class="card-kicker">Case study</p>
+              <p class="card-title">Responsible AI Future Foundation</p>
+            </div>
+            <p class="card-tag">Visual identity</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="work-row b">
+        <a class="card stack reveal" href="#">
+          <img class="card-img" src="assets/work-estorick.jpg" width="853" height="1200" alt="The Estorick Collection">
+          <div class="card-meta">
+            <div>
+              <p class="card-kicker">Case study</p>
+              <p class="card-title">The Estorick Collection</p>
+            </div>
+            <p class="card-tag">Print</p>
+          </div>
+        </a>
+        <a class="card reveal" href="#">
+          <img class="card-img" src="assets/work-adaptive.png" width="1422" height="928" alt="Inside Adaptive AI">
+          <div class="card-meta">
+            <div>
+              <p class="card-kicker">Article</p>
+              <p class="card-title">Inside Adaptive AI</p>
+            </div>
+            <p class="card-tag">By Chris</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="work-row c">
+        <a class="card reveal" href="#">
+          <img class="card-img" src="assets/work-botim.svg" width="711" height="464" alt="Botim">
+          <div class="card-meta">
+            <div>
+              <p class="card-kicker">Case study</p>
+              <p class="card-title">Botim</p>
+            </div>
+            <p class="card-tag">Experiential design</p>
+          </div>
+        </a>
+        <a class="card stack reveal" href="#">
+          <img class="card-img" src="assets/work-prompt.svg" width="393" height="376" alt="The Prompt: AI">
+          <div class="card-meta">
+            <div>
+              <p class="card-kicker">Article</p>
+              <p class="card-title">The Prompt: AI</p>
+            </div>
+            <p class="card-tag">By Louise</p>
+          </div>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="logos" id="logos" aria-label="Clients">
+    <div class="logos-track" id="logosTrack">
+      <div class="logos-set">
+      <img src="assets/logo-khazna.png" width="182" height="80" alt="Khazna">
+      <img src="assets/logo-2x.png" width="182" height="100" alt="2X">
+      <img src="assets/logo-champion-homes.png" width="182" height="85" alt="Champion Homes">
+      <img src="assets/logo-teledyne.png" width="182" height="78" alt="Teledyne">
+      <img src="assets/logo-hiscox.png" width="182" height="78" alt="Hiscox">
+      <img src="assets/logo-wates.png" width="182" height="78" alt="Wates">
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div>
+      <p>© The Frameworks Worldwide Ltd</p><p>&nbsp;</p>
+      <p class="muted">1989–2026</p>
+      <p class="links"><a href="#">FAQs</a><a href="#">Legal</a><a href="#">Cookies</a></p>
+    </div>
+    <div><p>We own it</p><p>&nbsp;</p><p class="muted">Proudly employee-owned<br>since 2024</p></div>
+    <div><p>Office</p><p>&nbsp;</p><p class="muted">7th Floor, Fora Building<br>21-33 Great Eastern Street<br>London EC2A 3EJ</p></div>
+    <div><p>Contact</p><p>&nbsp;</p><p class="muted"><a href="mailto:hello@theframeworks.com">hello@theframeworks.com</a><br><a href="#">LinkedIn</a></p></div>
+  </footer>
+</main>
+
+<!-- The intro block carries its own "Scroll ↓" cue now, so this older
+     bottom-centre hint starts hidden and is never shown (kept only so the
+     footer-release logic below has the element it expects). -->
+<div class="hint hide" id="hint">Scroll</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const STEP    = 100;                // grid step in px — half a 200px cell (see KEYS below)
+  const NSTATES = 5;                  // Clarity / Proximity / Imagination / Empathy / Momentum
+  const MAX     = NSTATES - 1;        // scroll units: 0..4 = the icon states. Past 4 the page
+                                      // itself scrolls, so the experience stops there.
+  const LOGO_RETURN_VH = .22;         // fraction of a viewport the mark takes
+                                      // to unwind back to the F on the way out
+  const INTRO_MIN = -1;               // -1..0 = the intro (hero copy + icon parked off the bottom)
+  const REDUCE  = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const smoothstep = t => t * t * (3 - 2 * t);
+
+  /* ------------------------------------------------------------------ *
+   * Keyframes, read straight off the five Figma "Icon State" frames.
+   * Each entry is [col, row, rotationDeg] on a grid with a 100px step —
+   * a half-cell — because each of the 10 triangles is half of a 200px
+   * cell, and Empathy's frame (state index 3) is offset by one half-cell
+   * from the others (its canvas is 800px wide starting further left, vs.
+   * 600px for the rest), so a whole-cell grid can't address both without
+   * everything living on a shared, finer step. Rotation follows the same
+   * convention as V1: 0 = ◤  90 = ◥  180 = ◢  270 = ◣ (right angle at
+   * top-left, rotated clockwise), just now applied to all 10 tiles
+   * instead of only 2 — every piece can both move and turn.
+   * ------------------------------------------------------------------ */
+  const KEYS = [
+    /* tri  1 */ [[3,0,   0], [1,0, 180], [3,0, 180], [0,2,  90], [1,2,  90]],
+    /* tri  2 */ [[3,0, 180], [3,2, 180], [1,0, 180], [0,0, 180], [1,0, 180]],
+    /* tri  3 */ [[5,0,   0], [3,0,   0], [5,0,   0], [2,2, 180], [3,0,   0]],
+    /* tri  4 */ [[5,0, 180], [3,0, 180], [5,0, 180], [4,2,  90], [5,0,  90]],
+    /* tri  5 */ [[3,2,   0], [3,4,   0], [1,2,  90], [2,0, 270], [1,2, 270]],
+    /* tri  6 */ [[3,2, 180], [3,4, 180], [3,4,   0], [6,0, -90], [3,4, -90]],
+    /* tri  7 */ [[5,2,   0], [5,2,   0], [5,2,   0], [6,2,   0], [3,4,  90]],
+    /* tri  8 */ [[5,2, 180], [5,2, 180], [5,2, 180], [4,4,   0], [5,4, 180]],
+    /* tri  9 */ [[1,4,   0], [1,2,   0], [3,0,   0], [2,4,  90], [1,0,   0]],
+    /* tri 10 */ [[1,4, 180], [1,2, 180], [1,0,   0], [4,0, 180], [3,0, 180]]
+  ];
+
+  /* The nav logo is the same 10 triangles arranged as the F ("Icon - TheF" in
+     Figma). Decoded off that frame's SVG the same way KEYS was, and expressed
+     in the same grid — verified by decoding Figma's own "Icon - Clarity" from
+     the same board and confirming it reproduces KEYS state 0 exactly, so the
+     triangle numbering is shared between the two and tile n really is the same
+     piece in both. Rows go negative because the F is taller than the icon and
+     extends above its top row; the logo's viewBox accounts for that. */
+  const THEF = [
+    /* 1 */ [2, 1,   0], /* 2 */ [2, 1, 180], /* 3 */ [4,-1,   0],
+    /* 4 */ [4,-1, 180], /* 5 */ [2,-1, 180], /* 6 */ [2, 3, 180],
+    /* 7 */ [4, 3,   0], /* 8 */ [4, 3, 180], /* 9 */ [2, 5,   0],
+    /*10 */ [2, 5, 180]
+  ];
+
+  /* Logo timeline: F while the intro and Clarity are on screen, then in step
+     with the centre icon from Proximity through Momentum, then back to the F
+     as the footer releases. Derived from KEYS rather than written out, so it
+     can't drift if the icon keyframes are edited. */
+  const LOGO_KEYS = THEF.map((f, i) => {
+    const mid  = KEYS[i].slice(1);            // Proximity → Momentum
+    const last = mid[mid.length - 1][2];
+    let end = f[2];                           // spin back to F the short way
+    while (end - last >  180) end -= 360;
+    while (end - last < -180) end += 360;
+    return [f, ...mid, [f[0], f[1], end]];
+  });
+
+  /* Each tile eases toward the scroll position with its own lag, so the
+     pieces arrive in a soft cascade instead of moving as one rigid group —
+     even while you're actively scrubbing through the scroll. */
+  const TILE_EASE = [0.150, 0.128, 0.118, 0.136, 0.108, 0.122, 0.142, 0.114, 0.132, 0.120];
+
+  const tiles = [...document.querySelectorAll(".tile")].map((el, i) => ({
+    el, ease: TILE_EASE[i], x: 0, keys: KEYS[i]
+  }));
+
+  const scene      = document.getElementById("scene");
+  const hintEl      = document.getElementById("hint");
+  const headlines   = [...document.querySelectorAll(".headline")];
+  const copies      = [...document.querySelectorAll(".copy")];
+  const highlights  = [...document.querySelectorAll(".highlight")];
+  const menuBtns    = [...document.querySelectorAll("#submenu button[data-state]")];
+  const introEl     = document.getElementById("intro");
+  const submenuEl   = document.getElementById("submenu");
+  const heroStage   = document.querySelector(".hero-stage");
+  const navEl       = document.querySelector(".nav");
+  const iconEl      = document.getElementById("icon");
+  const logoTris    = [...document.querySelectorAll("#logoMark polygon")];
+
+  /* ------------------------------------------------------------------ *
+   * Fit the 1440×900 hero (icon + headlines) into the space left over
+   * once chrome takes its share. Chrome is laid out separately with real
+   * viewport-edge CSS (see .nav/.submenu/.copy/.highlight, and their
+   * mobile-breakpoint overrides), so only this piece — the one with
+   * KEYS-grid-driven internal geometry that has to stay exactly
+   * proportional — needs an aspect-preserving scale. navH/bottomH mirror
+   * the --nav-h/--bottom-band CSS clamp()s exactly (desktop: nav only,
+   * no bottom band; mobile: sub-menu row on top, copy+highlight band on
+   * the bottom), so the space this fits into always matches what's
+   * actually on screen — keep the two in sync if either is retuned.
+   * ------------------------------------------------------------------ */
+  const MIN_S = .34, MAX_S = 1.6, MIN_S_MOBILE = .22;
+  const MOBILE = 767;
+  const ICON_W = 800, ICON_H = 600; // the icon's own box within the 1440×900 hero canvas
+  /* In state 1 the tiles only occupy columns 1–5 of that box (x 100→700),
+     so the visible square is 600 wide, centred, with 100 of empty box either
+     side. Margin-fitting has to use this, not ICON_W, or the artwork stops
+     100 units short of the margin on each side. */
+  const ICON_ART = 600;
+  const INTRO_SCALE_DESKTOP = 1.5;  // intro: icon is 50% bigger, then shrinks as it locks
+  const MAX_ICON_BOOST = 2.4;
+  /* Where the icon's top edge parks during the intro is derived from the
+     spacing, not fixed: the copy is centred between the logo and the square,
+     so for the space above and below it to both equal the gap, the square
+     has to sit exactly gap + blockHeight + gap below the logo. The clamp is
+     the safety net for viewports too short to honour the gap — there the
+     square stops moving and the spacing tightens instead of colliding. */
+  const INTRO_GAP = 120;                 // px above and below the intro copy
+  const INTRO_GAP_MOBILE = 105;
+  const INTRO_TOP_MIN = .55, INTRO_TOP_MAX = .92;
+  let   introParkPx = 0;       // px the icon is pushed down at full intro (set by fit())
+  let   iconBoost = 1;         // the icon's locked scale (mirrors --icon-boost)
+  let   introScale = 1;        // extra multiplier on top of it at full intro
+  let   booted = false;        // gates fit()'s re-render until the loop's state exists
+  let   isMobile = false;      // kept in sync by fit(), read by render()
+  let   releaseT = 0;          // 0..1 — how far the page has scrolled past the experience
+
+  /* ------------------------------------------------------------------ *
+   * Hand-off between the experience and the page
+   * ------------------------------------------------------------------
+   * The experience swallows wheel/touch until it reaches Momentum; from
+   * there the document takes over and scrolls normally. Coming back up, the
+   * page scrolls to its top first and only then does the experience pick the
+   * input back up — so the boundary behaves the same in both directions and
+   * there's never a moment where both are moving.
+   * ------------------------------------------------------------------ */
+  const atExperienceEnd = () =>
+    scrollTarget >= MAX - 0.001 && scrollDisplay >= MAX - 0.02;
+  const pageScrolled    = () => (window.scrollY || 0) > 0;
+  // true when the document — not the experience — should own this gesture
+  const pageOwnsScroll = dir =>
+    atExperienceEnd() && (dir > 0 || pageScrolled());
+
+  function syncRelease(){
+    const t = clamp((window.scrollY || 0) / Math.max(1, innerHeight), 0, 1);
+    // the logo's ramp is a fraction of this one, so it needs finer steps
+    if (Math.abs(t - releaseT) < 0.0002) return;
+    releaseT = t;
+    kick();
+  }
+  /* Semi-sticky nav (desktop only). Hidden on the way down, back on the way
+     up, with a dead zone so trackpad jitter can't flicker it and a hold-off
+     near the top where the bar should always be present. */
+  const NAV_HIDE_DELTA = 6;      // px of travel before a direction counts
+  let   lastNavY = 0;
+  function syncNav(){
+    const y = window.scrollY || 0;
+    if (isMobile){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
+    const dy = y - lastNavY;
+    if (Math.abs(dy) < NAV_HIDE_DELTA) return;
+    navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
+    lastNavY = y;
+  }
+  addEventListener("scroll", () => { syncRelease(); syncNav(); }, {passive:true});
+
+  function fit(){
+    const mobile = isMobile = innerWidth <= MOBILE;
+    const navH    = mobile ? clamp(innerHeight * .11, 72, 96) : clamp(innerHeight * .17, 90, 140);
+    const bottomH = mobile ? clamp(innerHeight * .28, 150, 210) : 0;
+    const heightFit = (innerHeight - navH - bottomH) / 900;
+    // --s fits the whole 1440-wide hero, so headline text (positioned all
+    // over that canvas — Empathy's starts almost at its left edge) always
+    // stays safely on screen. See --icon-boost below for making the icon
+    // itself bigger without dragging headlines along with it.
+    const s = Math.min(innerWidth / 1440, heightFit);
+    const minS = mobile ? MIN_S_MOBILE : MIN_S;
+    const finalS = Math.max(minS, Math.min(MAX_S, s));
+    document.documentElement.style.setProperty("--s", finalS);
+
+    let boost = 1;
+    if (mobile){
+      const iconMargin = clamp(innerWidth * .07, 20, 40);
+      const widthBoost  = (innerWidth - iconMargin * 2) / (ICON_W * finalS);
+      const heightBoost = ((innerHeight - navH - bottomH) * .96) / (ICON_H * finalS);
+      boost = clamp(Math.min(widthBoost, heightBoost), 1, MAX_ICON_BOOST);
+    }
+    document.documentElement.style.setProperty("--icon-boost", boost);
+    iconBoost = boost;
+
+    /* The icon is bigger during the intro and shrinks to its locked size as
+       the scroll experience takes over. Desktop is a flat multiplier; mobile
+       grows until the visible square runs full-bleed, edge to edge of the
+       viewport rather than stopping at the page margins. */
+    if (mobile){
+      const lockedArtW = ICON_ART * finalS * boost;
+      introScale = lockedArtW > 0 ? Math.max(1, innerWidth / lockedArtW) : 1;
+    } else {
+      introScale = INTRO_SCALE_DESKTOP;
+    }
+
+    /* How far to push the icon down during the intro so only its top edge
+       shows. The icon box is vertically centred in the hero (top 150 +
+       height 600 = centre 450 of a 900-tall canvas), and .hero-stage is
+       itself centred in the space between the nav and the bottom band —
+       so the icon's on-screen centre is that band's centre, and its top
+       edge sits half its scaled height above it. Measured at the intro
+       scale, not the locked one, so the enlarged square's top edge still
+       lands exactly on the line the copy is spaced against. */
+    const stageTop = navH, stageBottom = innerHeight - bottomH;
+    const iconCentreY = stageTop + (stageBottom - stageTop) / 2;
+    const iconTopY = iconCentreY - (ICON_H * finalS * boost * introScale) / 2;
+    /* .intro-bounds spans from the logo's bottom to the square's parked top
+       edge and centres the copy in it, so the space above and below the copy
+       is always equal. Both bounds are measured rather than recomputed in
+       CSS — the logo sits centred in a nav whose height differs between
+       breakpoints, and the copy block's height moves with the font clamps;
+       a second copy of either sum is exactly what drifts out of sync. */
+    const logo = document.querySelector(".logo");
+    const logoBottom = logo ? logo.getBoundingClientRect().bottom : navH;
+    document.documentElement.style.setProperty("--intro-top-bound", logoBottom.toFixed(1) + "px");
+
+    const gap = mobile ? INTRO_GAP_MOBILE : INTRO_GAP;
+    const blockH = introEl.getBoundingClientRect().height;
+    const introIconTop = clamp(
+      (logoBottom + gap * 2 + blockH) / innerHeight, INTRO_TOP_MIN, INTRO_TOP_MAX);
+    introParkPx = Math.max(0, innerHeight * introIconTop - iconTopY);
+    document.documentElement.style.setProperty("--intro-icon-top", (introIconTop * 100) + "%");
+    // introParkPx feeds a transform that only render() writes, so a resize
+    // has to re-run the loop or the icon keeps the old viewport's offset
+    if (booted) kick();
+  }
+  addEventListener("resize", fit, {passive:true});
+  fit();
+
+  /* ------------------------------------------------------------------ *
+   * Continuous scroll model
+   * ------------------------------------------------------------------
+   * scrollTarget  — where the wheel/touch/keys/clicks want to be, updated
+   *                 immediately and clamped to [0, MAX].
+   * scrollDisplay — what's actually rendered; chases scrollTarget every
+   *                 frame with exponential easing. That single lag is
+   *                 what makes the whole experience feel smooth: there is
+   *                 no per-gesture lock, no threshold, no "wait for it" —
+   *                 you're always in direct, continuous control of where
+   *                 the icon sits between states, and letting go just
+   *                 lets it glide to rest.
+   * ------------------------------------------------------------------ */
+  const EASE_MAIN = REDUCE ? 1 : 0.10;
+
+  let scrollTarget  = INTRO_MIN;   // the page opens on the intro
+  let scrollDisplay = INTRO_MIN;
+  let hasInteracted = false;
+  let running = false;
+
+  function applyTiles(iconProgress){
+    for (const t of tiles){
+      t.x += (iconProgress - t.x) * (REDUCE ? 1 : t.ease);
+
+      let i0 = Math.floor(t.x);
+      i0 = clamp(i0, 0, NSTATES - 2);
+      const f  = t.x - i0;
+      const a  = t.keys[i0];
+      const b  = t.keys[i0 + 1];
+      const px = (a[0] + (b[0] - a[0]) * f) * STEP;
+      const py = (a[1] + (b[1] - a[1]) * f) * STEP;
+      const rt =  a[2] + (b[2] - a[2]) * f;
+      t.el.style.transform =
+        `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0) rotate(${rt.toFixed(2)}deg)`;
+    }
+  }
+
+  /* Same interpolation for the nav mark, but driven straight off the scroll
+     position with no per-tile lag: at logo size the cascade would only read as
+     the shape wobbling. Positions are viewBox units, so this writes the SVG
+     transform attribute rather than a CSS one. */
+  function applyLogo(p){
+    for (let i = 0; i < logoTris.length; i++){
+      const keys = LOGO_KEYS[i];
+      const i0 = clamp(Math.floor(p), 0, keys.length - 2);
+      const f  = p - i0;
+      const a  = keys[i0];
+      const b  = keys[i0 + 1];
+      const px = (a[0] + (b[0] - a[0]) * f) * STEP;
+      const py = (a[1] + (b[1] - a[1]) * f) * STEP;
+      const rt =  a[2] + (b[2] - a[2]) * f;
+      logoTris[i].setAttribute("transform",
+        `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${rt.toFixed(1)} 100 100)`);
+    }
+  }
+
+  /* Parallax + crossfade windows for the copy layers.
+     Headline sits IN FRONT of the icon (z-index 3 > 2) and drifts the
+     most — that's the parallax. Body copy and the project highlight sit
+     in their own front layer and drift less, so the whole thing reads as
+     depth, not just fading. */
+  const HEADLINE_PARALLAX = 92;   // px of vertical drift per full state of scroll
+  const HEADLINE_WINDOW   = 0.72; // half-width of the visible window, in state-units
+  const COPY_PARALLAX     = 20;
+  const COPY_WINDOW       = 0.52;
+  const HI_PARALLAX       = 30;
+  const HI_WINDOW         = 0.52;
+
+  function layer(nodes, dist, parallax, halfWindow){
+    nodes.forEach(n => {
+      const s    = +n.dataset.state;
+      const d    = dist - s;
+      let op     = 1 - clamp(Math.abs(d) / halfWindow, 0, 1);
+      op         = smoothstep(op);
+      n.style.opacity    = op.toFixed(3);
+      n.style.visibility = op > 0.01 ? "visible" : "hidden";
+      // .fade's base pointer-events:none is permanent (JS only ever
+      // overrides opacity/visibility inline), so without this the
+      // highlight's :hover state — scale + colour change — could never
+      // fire even when fully visible. Only flip it on once basically
+      // settled, so a highlight mid-crossfade isn't hoverable too.
+      n.style.pointerEvents = op > 0.85 ? "auto" : "none";
+      n.style.transform  = `translateY(${(-d * parallax).toFixed(1)}px)`;
+    });
+  }
+
+  function render(){
+    scrollDisplay += (scrollTarget - scrollDisplay) * EASE_MAIN;
+    if (Math.abs(scrollTarget - scrollDisplay) < 0.0004) scrollDisplay = scrollTarget;
+
+    const iconProgress = clamp(scrollDisplay, 0, NSTATES - 1);
+    applyTiles(iconProgress);
+    /* 0 = F (held through the intro and Clarity), 1–4 = the icon states,
+       5 = back to the F. The return runs on its own short ramp rather than
+       releaseT: releaseT spans a whole viewport of scrolling, which left the
+       mark half-morphed for most of the way out. LOGO_RETURN_VH gets it home
+       almost as soon as the experience is behind you, still eased. */
+    const logoReturn = clamp(
+      (window.scrollY || 0) / Math.max(1, innerHeight * LOGO_RETURN_VH), 0, 1);
+    applyLogo(clamp(scrollDisplay, 0, NSTATES - 1) + logoReturn);
+
+    layer(headlines,  scrollDisplay, HEADLINE_PARALLAX, HEADLINE_WINDOW);
+    layer(copies,     scrollDisplay, COPY_PARALLAX,      COPY_WINDOW);
+    layer(highlights, scrollDisplay, HI_PARALLAX,         HI_WINDOW);
+
+    /* ---- intro phase (scroll units -1..0) ----
+       introT is 1 at the very top and 0 once the scroll experience has
+       locked onto Clarity. The icon rides down by introParkPx (so only
+       its top shows), the hero copy fades out early, and the sub-menu
+       fades in late — the headline/copy/highlight need no special case,
+       their existing distance-based windows already have them invisible
+       a full state away from Clarity. */
+    const introT = clamp(-scrollDisplay, 0, 1);
+    heroStage.style.transform = introT > 0
+      ? `translateY(${(introT * introParkPx).toFixed(1)}px)` : "";
+    // eased back down to the locked size as the scroll takes over; cleared
+    // at rest so the CSS scale(var(--icon-boost)) is the single source again
+    iconEl.style.transform = introT > 0
+      ? `scale(${(iconBoost * (1 + (introScale - 1) * introT)).toFixed(4)})` : "";
+    /* The intro copy and the sub-menu both live against the left edge at
+       almost the same height (Figma puts the sub-menu at nav+50 and the
+       intro dot at nav+122), so they must hand over rather than
+       crossfade — otherwise they visibly overlap mid-scroll. The intro is
+       fully gone by introT .45, which is exactly where the sub-menu
+       starts to arrive. */
+    const introOp = smoothstep(clamp((introT - .45) / .35, 0, 1));
+    introEl.style.opacity       = introOp.toFixed(3);
+    introEl.style.visibility    = introOp > 0.01 ? "visible" : "hidden";
+    introEl.style.pointerEvents = introOp > 0.85 ? "auto" : "none";
+    introEl.style.transform     = `translateY(${((1 - introT) * -40).toFixed(1)}px)`;
+    const subOp = smoothstep(clamp((.45 - introT) / .35, 0, 1));
+    submenuEl.style.opacity       = subOp.toFixed(3);
+    submenuEl.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
+    // on mobile the logo shares the sub-menu's slot, so it rides the intro
+    // ramp out as the sub-menu comes in; on desktop it just stays put
+    if (isMobile){
+      // ...but once the page starts scrolling the sub-menu leaves with the
+      // scene, so the logo has to come back or mobile loses its nav entirely
+      const navOp = Math.max(introOp, releaseT);
+      navEl.style.opacity       = navOp.toFixed(3);
+      navEl.style.pointerEvents = navOp > 0.85 ? "auto" : "none";
+    } else if (navEl.style.opacity){
+      navEl.style.opacity = navEl.style.pointerEvents = "";
+    }
+
+    const nearest = Math.round(iconProgress);
+    menuBtns.forEach(b => b.setAttribute("aria-current", String(introT < .5 && +b.dataset.state === nearest)));
+
+    /* Hand-off to the page: once released, how far the document has scrolled
+       through its first viewport drives the scene out, exactly as the old
+       virtual 4→5 tail used to. Written here rather than in the scroll
+       listener so it stays a pure function of state like everything else. */
+    // The scene now physically scrolls away (see body.released .scene), so it
+    // no longer fades or parallaxes on the way out — that would fight the
+    // real scrolling and read as the page moving at two speeds at once.
+    if (scene.style.transform || scene.style.opacity)
+      scene.style.transform = scene.style.opacity = "";
+    scene.style.pointerEvents = releaseT > .05 ? "none" : "";
+    /* touch-action can't be toggled per-gesture, so the body carries it as a
+       class: locked while the experience still owns the input, pan-y once it
+       has handed over. Without this a finger can't scroll the page at all. */
+    document.body.classList.toggle("released", atExperienceEnd());
+
+    let moving = Math.abs(scrollTarget - scrollDisplay) > 0.0004;
+    if (!moving){
+      for (const t of tiles){
+        if (Math.abs(t.x - iconProgress) > 0.0004){ moving = true; break; }
+      }
+    }
+
+    if (moving) requestAnimationFrame(safeRender);
+    else running = false;
+  }
+
+  function kick(){
+    if (running) return;
+    running = true;
+    requestAnimationFrame(safeRender);
+  }
+  /* render() drives everything, so if it ever throws the rAF chain breaks and
+     `running` stays true — which silently freezes the whole page, input and
+     all. Releasing the flag on the way out means the next wheel or touch can
+     always restart the loop, and the error still surfaces in the console. */
+  function safeRender(){
+    try { render(); }
+    catch (err){ running = false; throw err; }
+  }
+
+  function markInteracted(){
+    if (hasInteracted) return;
+    hasInteracted = true;
+    hintEl.classList.add("hide");
+  }
+
+  function setTarget(v){
+    clearTimeout(snapTimer);
+    scrollTarget = clamp(v, INTRO_MIN, MAX);
+    kick();
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Snap-to-state
+   * ------------------------------------------------------------------
+   * The continuous drag is still fully live while you're actively
+   * scrolling — no locks, no thresholds, same as before. But once input
+   * stops, sitting at some arbitrary fractional point leaves the icon in
+   * a half-formed blend of two states more often than not, which reads
+   * as broken rather than as an in-between moment. So on wheel, once
+   * ticks stop arriving for SNAP_DELAY, and on touch, the instant the
+   * finger lifts, we round to the nearest whole state (0/1/2, or 3 for
+   * the fully-released footer) and glide the rest of the way there —
+   * same easing, just a guaranteed clean landing.
+   * ------------------------------------------------------------------ */
+  const SNAP_DELAY = 160;
+  let snapTimer = null;
+
+  function scheduleSnap(){
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(() => { setTarget(Math.round(scrollTarget)); }, SNAP_DELAY);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Wheel / trackpad — continuous, no locks, no thresholds while moving.
+   * Every notch or momentum tick nudges scrollTarget directly; the easing
+   * in render() is what turns that into a smooth glide. Works no matter
+   * where on the page the cursor is, since the listener is on the window.
+   * ------------------------------------------------------------------ */
+  const WHEEL_SENSITIVITY = 760; // px of wheel travel per full state
+
+  addEventListener("wheel", e => {
+    let d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    if (e.deltaMode === 1) d *= 16;        // line mode
+    else if (e.deltaMode === 2) d *= innerHeight; // page mode
+    if (pageOwnsScroll(d)) return;         // let the document scroll itself
+    e.preventDefault();
+    markInteracted();
+    setTarget(scrollTarget + d / WHEEL_SENSITIVITY);
+    scheduleSnap();
+  }, {passive:false});
+
+  /* ------------------------------------------------------------------ *
+   * Touch — 1:1 drag, same continuous model, plus a flick
+   * ------------------------------------------------------------------
+   * Rounding to the nearest state on lift means a plain drag has to cross
+   * the halfway point to commit, so at the old 480px-per-state that was a
+   * 240px swipe — most of a phone screen — and a fast short flick did
+   * nothing at all. Two changes: a state is now a shorter drag, and a
+   * flick commits on velocity regardless of distance, the way a pager
+   * does. A slow, deliberate drag still lands wherever it was let go, so
+   * you keep full scrub control.
+   * ------------------------------------------------------------------ */
+  const TOUCH_SENSITIVITY = 260;  // px of drag per full state
+  const FLICK_VELOCITY    = 0.25; // px/ms — above this, a flick advances a state
+  const FLICK_STALE_MS    = 120;  // finger paused this long before lifting = not a flick
+  let touchY = null, touchFrom = 0, touchVel = 0, touchLastT = 0;
+
+  addEventListener("touchstart", e => {
+    touchY = e.touches[0].clientY;
+    touchFrom = scrollTarget;   // the state the gesture began from
+    touchVel = 0;
+    touchLastT = e.timeStamp;
+    clearTimeout(snapTimer);
+  }, {passive:true});
+  addEventListener("touchmove", e => {
+    if (touchY === null) return;
+    markInteracted();
+    const cur = e.touches[0].clientY;
+    const d = touchY - cur;
+    if (pageOwnsScroll(d)){ touchY = cur; return; }  // document scrolls itself
+    const dt = Math.max(1, e.timeStamp - touchLastT);
+    // smoothed so one jittery sample can't decide whether it was a flick
+    touchVel = touchVel * 0.7 + (d / dt) * 0.3;
+    touchY = cur;
+    touchLastT = e.timeStamp;
+    setTarget(scrollTarget + d / TOUCH_SENSITIVITY);
+  }, {passive:true});
+  addEventListener("touchend", e => {
+    touchY = null;
+    if (pageOwnsScroll(0)) return;      // page is scrolling; leave it alone
+    let dest = Math.round(scrollTarget);
+    const moving = e.timeStamp - touchLastT < FLICK_STALE_MS;
+    if (moving && Math.abs(touchVel) > FLICK_VELOCITY){
+      // carry at least one whole state in the direction of the flick,
+      // without undoing a longer drag that already went further
+      const dir = touchVel > 0 ? 1 : -1;
+      const atLeast = Math.round(touchFrom) + dir;
+      dest = dir > 0 ? Math.max(dest, atLeast) : Math.min(dest, atLeast);
+    }
+    setTarget(dest);
+  }, {passive:true});
+
+  /* ---- keyboard: discrete jumps, still glides via the same easing ---- */
+  addEventListener("keydown", e => {
+    const k = e.key;
+    if (k === "ArrowDown" || k === "PageDown" || k === " "){
+      e.preventDefault(); markInteracted();
+      setTarget(Math.round(scrollTarget) + 1);
+    } else if (k === "ArrowUp" || k === "PageUp"){
+      e.preventDefault(); markInteracted();
+      setTarget(Math.round(scrollTarget) - 1);
+    } else if (k === "Home"){
+      e.preventDefault(); markInteracted(); setTarget(INTRO_MIN);
+    } else if (k === "End"){
+      e.preventDefault(); markInteracted(); setTarget(NSTATES - 1);
+    }
+  });
+
+  /* ---- sub-menu: jump straight to a state, same smooth glide ---- */
+  menuBtns.forEach(b => {
+    b.addEventListener("click", () => {
+      markInteracted();
+      setTarget(+b.dataset.state);
+    });
+  });
+
+  /* ---- click the icon to advance one state ---- */
+  const icon = document.getElementById("icon");
+  icon.addEventListener("click", () => {
+    markInteracted();
+    setTarget(clamp(Math.round(scrollDisplay) + 1, 0, NSTATES - 1));
+  });
+  icon.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " "){
+      e.preventDefault(); markInteracted();
+      setTarget(clamp(Math.round(scrollDisplay) + 1, 0, NSTATES - 1));
+    }
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Work cards — lift in on arrival, left before right
+   * ------------------------------------------------------------------
+   * A plain IntersectionObserver rather than anything tied to the scroll
+   * loop: these live in the normal document, so they should react to the
+   * document. The stagger is per row — index within the row, not the page —
+   * so each row plays the same left-then-right beat as it arrives.
+   * ------------------------------------------------------------------ */
+  const REVEAL_STAGGER = 140;   // ms between the left card and the right one
+  const revealObserver = new IntersectionObserver((entries, obs) => {
+    for (const entry of entries){
+      if (!entry.isIntersecting) continue;
+      const card = entry.target;
+      const row  = card.closest(".work-row");
+      const i    = row ? [...row.children].indexOf(card) : 0;
+      setTimeout(() => card.classList.add("in"), i * REVEAL_STAGGER);
+      obs.unobserve(card);      // one-shot; it shouldn't replay on the way back
+    }
+  }, { rootMargin: "0px 0px -12% 0px", threshold: 0.15 });
+  document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+
+  /* ------------------------------------------------------------------ *
+   * Logo wall — a continuous tick you can grab
+   * ------------------------------------------------------------------
+   * One strip repeated three times; the offset wraps at the width of a
+   * single copy, so the row is seamless whichever way it's moving. Pointer
+   * events (not mouse/touch pairs) so a finger, a trackpad and a mouse all
+   * take the same path. While dragging, the auto-tick is suspended and the
+   * offset follows the pointer 1:1; on release it simply resumes from
+   * wherever it was left — including any direction the drag was heading.
+   * ------------------------------------------------------------------ */
+  const TICKER_SPEED = 28;      // px per second
+  const logosEl   = document.getElementById("logos");
+  const trackEl   = document.getElementById("logosTrack");
+  if (logosEl && trackEl){
+    let offset = 0, lastT = 0, dragging = false, pointerId = null;
+    let dragLastX = 0, tickerW = 0;
+
+    const measure = () => {
+      const first = trackEl.querySelector(".logos-set");
+      // one copy's width — the distance the offset wraps over
+      tickerW = first ? first.getBoundingClientRect().width : 0;
+      /* The offset wraps within a single copy, so the strip has to be at
+         least a viewport plus one copy wide or a gap appears at the right
+         edge at the far end of the wrap. Cloned to fit rather than hard-coded,
+         because how many copies that takes depends on the window. */
+      if (tickerW > 0 && first){
+        const needed = Math.ceil((innerWidth + tickerW) / tickerW) + 1;
+        while (trackEl.children.length < needed){
+          const copy = first.cloneNode(true);   // deep: the whole set
+          copy.setAttribute("aria-hidden", "true");
+          copy.querySelectorAll("img").forEach(i => i.alt = "");
+          trackEl.appendChild(copy);
+        }
+      }
+    };
+    addEventListener("resize", measure, {passive:true});
+    // images may not have laid out yet on first paint
+    if (document.readyState === "complete") measure();
+    else addEventListener("load", measure, {once:true});
+    measure();
+
+    function tick(now){
+      if (!lastT) lastT = now;
+      const dt = Math.min(64, now - lastT) / 1000;   // clamp, so a backgrounded
+      lastT = now;                                    // tab can't lurch on return
+      if (!dragging && !REDUCE) offset -= TICKER_SPEED * dt;
+      if (tickerW > 0){
+        // keep the offset in one strip's worth so it never grows unbounded
+        offset = ((offset % tickerW) + tickerW) % tickerW - tickerW;
+      }
+      trackEl.style.transform = `translate3d(${offset.toFixed(2)}px,0,0)`;
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    logosEl.addEventListener("pointerdown", e => {
+      dragging = true; pointerId = e.pointerId; dragLastX = e.clientX;
+      logosEl.classList.add("dragging");
+      logosEl.setPointerCapture(pointerId);
+    });
+    logosEl.addEventListener("pointermove", e => {
+      if (!dragging || e.pointerId !== pointerId) return;
+      offset += e.clientX - dragLastX;
+      dragLastX = e.clientX;
+    });
+    const endDrag = e => {
+      if (!dragging || (pointerId !== null && e.pointerId !== pointerId)) return;
+      dragging = false; pointerId = null;
+      logosEl.classList.remove("dragging");
+    };
+    logosEl.addEventListener("pointerup", endDrag);
+    logosEl.addEventListener("pointercancel", endDrag);
+    logosEl.addEventListener("dragstart", e => e.preventDefault());
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Boot
+   * ------------------------------------------------------------------ */
+  /* A reload would otherwise come back at whatever scroll position it left
+     off at, dropping the visitor into the middle of the page with the
+     experience still parked at the intro behind it. */
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  addEventListener("pageshow", () => { if (!atExperienceEnd()) window.scrollTo(0, 0); });
+
+  function boot(){
+    // the intro's own "Scroll ↓" is the cue now, so the old bottom-centre
+    // hint stays hidden (see the markup) and isn't revealed on a timer
+    booted = true;
+    fit();     // re-measure once fonts are in, then paint the intro
+    render();
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot);
+  else boot();
+})();
+</script>
+</body>
+</html>

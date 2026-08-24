@@ -533,7 +533,7 @@
     :root{
       --nav-h:clamp(72px,11vh,92px);
       --edge-x:clamp(16px,5.5vw,24px);
-      --hero-top:calc(var(--nav-h) + 44px);   /* nav bar + sub-menu row */
+      --hero-top:calc(var(--nav-h) + 56px);   /* nav bar + sub-menu band */
       --bottom-band:clamp(150px,28vh,210px);
     }
     /* The nav persists through the whole experience now rather than trading
@@ -552,7 +552,10 @@
     .nav.is-hidden{ transform:none; }
     .nav-links{ display:none; }
     .submenu{
-      left:0; right:0; top:calc(var(--nav-h) + 8px);
+      /* Fills the whole band under the nav and centres itself in it, rather
+         than hanging a fixed 8px off the nav — that left it crowding the bar
+         with all the slack below. */
+      left:0; right:0; top:var(--nav-h); height:56px; align-items:center;
       width:auto; padding:0 var(--edge-x);
       flex-direction:row; flex-wrap:wrap;
       /* the base rule stacks these in a left-aligned column; as a row it
@@ -578,10 +581,14 @@
     /* The desktop sizing is vw-driven, which collapses to the clamp minimums
        on a phone and leaves the logos small. Mobile gets its own, larger box —
        still sized so the ~182px sources aren't being magnified. */
+    /* Two sources of whitespace here: the gap between boxes, and the slack
+       inside each one (the box was far wider than the widest logo drawn in
+       it). Both are pulled in — the box is now barely wider than the largest
+       mark, so the spacing you see is mostly the margin. */
     .logos-set img{
-      width:clamp(210px,58vw,260px);
+      width:clamp(180px,48vw,200px);
       height:clamp(72px,20vw,88px);
-      margin-right:clamp(48px,13vw,72px);
+      margin-right:clamp(24px,7vw,40px);
     }
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
@@ -1035,9 +1042,9 @@
   function fit(){
     const mobile = isMobile = innerWidth <= MOBILE;
     const navH    = mobile ? clamp(innerHeight * .11, 72, 92) : clamp(innerHeight * .17, 90, 140);
-    // mobile reserves a 44px band under the nav for the sub-menu row; the hero
+    // mobile reserves a 56px band under the nav for the sub-menu row; the hero
     // starts below both (mirrors --hero-top in the stylesheet)
-    const topBand = mobile ? navH + 44 : navH;
+    const topBand = mobile ? navH + 56 : navH;
     const bottomH = mobile ? clamp(innerHeight * .28, 150, 210) : 0;
     const heightFit = (innerHeight - topBand - bottomH) / 900;
     // --s fits the whole 1440-wide hero, so headline text (positioned all

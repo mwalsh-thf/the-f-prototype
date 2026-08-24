@@ -357,9 +357,9 @@
   .card-img{
     display:block; width:100%; height:auto;
   }
-  /* The Prompt: AI artwork is transparent line-work, so its card supplies the
-     backdrop — F Red, the same red as the icons. */
-  .card-img.on-red{ background:var(--f-red); }
+  /* The Prompt: AI artwork is transparent line-work and sits straight on the
+     page background — no card backdrop at all, which is what leaving it
+     transparent gives us since the section behind it is --bg. */
   .card-meta{
     display:flex; justify-content:space-between; align-items:flex-start; gap:20px;
     margin-top:clamp(16px,2vh,25px);
@@ -568,6 +568,14 @@
          transform is owned by the JS parallax every frame (see above). */
       transform:scale(.867);
       transform-origin:bottom right;
+    }
+    /* The desktop sizing is vw-driven, which collapses to the clamp minimums
+       on a phone and leaves the logos small. Mobile gets its own, larger box —
+       still sized so the ~182px sources aren't being magnified. */
+    .logos-set img{
+      width:clamp(210px,58vw,260px);
+      height:clamp(72px,20vw,88px);
+      margin-right:clamp(48px,13vw,72px);
     }
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
@@ -808,7 +816,7 @@
           </div>
         </a>
         <a class="card stack reveal" href="#">
-          <img class="card-img on-red" src="assets/work-prompt.svg" width="393" height="376" alt="The Prompt: AI">
+          <img class="card-img" src="assets/work-prompt.svg" width="393" height="376" alt="The Prompt: AI">
           <div class="card-meta">
             <div>
               <p class="card-kicker">Article</p>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Services — The Frameworks</title>
+<meta name="description" content="We’re experts in brand strategy, but we don’t stop there; our specialist teams follow through with AI consultancy, content and design development, and digital experience." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* ==================================================================== *
+   * The Frameworks — Services
+   *
+   * Figma: "The F website 2026", page "Claude Full-site", frame 2895:10584
+   * https://www.figma.com/design/8Iz2K9VMKdGd09eOTRl3cQ/The-F-website-2026?node-id=2895-10584
+   *
+   * One file, no build, no dependencies. Tokens, nav and footer are
+   * deliberately duplicated from article.html — change one there and it
+   * changes here too.
+   * ==================================================================== */
+  :root{
+    --black:#272727;
+    --mid-grey:#8F8F8F;
+    --f-red:#F45944;
+    --bg:#F8F8F8;
+    --ink-footer:#1F1F1F;     /* this frame sets nearly all its ink at 1F1F1F */
+    --ink-body:#373636;
+    --rule:#E3E1DE;           /* awards hairlines */
+
+    --nav-h:clamp(90px,17vh,140px);
+    --page-max:1900px;
+    --pad-x:100px;
+
+    --fs-h3:clamp(28px,2.78vw,40px);   /* the 40px statements — 40 at 1440 */
+    --fs-h4:clamp(21px,1.875vw,27px);  /* service titles — 27 at 1440 */
+    --fs-body:18px;
+    --fs-details:15px;
+
+    --ease-out-expo:cubic-bezier(.16,1,.3,1);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{ scrollbar-gutter:stable; background:var(--bg); }
+  body{
+    max-width:var(--page-max); margin-inline:auto;
+    background:var(--bg);
+    color:var(--ink-footer);
+    font-family:"Geist","Geist Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  img{ display:block; max-width:100%; }
+
+  /* ------------------------------------------------------------------ *
+   * Nav — shared component (see article.html)
+   * ------------------------------------------------------------------ */
+  .nav{
+    height:var(--nav-h);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 var(--pad-x);
+  }
+  .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
+  .logo-mark{width:100%;height:100%;display:block;overflow:visible}
+  .logo-mark polygon{
+    fill:var(--ink-footer);
+    stroke:var(--ink-footer);
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;
+  }
+  .nav-menu{
+    display:none;
+    background:none; border:0; padding:0; margin:0;
+    width:27px; height:27px; cursor:pointer; flex:none;
+  }
+  .nav-menu svg{ display:block; width:100%; height:100%; }
+  .nav-menu path{ fill:var(--ink-footer); }
+  .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
+  .nav-links{display:flex; align-items:center; gap:30px}
+  .nav-links a{
+    font-size:14px; line-height:17px; letter-spacing:.01em;
+    color:var(--mid-grey); text-decoration:none; white-space:nowrap;
+    transition:color .35s ease;
+  }
+  .nav-links a:hover{color:var(--black)}
+
+  /* ------------------------------------------------------------------ *
+   * Header — statement + intro on the 4-col grid
+   * ------------------------------------------------------------------ */
+  .page-head{
+    display:grid; grid-template-columns:repeat(4,1fr); column-gap:30px;
+    align-items:start;
+    padding:100px var(--pad-x);
+  }
+  .statement{
+    font-weight:300;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    color:var(--ink-footer);
+  }
+  @supports (text-box: trim-both cap alphabetic){
+    .statement{ text-box:trim-both cap alphabetic; }
+  }
+  .page-head .statement{ grid-column:1 / span 2; }
+  .page-head .intro{
+    grid-column:4;
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Services grid — ten items, icon over title over copy
+   * ------------------------------------------------------------------ */
+  .services{
+    display:grid; grid-template-columns:repeat(4,1fr);
+    column-gap:30px; row-gap:60px;
+    padding:0 var(--pad-x) 100px;
+  }
+  .service{
+    display:flex; flex-direction:column;
+    min-height:277px;
+    padding-right:30px;
+  }
+  /* the icon zone flexes so every title in a row sits on the same line,
+     whatever the copy above it does */
+  .s-icon{ flex:1 0 auto; min-height:140px; }
+  .s-icon img{ width:100px; height:100px; }
+  .service h2{
+    font-weight:300;
+    font-size:var(--fs-h4); line-height:1.15; letter-spacing:-.02em;
+    margin-bottom:30px;
+  }
+  .service p{
+    font-size:var(--fs-body); line-height:1.2; letter-spacing:-.02em;
+  }
+  .service .s-link{
+    display:inline-block; margin-top:15px;
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    color:var(--mid-grey); text-decoration:none;
+    transition:color .3s ease;
+  }
+  .service .s-link:hover{ color:var(--f-red); }
+
+  /* ---- the icon unfold ----
+     Every mark expands from a single triangle into its full square — the
+     0% clip is a triangle (fourth point collapsed onto the third so the
+     polygon can interpolate), the 100% is the square. `backwards` holds
+     the triangle through each icon's stagger delay; after the animation
+     ends the *base* clip-path applies, which is what lets the hover
+     transition below work — a fill-mode:forwards would pin the keyframe
+     value and dead-end the hover. */
+  .s-icon img{
+    clip-path:polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transition:clip-path .45s var(--ease-out-expo), transform .45s var(--ease-out-expo);
+  }
+  @keyframes icon-unfold{
+    0%  { opacity:0; clip-path:polygon(0 0, 100% 0, 0 100%, 0 100%); transform:scale(.55); transform-origin:top left; }
+    45% { opacity:1; }
+    100%{ opacity:1; clip-path:polygon(0 0, 100% 0, 100% 100%, 0 100%); transform:none; }
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .js .service:not(.in) .s-icon img{ opacity:0; }
+    .service.in .s-icon img{
+      animation:icon-unfold .85s var(--ease-out-expo) backwards;
+      animation-delay:var(--d, 0ms);
+    }
+    /* the subtle re-fold on hover: one corner tucks in and springs back */
+    .service:hover .s-icon img{
+      clip-path:polygon(0 0, 100% 0, 100% 72%, 0 100%);
+      transform:scale(.96);
+      transform-origin:top left;
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Client logos
+   * ------------------------------------------------------------------ */
+  .clients{ padding:100px var(--pad-x) 25px; }
+  .clients .statement{ max-width:calc(50% - 20px); }
+  .logo-wall{
+    display:grid; grid-template-columns:repeat(6,1fr);
+    column-gap:30px; row-gap:74px;
+    padding:50px 0;
+    margin-top:40px;
+  }
+  .logo-cell{
+    display:flex; align-items:center; justify-content:center;
+    min-height:44px;
+  }
+  .logo-cell img{ max-height:40px; max-width:100%; width:auto; }
+
+  /* ------------------------------------------------------------------ *
+   * Awards — sortable table, rows cascade in
+   * ------------------------------------------------------------------ */
+  .awards{ padding:100px var(--pad-x) 60px; }
+  .awards .statement{ margin-bottom:62px; }
+  .awards-head, .award-row{
+    display:grid;
+    grid-template-columns:1.4fr 1.2fr 1.4fr .55fr .45fr;
+    column-gap:30px; align-items:baseline;
+  }
+  .awards-head button{
+    background:none; border:0; padding:0; cursor:pointer; text-align:left;
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.07em;
+    color:var(--mid-grey);
+    transition:color .3s ease;
+  }
+  .awards-head button:hover{ color:var(--black); }
+  .awards-head button[aria-sort]{ color:var(--ink-footer); }
+  .awards-head button:focus-visible{ outline:1px solid var(--f-red); outline-offset:4px }
+  .awards-head{ padding-bottom:12px; }
+  .award-row{
+    border-top:1px solid var(--rule);
+    padding:12px 0;
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink-footer);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Motion — masthead load-in, shared reveal, cascade choreography
+   * ------------------------------------------------------------------ */
+  @media (prefers-reduced-motion: no-preference){
+    .page-head .statement{ animation:rise-in .9s var(--ease-out-expo) backwards; }
+    .page-head .intro{ animation:rise-in .8s var(--ease-out-expo) .15s backwards; }
+  }
+  @keyframes rise-in{
+    from{ opacity:0; transform:translateY(22px); }
+  }
+  .js .reveal{
+    opacity:0; transform:translateY(24px);
+    transition:opacity .65s var(--ease-out-expo), transform .65s var(--ease-out-expo);
+    transition-delay:var(--d, 0ms);
+  }
+  .js .reveal.in{ opacity:1; transform:none; }
+  /* rows stepping out before a re-sort */
+  .js .award-row.step-out{
+    opacity:0; transform:translateY(10px);
+    transition:opacity .2s ease, transform .2s ease;
+    transition-delay:var(--d, 0ms);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .js .reveal{ opacity:1; transform:none; transition:none }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Footer — shared component
+   * ------------------------------------------------------------------ */
+  .footer{
+    display:flex; gap:30px; align-items:flex-start;
+    padding:clamp(40px,7vh,100px) var(--pad-x) clamp(50px,8vh,110px);
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.6px; color:var(--ink-footer);
+  }
+  .footer > div{flex:1 1 0; min-width:0}
+  .footer a{ color:var(--mid-grey); text-decoration:none; }
+  .footer a:hover{ color:var(--f-red); }
+  .footer .links a{ margin-right:14px; }
+
+  /* ================================================================== *
+   * Tablet
+   * ================================================================== */
+  @media (max-width:1100px){
+    .page-head{ grid-template-columns:1fr 1fr; }
+    .page-head .statement{ grid-column:1 / -1; }
+    .page-head .intro{ grid-column:2; grid-row:2; margin-top:28px; }
+    .services{ grid-template-columns:repeat(2,1fr); }
+    .service{ min-height:0; }
+    .s-icon{ min-height:0; margin-bottom:40px; }
+    .clients .statement{ max-width:none; }
+    .logo-wall{ grid-template-columns:repeat(4,1fr); row-gap:56px; }
+    .awards-head, .award-row{ grid-template-columns:1.6fr 1.2fr .55fr .45fr; }
+    .awards-head .c-cat, .award-row .c-cat{ display:none; }
+  }
+
+  /* ================================================================== *
+   * Mobile
+   * ================================================================== */
+  @media (max-width:767px){
+    :root{
+      --nav-h:clamp(72px,11vh,92px);
+      --pad-x:clamp(16px,5.5vw,24px);
+      --fs-body:16px;
+      --fs-details:13px;
+    }
+    .logo{ width:40px; height:40px; margin-left:-10px; }
+    .nav-menu{ display:block; }
+    .nav-links{ display:none; }
+
+    .page-head{ display:block; padding-top:32px; padding-bottom:56px; }
+    .page-head .intro{ margin-top:24px; max-width:340px; }
+    .services{ grid-template-columns:1fr; row-gap:48px; padding-bottom:64px; }
+    .service{ padding-right:0; }
+    .s-icon{ margin-bottom:28px; }
+    .s-icon img{ width:80px; height:80px; }
+    .clients{ padding-top:64px; }
+    .logo-wall{ grid-template-columns:repeat(3,1fr); column-gap:20px; row-gap:40px; padding:32px 0; }
+    .logo-cell img{ max-height:30px; }
+    .awards{ padding-top:64px; }
+    .awards .statement{ margin-bottom:36px; }
+    .awards-head, .award-row{ grid-template-columns:1.8fr .7fr .5fr; column-gap:16px; }
+    .awards-head .c-cat, .award-row .c-cat,
+    .awards-head .c-org, .award-row .c-org{ display:none; }
+
+    .footer{ flex-wrap:wrap; row-gap:24px; }
+    .footer > div{ flex:1 1 45%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="logo" href="index.html" aria-label="The Frameworks — home">
+    <svg class="logo-mark" viewBox="0 -100 800 800" aria-hidden="true">
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(180 100 100)"></polygon>
+    </svg>
+  </a>
+  <nav class="nav-links">
+    <a href="work.html">Work</a>
+    <a href="services.html" aria-current="page">Services</a>
+    <a href="about.html">About</a>
+    <a href="thinking.html">Thinking</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <button class="nav-menu" type="button" aria-label="Open menu">
+    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
+      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
+    </svg>
+  </button>
+</header>
+
+<main>
+  <section class="page-head">
+    <h1 class="statement">Tell a story that resonates with your audiences. Get close enough to make them listen.</h1>
+    <p class="intro">We’re experts in brand strategy, but we don’t stop there; our specialist teams follow through with AI consultancy, content and design development, and digital experience.</p>
+  </section>
+
+  <section class="services" aria-label="What we do">
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-brand-strategy.svg" alt="" width="100" height="100"></div>
+      <h2>Brand strategy and identity</h2>
+      <p>Establish a foundation with insights and ideas that elevate your promise.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-content-campaign.svg" alt="" width="100" height="100"></div>
+      <h2>Content and campaign strategy</h2>
+      <p>Tell your brand story and build a rapport with the right people at the right time.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-copywriting.svg" alt="" width="100" height="100"></div>
+      <h2>Copywriting and brand voice</h2>
+      <p>Turn complexity into clarity with creative messaging that captures your unique voice.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-brand-design.svg" alt="" width="100" height="100"></div>
+      <h2>Brand design and application</h2>
+      <p>Bring creative ideas to life with meaningful experiences and well-crafted design.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-digital-dev.svg" alt="" width="100" height="100"></div>
+      <h2>Digital development</h2>
+      <p>Create beautiful digital experiences across platforms, throughout the brand journey.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-abm.svg" alt="" width="100" height="100"></div>
+      <h2>Account-based marketing</h2>
+      <p>Grow your relationships, reputation and revenue with targeted campaigns and toolkits.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-research.svg" alt="" width="100" height="100"></div>
+      <h2>Research and insights</h2>
+      <p>Create authentic connections built on audience segmentation and market research.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-media-activation.svg" alt="" width="100" height="100"></div>
+      <h2>Media activation</h2>
+      <p>Maximise media opportunities to get the engagement your campaign deserves.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-ai-experiences.svg" alt="" width="100" height="100"></div>
+      <h2>AI experiences</h2>
+      <p>Enhance your brand and cut through with interactions that meet real human needs.</p>
+    </div>
+    <div class="service reveal">
+      <div class="s-icon"><img src="assets/icons/icon-brand-proximity.svg" alt="" width="100" height="100"></div>
+      <h2>Brand Proximity</h2>
+      <p>Take advantage of disruptive tools to get closer to the people who matter.</p>
+      <a class="s-link" href="contact.html">Let’s talk about your brand →</a>
+    </div>
+  </section>
+
+  <section class="clients">
+    <h2 class="statement reveal">We’ve crafted meaningful work for some of the world’s biggest B2B brands.</h2>
+    <!-- ⚠️ 18 of the frame's ~30 client logos as fresh SVGs — the Figma MCP
+         asset pipe caps SVG exports at 20 per node, and two of the 20 came
+         through as junk fragments (replaced with the homepage's Hiscox and
+         Teledyne PNGs). The remaining marks can be pulled individually from
+         frame 2895:10675 if the full wall is wanted. -->
+    <div class="logo-wall" aria-label="Client logos">
+      <div class="logo-cell reveal"><img src="assets/logos/logo-01.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logo-hiscox.png" alt="Hiscox"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-03.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-04.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-05.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logo-teledyne.png" alt="Teledyne"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-07.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-08.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-09.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-10.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-11.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-12.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-13.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-14.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-15.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-16.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-17.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-18.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-19.svg" alt="Client logo"></div>
+      <div class="logo-cell reveal"><img src="assets/logos/logo-20.svg" alt="Client logo"></div>
+    </div>
+  </section>
+
+  <section class="awards">
+    <h2 class="statement reveal">Some of our award-winning work</h2>
+    <div class="awards-head" role="row">
+      <button type="button" data-key="project">Project</button>
+      <button type="button" data-key="org" class="c-org">Awarding body</button>
+      <button type="button" data-key="cat" class="c-cat">Category</button>
+      <button type="button" data-key="level">Level</button>
+      <button type="button" data-key="year" aria-sort="descending">Year <span class="arrow">↓</span></button>
+    </div>
+    <div id="awardsBody"><!-- rows rendered by script --></div>
+  </section>
+
+  <footer class="footer">
+    <div>
+      <p>© The Frameworks Ltd</p><p>&nbsp;</p>
+      <p>1989–2026</p>
+      <p class="links"><a href="#">FAQs</a><a href="#">Legal</a><a href="#">Cookies</a></p>
+    </div>
+    <div><p>We own it</p><p>&nbsp;</p><p>Proudly employee-owned<br>since 2024</p></div>
+    <div><p>Office</p><p>&nbsp;</p><p>7th Floor, Fora Building<br>21-33 Great Eastern Street<br>London EC2A 3EJ</p></div>
+    <div><p>Contact</p><p>&nbsp;</p><p><a href="mailto:hello@theframeworks.com">hello@theframeworks.com</a><br><a href="#">LinkedIn</a></p></div>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  document.documentElement.classList.add("js");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+
+  /* ---- generic reveal with per-group stagger: elements that arrive in the
+     same observer batch cascade rather than landing at once ---- */
+  const revealObserver = new IntersectionObserver((entries) => {
+    const arrived = entries.filter(e => e.isIntersecting);
+    arrived.forEach((e, i) => {
+      e.target.style.setProperty("--d", (i * 70) + "ms");
+      e.target.classList.add("in");
+      revealObserver.unobserve(e.target);
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.1 });
+  document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+
+  /* ---- awards: data + render + sort ----
+     Rows live here rather than in markup because sorting re-orders them —
+     the DOM is a projection of this array. */
+  const LEVEL_RANK = { "Platinum":0, "Gold":1, "Silver":2, "Bronze":3, "Shortlisted":4 };
+  const AWARDS = [
+    ["UST Boundless Transformation Film","Telly Awards","B2B","Bronze",2026],
+    ["UST Boundless Campaign","Telly Awards","B2B Campaign","Bronze",2026],
+    ["UST Boundless Transformation Film","Hermes Creative Awards","Video Ad","Gold",2026],
+    ["UST Boundless Campaign","Hermes Creative Awards","Digital Advertising Campaign","Platinum",2026],
+    ["UST Boundless Transformation Film","Muse Creative Awards","Digital Video B2B","Silver",2026],
+    ["UST Boundless Campaign","Muse Creative Awards","Digital Branded Content B2B","Gold",2026],
+    ["Inception","Muse Creative Awards","Corporate Identity, Redesign","Silver",2026],
+    ["The Frameworks Imagination Report","Muse Creative Awards","Corporate Identity, White Paper","Gold",2026],
+    ["The Frameworks Imagination Report","UK Content Awards","Best Use of Research","Shortlisted",2026],
+    ["Inception","Transform Awards MEA","Best Brand Evolution","Shortlisted",2026],
+    ["G42 The Intelligence Grid","Telly Awards","Digital Environments/Craft","Gold",2025],
+    ["UST Boundless Care (Caryn Health)","Telly Awards","Branded Content","Gold",2025],
+    ["Genius Sports Built on Genius","Telly Awards","B2B","Silver",2025],
+    ["Genius Sports Built on Genius","Telly Awards","Branded Content","Silver",2025],
+    ["UST Boundless Potential (Equifax)","Telly Awards","Branded Content","Silver",2025],
+    ["G42 The Intelligence Grid","Telly Awards","Digital Environments/Craft","Bronze",2025],
+    ["G42 The Intelligence Grid","HERMES Creative Awards","Interactive Brand Experience","Platinum",2025],
+    ["Genius Sports Built on Genius","HERMES Creative Awards","Strategic Marketing Campaign","Platinum",2025],
+    ["UST Boundless Care","Telly Awards","Branded Content","Gold",2025],
+    ["UST Boundless Potential","Telly Awards","Branded Content","Silver",2025],
+    ["UST Boundless Community","Telly Awards","Branded Content","Gold",2024],
+  ];
+  const KEYS = { project:0, org:1, cat:2, level:3, year:4 };
+  const tbody = document.getElementById("awardsBody");
+  const headBtns = [...document.querySelectorAll(".awards-head button")];
+  let sortKey = "year", sortDir = -1;   // the frame ships sorted Year ↓
+  let sorting = false;
+
+  function sorted(){
+    const k = KEYS[sortKey];
+    return [...AWARDS].sort((a, b) => {
+      let va = a[k], vb = b[k];
+      if (sortKey === "level"){ va = LEVEL_RANK[va]; vb = LEVEL_RANK[vb]; }
+      if (va < vb) return -1 * sortDir;
+      if (va > vb) return  1 * sortDir;
+      return 0;
+    });
+  }
+
+  function render(cascade){
+    tbody.textContent = "";
+    for (const r of sorted()){
+      const row = document.createElement("div");
+      row.className = "award-row";
+      row.innerHTML =
+        `<span>${r[0]}</span><span class="c-org">${r[1]}</span>` +
+        `<span class="c-cat">${r[2]}</span><span>${r[3]}</span><span>${r[4]}</span>`;
+      tbody.appendChild(row);
+    }
+    const rows = [...tbody.children];
+    if (cascade && !reduced.matches){
+      rows.forEach((row, i) => {
+        row.style.setProperty("--d", (i * 30) + "ms");
+        row.classList.add("reveal");
+        requestAnimationFrame(() => requestAnimationFrame(() => row.classList.add("in")));
+      });
+    }
+  }
+
+  function setSort(key){
+    if (sorting) return;
+    if (sortKey === key){ sortDir = -sortDir; }
+    else { sortKey = key; sortDir = key === "year" ? -1 : 1; }
+    headBtns.forEach(b => {
+      const active = b.dataset.key === sortKey;
+      if (active){
+        b.setAttribute("aria-sort", sortDir === 1 ? "ascending" : "descending");
+        b.innerHTML = b.textContent.replace(/[↓↑]\s*$/, "").trim()
+          + ' <span class="arrow">' + (sortDir === 1 ? "↑" : "↓") + "</span>";
+      } else {
+        b.removeAttribute("aria-sort");
+        b.innerHTML = b.textContent.replace(/[↓↑]\s*$/, "").trim();
+      }
+    });
+    if (reduced.matches){ render(false); return; }
+    /* rows step out top-to-bottom, then the re-sorted set cascades back in */
+    sorting = true;
+    const rows = [...tbody.children];
+    rows.forEach((row, i) => {
+      row.style.setProperty("--d", (i * 8) + "ms");
+      row.classList.add("step-out");
+    });
+    setTimeout(() => { render(true); sorting = false; }, 200 + rows.length * 8);
+  }
+
+  headBtns.forEach(b => b.addEventListener("click", () => setSort(b.dataset.key)));
+
+  /* first paint: rendered sorted Year ↓, cascading in when scrolled to.
+     The rows aren't in the initial reveal sweep (they're script-made), so
+     observe the table body wholesale and cascade on first sight. */
+  render(false);
+  const rows = [...tbody.children];
+  rows.forEach(r => r.classList.add("reveal"));
+  const tableObserver = new IntersectionObserver((entries, obs) => {
+    if (!entries.some(e => e.isIntersecting)) return;
+    rows.forEach((row, i) => {
+      row.style.setProperty("--d", (i * 40) + "ms");
+      row.classList.add("in");
+    });
+    obs.disconnect();
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
+  tableObserver.observe(tbody);
+})();
+</script>
+</body>
+</html>

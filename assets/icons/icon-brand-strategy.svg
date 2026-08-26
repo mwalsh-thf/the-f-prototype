@@ -1,0 +1,20 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Vector">
+<path d="M25 25V0L0 25H25Z" fill="#1F1F1F"/>
+<path d="M75 75V50L50 75H75Z" fill="#1F1F1F"/>
+<path d="M75 25V0L50 25H75Z" fill="#1F1F1F"/>
+<path d="M25 75V50L0 75H25Z" fill="#1F1F1F"/>
+<path d="M25 25V50L0 25H25Z" fill="#1F1F1F"/>
+<path d="M75 75V100L50 75H75Z" fill="#1F1F1F"/>
+<path d="M75 25V50L50 25H75Z" fill="#1F1F1F"/>
+<path d="M25 75V100L0 75H25Z" fill="#1F1F1F"/>
+<path d="M25 25V0L50 25H25Z" fill="#1F1F1F"/>
+<path d="M75 75V50L100 75H75Z" fill="#1F1F1F"/>
+<path d="M75 25V0L100 25H75Z" fill="#1F1F1F"/>
+<path d="M25 75V50L50 75H25Z" fill="#1F1F1F"/>
+<path d="M25 25V50L50 25H25Z" fill="#1F1F1F"/>
+<path d="M75 75V100L100 75H75Z" fill="#1F1F1F"/>
+<path d="M75 25V50L100 25H75Z" fill="#1F1F1F"/>
+<path d="M25 75V100L50 75H25Z" fill="#1F1F1F"/>
+</g>
+</svg>

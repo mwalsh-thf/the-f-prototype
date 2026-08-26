@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Union">
+<path d="M50 100H25V75H50V100Z" fill="#1F1F1F"/>
+<path d="M100 100H50L100 50V100Z" fill="#1F1F1F"/>
+<path d="M50 25H25V75H0V0H50V25Z" fill="#1F1F1F"/>
+<path d="M100 0V50L50 0H100Z" fill="#1F1F1F"/>
+</g>
+</svg>

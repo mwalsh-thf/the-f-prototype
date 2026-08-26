@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Prompt: Are your brand guidelines ready to deliver behaviour? — The Frameworks</title>
+<meta name="description" content="Sandra Peat spent 18 months researching how brands create meaning through behaviour. She tells us that most B2B companies are designing for a world that no longer exists." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* ==================================================================== *
+   * The Frameworks — article page
+   *
+   * Figma: "The F website 2026", frame 2789:487 ("Article 3")
+   * https://www.figma.com/design/8Iz2K9VMKdGd09eOTRl3cQ/The-F-website-2026?node-id=2789-487
+   *
+   * Same rules as index.html: one file, no build, no dependencies. The nav,
+   * footer, tokens and reveal behaviour are lifted from index.html deliberately
+   * — if one of them changes there it should change here too.
+   * ==================================================================== */
+  :root{
+    /* --- Figma tokens (shared with index.html) --- */
+    --black:#272727;
+    --mid-grey:#8F8F8F;
+    --f-red:#F45944;
+    --bg:#F8F8F8;             /* Off-white */
+    --ink-footer:#1F1F1F;     /* Off Black */
+
+    /* --- Figma tokens (this frame) ---
+       The article frame sets its body ink at #373636 rather than the
+       homepage's #272727. Kept as its own token rather than snapped to
+       --black, because it's what frame 2789:487 actually specifies. */
+    --ink-body:#373636;
+    --label:#8F8F8F;          /* "Author" / "Published" / section labels */
+
+    /* --- layout (shared with index.html) --- */
+    --nav-h:clamp(90px,17vh,140px);
+
+    /* --- article layout ---
+       The page is capped and centred, and the grid is two equal halves of it.
+       The cover fills the right half outright — from the centre line to the
+       page's right edge, with no margin of its own. That's why .article has no
+       horizontal padding any more: padding on the container would hold the
+       cover off the edge, so the left half carries its own inset instead and
+       the right half is left clean to bleed into.
+
+       Two different behaviours, deliberately:
+
+       **The page inset is a fixed 100px**, Figma's own, held on every element
+       the page sizes — nav, article and footer alike, so they all line up on
+       one margin. It does not scale with the page; it only gives way on small
+       screens, where 100px either side would leave nothing in the middle.
+
+       **The columns inside are percentages of that content area**, so they
+       scale with whatever is left over. At 1440 they resolve to Figma's exact
+       numbers: a 1240 content area split 499 / 133 / 608.
+
+       Nothing here bleeds to the page edge any more — frame 2789:434 ends the
+       cover on the right content margin, not the frame edge, so the 100px
+       holds on both sides for everything. */
+    --page-max:1900px;
+    --pad-x:100px;         /* Figma's page inset, both sides */
+    --col-text:40.24%;     /* 499 of 1240 */
+    --col-gap:10.73%;      /* 133 of 1240 */
+    --col-cover:49.03%;    /* 608 of 1240 */
+    /* The gap the cover holds against the top of the viewport once it pins.
+       Measured from the top of the viewport: the nav scrolls away with the
+       page, so there's nothing up there to clear. Note this is not the 50px
+       of padding Figma puts above the image — that only sets where the cover
+       *starts*; this is where it comes to rest. */
+    --cover-stick:100px;
+    /* air kept below the pinned cover, so it never runs to the exact bottom
+       edge of the window — also the slack the height cap above works to */
+    --cover-foot:40px;
+
+    /* --- type ---
+       Letter-spacing is expressed in em because Figma's values are all -2%
+       (and +7% on the mono). In em they stay correct as the clamped sizes
+       resolve; in px they'd only be right at 1440. */
+    --fs-h2:clamp(34px,4.17vw,60px);   /* Desktop/H2  — 60px at 1440 */
+    --fs-h4:clamp(21px,1.875vw,27px);  /* Desktop/H4  — 27px at 1440 */
+    --fs-h5:20px;                      /* Desktop/H5 */
+    --fs-body:18px;                    /* Desktop/Body */
+    --fs-details:15px;                 /* Details */
+
+    /* --- motion --- */
+    --ease-out-expo:cubic-bezier(.16,1,.3,1);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  /* The ground has to live on html, not body: body is the capped page now, so
+     a background there would stop at 1800 and leave bare canvas either side. */
+  html{ scrollbar-gutter:stable; background:var(--bg); }
+  body{
+    max-width:var(--page-max); margin-inline:auto;
+    background:var(--bg);
+    color:var(--ink-body);
+    font-family:"Geist","Geist Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  img{ display:block; max-width:100%; }
+
+  /* ------------------------------------------------------------------ *
+   * Nav — same component as index.html
+   *
+   * The mark is the same ten triangles, but parked on the F keyframe and
+   * baked into the markup: there's no scroll experience on this page, so
+   * there's nothing for it to morph to. The transforms come straight from
+   * index.html's THEF array (translate col*100, row*100 → rotate about the
+   * cell centre), so the two pages can't drift apart.
+   * ------------------------------------------------------------------ */
+  /* Ordinary page content, not a fixed overlay — which is how the frame draws
+     it, a flex row at the top of the column rather than a bar over it. So it
+     scrolls away with the article and is only there when you're at the top.
+     index.html's nav is fixed because it has to outlive the scene beneath it;
+     this one has nothing to outlive, and a bar riding over a pinned cover
+     fights it. Nothing passes underneath it, so it needs no background and no
+     script. */
+  .nav{
+    height:var(--nav-h);
+    display:flex; align-items:center; justify-content:space-between;
+    /* On the 100px margin with everything else. It was flush to the page edge
+       while the cover bled past it; the cover doesn't bleed any more, so the
+       nav comes back to the shared margin — which is where 2789:434 draws it.
+       The logo's negative margin is what lands the F's own left edge on that
+       line rather than its (wider) box. */
+    padding:0 var(--pad-x);
+  }
+  .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
+  .logo-mark{width:100%;height:100%;display:block;overflow:visible}
+  .logo-mark polygon{
+    fill:var(--ink-footer);
+    /* same seam treatment as index.html — a 1px non-scaling stroke in the
+       fill colour, so neighbouring triangles overlap by a screen pixel and
+       leave no light line between them */
+    stroke:var(--ink-footer);
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;
+  }
+  .nav-menu{
+    display:none;                      /* desktop uses the text links instead */
+    background:none; border:0; padding:0; margin:0;
+    width:27px; height:27px; cursor:pointer; flex:none;
+  }
+  .nav-menu svg{ display:block; width:100%; height:100%; }
+  .nav-menu path{ fill:var(--ink-footer); }
+  .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
+  .nav-links{display:flex; align-items:center; gap:30px}
+  .nav-links a{
+    font-size:14px; line-height:17px; letter-spacing:.01em;
+    color:var(--mid-grey); text-decoration:none; white-space:nowrap;
+    transition:color .35s ease;
+  }
+  .nav-links a:hover{color:var(--black)}
+
+  /* ------------------------------------------------------------------ *
+   * Article shell
+   * ------------------------------------------------------------------ */
+  .article{
+    padding:50px var(--pad-x) 30px;
+  }
+  .article-grid{
+    display:grid;
+    grid-template-columns:var(--col-text) var(--col-cover);
+    column-gap:var(--col-gap);
+    /* the cover spans both rows and pins; nothing should be stretched to
+       match anything else's height */
+    align-items:start;
+  }
+  .article-head, .article-body{ grid-column:1; }
+  .article-head{ grid-row:1; }
+  .article-body{
+    grid-row:2;
+    /* Figma: 50px of bottom padding on the hero section + 30px of top
+       padding on the first body section */
+    margin-top:80px;
+  }
+
+  /* ---- the sticky cover ---- */
+  .article-cover{
+    grid-column:2; grid-row:1 / span 2;
+    position:sticky; top:var(--cover-stick);
+    align-self:start;
+  }
+  /* The cover takes its aspect ratio from the image itself — nothing here
+     imposes one. The width/height attributes on the <img> reserve the right
+     box before it loads, so swapping in a different ratio is a one-line markup
+     change and the layout follows. (It used to hard-code 1:1, which silently
+     centre-cropped anything that wasn't square.)
+
+     Two constraints, and the image is scaled to satisfy both with its ratio
+     intact: it never exceeds the column, and — because a pinned element is
+     anchored by its top — it never exceeds the height that will actually fit
+     on screen. Without the second one, a portrait cover taller than the
+     viewport has a bottom edge you can never scroll to. */
+  /* Scales, never crops. Two ceilings — the width of the half, and the height
+     that will actually fit on screen — and the image is sized to satisfy both
+     with its ratio intact. It fills the half whenever the window is tall
+     enough to allow it; when it isn't, the whole image gets smaller rather
+     than losing its edges, and stays anchored to the page's right edge so the
+     air opens up on the centre side. Cropping to hold the fill was the earlier
+     behaviour and it read as the image refusing to scale. */
+  .article-cover img{
+    /* width:100% so it grows to fill the half — `auto` would only ever let it
+       shrink from its natural size and it would never reach the edges.
+       max-height then caps the box on a short window, and object-fit:contain
+       scales the picture down inside that box with its ratio intact, anchored
+       right so the air opens up on the centre side and the page edge stays
+       met. Under the cap the box is exactly the image's shape and contain does
+       nothing. */
+    width:100%; height:auto;
+    max-height:calc(100dvh - var(--cover-stick) - var(--cover-foot));
+    object-fit:contain; object-position:right center;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Type
+   * ------------------------------------------------------------------ */
+  /* Desktop/H2 — Geist Light 60/1.15, -2%.
+     text-box trims the half-leading so the cap sits on the box edge, which
+     is what makes the headline's top line up with the cover's. Progressive:
+     browsers without it just render with normal leading. */
+  .article-title{
+    font-weight:300;
+    font-size:var(--fs-h2); line-height:1.15; letter-spacing:-.02em;
+    color:var(--ink-body);
+  }
+  @supports (text-box: trim-both cap alphabetic){
+    .article-title{ text-box:trim-both cap alphabetic; }
+  }
+
+  /* ---- Author / Published / Category ---- */
+  /* 2789:434 puts Author and Published side by side and drops Category onto
+     its own row beneath them. A two-column grid rather than a nested row, so
+     the three groups stay direct children of the <dl> — dl > div > dt/dd is
+     the valid nesting, and dl > div > div > dt is not. */
+  .article-meta{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:42px;
+    margin-top:58px;
+  }
+  .article-meta > div{ display:flex; flex-direction:column; gap:16px; }
+  .article-meta > div:nth-child(3){ grid-column:1 / -1; }
+  .article-meta dt{                       /* Details — 15/1.2, -2% */
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    color:var(--label);
+  }
+  .article-meta dd{                       /* Desktop/H5 — 20/1.2, -2% */
+    font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink-body);
+  }
+
+  /* Desktop/H4 — Geist Light 27/1.15, -2%. The standfirst. */
+  .article-standfirst{
+    font-weight:300;
+    font-size:var(--fs-h4); line-height:1.15; letter-spacing:-.02em;
+    color:var(--ink-body);
+  }
+
+  /* ---- prose ---- */
+  /* Desktop/Body — 18/1.2, -2%. The 1.2 is Figma's; it's tight for running
+     copy, and it's the first thing to revisit if this reads dense on the
+     page. Paragraph spacing is a full blank line (1.2em), which is how the
+     Figma text frames space theirs. */
+  .prose{
+    font-size:var(--fs-body); line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink-body);
+  }
+  .prose p + p{ margin-top:1.2em; }
+  /* Figma hangs the opening quote mark into the margin (indent -0.45em) so
+     the first letter of a quoted paragraph stays on the same optical line as
+     the paragraphs above it. */
+  .prose p.quote{ text-indent:-.45em; }
+
+  .article-standfirst + .prose{ margin-top:40px; }
+
+  /* ---- body sections ---- */
+  .article-section{
+    /* Figma: 30px bottom padding + 30px top padding between sections */
+    margin-top:60px;
+  }
+  .article-section h2{                    /* Details, grey — the section label */
+    font-size:var(--fs-details); font-weight:400; line-height:1.2;
+    letter-spacing:-.02em; color:var(--label);
+    margin-bottom:40px;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Load-in
+   *
+   * The masthead is the one part of the page that's on screen before any
+   * scrolling happens, so it can't rely on the IntersectionObserver below —
+   * it plays on load instead, straight from CSS.
+   *
+   * The whole thing lives inside `prefers-reduced-motion: no-preference`
+   * rather than being switched off by a later override. That's deliberate:
+   * the hidden start state is written only in the keyframes' `from`, so a
+   * reader who doesn't want motion never has a rule that hides anything in
+   * the first place — there's nothing to fail to un-hide. `backwards` holds
+   * that start state through the delay, so nothing flashes in and then out.
+   *
+   * Order reads headline -> artwork -> details, which is the order you'd want
+   * someone to take the page in. Everything is on one easing so it arrives as
+   * a single gesture rather than four separate ones.
+   * ------------------------------------------------------------------ */
+  @media (prefers-reduced-motion: no-preference){
+    .article-title{
+      animation:rise-in .9s var(--ease-out-expo) backwards;
+    }
+    /* The cover leads with a bottom-up wipe rather than a fade — it's the one
+       element big enough to carry it, and a wipe keeps the artwork crisp where
+       a scale would soften it mid-flight. */
+    .article-cover img{
+      animation:cover-in 1.1s var(--ease-out-expo) .12s backwards;
+    }
+    /* Author / Published / Category, one after the other. */
+    .article-meta > div{
+      animation:rise-in .8s var(--ease-out-expo) backwards;
+    }
+    .article-meta > div:nth-child(1){ animation-delay:.20s }
+    .article-meta > div:nth-child(2){ animation-delay:.28s }
+    .article-meta > div:nth-child(3){ animation-delay:.36s }
+  }
+  /* Which mechanism the cover uses depends on whether it's reliably on screen
+     at load, and that changes with the layout. Side by side it always is, so
+     it plays the load-in — and must not also be held back by the scroll reveal
+     it carries for the stacked case. Stacked, it sits around 540px down, which
+     is in view on most phones but not on a short one, so the observer takes
+     over: it fires immediately when the cover is visible and on scroll when it
+     isn't, which a load-in can't do. Exactly one of the two is ever live. */
+  @media (min-width:900px){
+    .js .article-cover.reveal{ opacity:1; transform:none; transition:none; }
+  }
+  @media (max-width:899px){
+    .article-cover img{ animation:none; }
+  }
+
+  @keyframes rise-in{
+    from{ opacity:0; transform:translateY(22px); }
+  }
+  /* Both endpoints have to be written out, and both have to be inset(): an
+     implicit `to` resolves to the element's base clip-path of `none`, and
+     inset() -> none isn't interpolatable, so it jumps at the halfway mark
+     instead of wiping. */
+  @keyframes cover-in{
+    from{ opacity:0; transform:translateY(20px); clip-path:inset(100% 0 0 0); }
+    to  { opacity:1; transform:none;             clip-path:inset(0 0 0 0); }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Reveal — same one-shot lift as index.html's work cards
+   * ------------------------------------------------------------------ */
+  /* Scoped to .js — set by the script below — so the whole article body isn't
+     hidden behind a script that might not run. Without the guard, a blocked or
+     broken script leaves the page blank; unlike the homepage's work cards,
+     what's behind .reveal here is the entire piece. */
+  .js .reveal{
+    opacity:0; transform:translateY(28px);
+    transition:opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+  }
+  .js .reveal.in{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .js .reveal{ opacity:1; transform:none; transition:none }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Footer — same component and same markup as index.html
+   * ------------------------------------------------------------------ */
+  .footer{
+    display:flex; gap:30px; align-items:flex-start;
+    padding:clamp(40px,7vh,100px) var(--pad-x) clamp(50px,8vh,110px);
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.6px; color:var(--ink-footer);
+  }
+  .footer > div{flex:1 1 0; min-width:0}
+  .footer a{ color:var(--mid-grey); text-decoration:none; }
+  .footer a:hover{ color:var(--f-red); }
+  .footer .links a{ margin-right:14px; }
+
+  /* ================================================================== *
+   * Tablet — the two columns survive, the reading column takes the slack
+   *
+   * Below about 1100 the Figma split leaves the text column too narrow to
+   * read comfortably, so it borrows from the gutter. The cover still pins.
+   * ================================================================== */
+  /* ================================================================== *
+   * Stacked — one column
+   *
+   * Deliberately at 900, not at the 767 the nav switches on: how narrow a
+   * reading column can get and when the nav should collapse are two
+   * different questions. Below this the cover stops pinning and becomes a
+   * normal block between the header and the body, which is where it reads.
+   * ================================================================== */
+  @media (max-width:899px){
+    /* One column, so the two grid tracks collapse; --pad-x carries on holding
+       the margin exactly as it does on the wide layout. */
+    .article-grid{ display:block; }
+
+    .article-body{ margin-top:0; }
+    .article-cover{
+      position:static;
+      margin:clamp(40px,7vw,64px) 0;
+    }
+    /* Stacked, the binding constraint changes: nothing is pinned, so height no
+       longer has to fit the viewport — but a portrait cover at full column
+       width can still swallow a whole screen and more. Capped at 80% of the
+       viewport instead, and left on the margin. */
+    .article-cover img{
+      max-height:80dvh;
+      /* stacked, it aligns with the copy rather than the page's right edge */
+      object-position:left center;
+    }
+  }
+
+  /* ================================================================== *
+   * Mobile — same breakpoint and the same nav as index.html
+   * ================================================================== */
+  @media (max-width:767px){
+    :root{
+      --nav-h:clamp(72px,11vh,92px);
+      --pad-x:clamp(16px,5.5vw,24px);
+      --fs-h5:18px;
+      --fs-body:16px;
+      --fs-details:13px;
+    }
+    /* Figma's mobile nav: a 20x40 F against the 27x27 menu mark. The box is
+       wider than the F because on the homepage it has to hold the morphed
+       states — the F fills the box's height and half its width, so a 40px
+       box renders the mark at exactly 20x40. The negative margin (a quarter
+       of the box) keeps its left edge on the page margin. */
+    .logo{ width:40px; height:40px; margin-left:-10px; }
+    .nav-menu{ display:block; }
+    .nav-links{ display:none; }
+
+    .article{ padding-top:32px; }
+    .article-meta{ gap:28px 20px; margin-top:36px; }
+    .article-meta > div{ gap:10px; }
+    .article-standfirst + .prose{ margin-top:28px; }
+    .article-section{ margin-top:44px; }
+    .article-section h2{ margin-bottom:24px; }
+
+    .footer{ flex-wrap:wrap; row-gap:24px; }
+    .footer > div{ flex:1 1 45%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="logo" href="index.html" aria-label="The Frameworks — home">
+    <!-- The ten triangles of index.html's mark, parked on the F keyframe.
+         viewBox spans the union of every state (x 0→800) and of the F
+         (y -100→700); at 40x40 the F lands at exactly 20x40. Transforms are
+         index.html's THEF entries at STEP=100. -->
+    <svg class="logo-mark" viewBox="0 -100 800 800" aria-hidden="true">
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(180 100 100)"></polygon>
+    </svg>
+  </a>
+  <nav class="nav-links">
+    <a href="work.html">Work</a>
+    <a href="services.html">Services</a>
+    <a href="about.html">About</a>
+    <!-- this article lives in the Thinking section -->
+    <a href="thinking.html" aria-current="page">Thinking</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <!-- mobile only: Figma's 2x2 mark, four 9px squares in a 27px box.
+       Inert, exactly as on the homepage — no menu is wired up yet. -->
+  <button class="nav-menu" type="button" aria-label="Open menu">
+    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
+      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
+    </svg>
+  </button>
+</header>
+
+<main>
+  <article class="article">
+    <div class="article-grid">
+
+      <header class="article-head">
+        <h1 class="article-title">The&nbsp;Prompt:<br>Are your brand guidelines ready to deliver behaviour?</h1>
+        <dl class="article-meta">
+          <div>
+            <dt>Author</dt>
+            <dd>Don Hoyt Gorman</dd>
+          </div>
+          <div>
+            <dt>Published</dt>
+            <dd><time datetime="2026-05-11">11/05/26</time></dd>
+          </div>
+          <div>
+            <dt>Category</dt>
+            <dd>Culture</dd>
+          </div>
+        </dl>
+      </header>
+
+      <figure class="article-cover reveal">
+        <!-- The cover from the Figma frame. The cover box takes its ratio
+             from whatever is here, so swapping shape is just these three
+             values — assets/article-cover-4x5.jpg (1080x1350) is the 4:5 test
+             asset if it's wanted again. -->
+        <img src="assets/article-prompt-cover.png" width="605" height="605"
+             alt="The Prompt — challenging conversations about AI." />
+      </figure>
+
+      <div class="article-body">
+
+        <p class="article-standfirst reveal">Sandra Peat spent 18 months researching how brands create meaning through behaviour. She tells us that most B2B companies are designing for a world that no longer exists.</p>
+
+        <div class="prose reveal">
+          <p>All our current clients are trying to figure out how AI fits into their brand. Some are adding chatbots. Others use generative tools to quickly create campaign materials. A few have hired heads of AI and transformation and are working out what this means for their customer experience.</p>
+          <p>At The Frameworks, we’re asking ourselves the question: when an AI interacts with your customers, how does it behave – and how does that reflect on you?</p>
+          <p>It’s the question that led me to Sandra Peat.</p>
+          <p>Peat is a brand strategist with impressive experience. She led brand at Red Bull, was a strategy partner at JKR, and is now working on a PhD about “brand behaviour”: the repeated actions of an organisation, including what it says, how it says it, and what it does.</p>
+          <p>She started her PhD because, when she looked for academic research on how brands build meaning through their actions over time, she found nothing. The idea just wasn’t in the literature.</p>
+          <p class="quote">“I kept seeing it in industry,” she tells me. “The actions that brands take – what they do – carry important meaning. But we spend so much time focused on communications, and particularly advertising. I started looking at academic research and realised it didn’t exist.”</p>
+          <p>Peat’s work is especially relevant now. The question of how brands behave has become much more complex, since the people shaping brand meaning are no longer just human.</p>
+        </div>
+
+        <section class="article-section reveal" id="section-1">
+          <h2>The thousand interactions problem</h2>
+          <div class="prose">
+            <p>Peat points to Michael Eisner’s idea that the Disney experience is shaped by a thousand small interactions, each adding or taking away meaning. That’s been true for years. What’s changed is the speed and scale, and the fact that more of these interactions are now handled by machines that haven’t been taught the brand’s behavioural expectations.</p>
+            <p class="quote">“We’re living in a world where the entities creating brand meaning are both human and non-human,” Peat says. “That process of iteration and meaning generation is almost out of our hands. It’s not about what the AI did. It’s about what behaviours we’ve trained into this AI so that it creates the meaning we wanted to create.”</p>
+            <p>This is the gap between the usual way we build brands and what’s needed now with AI. Our traditional brand strategy tools – like tone of voice, content strategy, visual style – are all about controlling what gets said. They’re great for that. But, as Peat points out, they were never meant to guide how a brand actually behaves.</p>
+            <p class="quote">“They guide a quite narrow part of what I would consider the experience that delivers meaning,” she says. “They don’t control brand actions. They don’t address inconsistency. They don’t tell you how to make decisions under pressure.”</p>
+            <p>For those of us who have built brand platforms and content strategies, this is a tough truth. She’s right. We write the words, build the frameworks, and make recommendations around how the brand should appear. But when a chatbot handles a frustrated customer late at night, or an AI agent creates social content, the tone-of-voice guide only goes so far in shaping the customer’s experience.</p>
+          </div>
+        </section>
+
+        <!-- ⚠️ Placeholder. Frame 2789:487 repeats the section above verbatim
+             — same label, same five paragraphs — to show the page's rhythm at
+             length. Reproduced as designed; swap in the real copy when it
+             exists. -->
+        <section class="article-section reveal" id="section-2">
+          <h2>The thousand interactions problem</h2>
+          <div class="prose">
+            <p>Peat points to Michael Eisner’s idea that the Disney experience is shaped by a thousand small interactions, each adding or taking away meaning. That’s been true for years. What’s changed is the speed and scale, and the fact that more of these interactions are now handled by machines that haven’t been taught the brand’s behavioural expectations.</p>
+            <p class="quote">“We’re living in a world where the entities creating brand meaning are both human and non-human,” Peat says. “That process of iteration and meaning generation is almost out of our hands. It’s not about what the AI did. It’s about what behaviours we’ve trained into this AI so that it creates the meaning we wanted to create.”</p>
+            <p>This is the gap between the usual way we build brands and what’s needed now with AI. Our traditional brand strategy tools – like tone of voice, content strategy, visual style – are all about controlling what gets said. They’re great for that. But, as Peat points out, they were never meant to guide how a brand actually behaves.</p>
+            <p class="quote">“They guide a quite narrow part of what I would consider the experience that delivers meaning,” she says. “They don’t control brand actions. They don’t address inconsistency. They don’t tell you how to make decisions under pressure.”</p>
+            <p>For those of us who have built brand platforms and content strategies, this is a tough truth. She’s right. We write the words, build the frameworks, and make recommendations around how the brand should appear. But when a chatbot handles a frustrated customer late at night, or an AI agent creates social content, the tone-of-voice guide only goes so far in shaping the customer’s experience.</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </article>
+
+  <footer class="footer">
+    <div>
+      <p>© The Frameworks Ltd</p><p>&nbsp;</p>
+      <p>1989–2026</p>
+      <p class="links"><a href="#">FAQs</a><a href="#">Legal</a><a href="#">Cookies</a></p>
+    </div>
+    <div><p>We own it</p><p>&nbsp;</p><p>Proudly employee-owned<br>since 2024</p></div>
+    <div><p>Office</p><p>&nbsp;</p><p>7th Floor, Fora Building<br>21-33 Great Eastern Street<br>London EC2A 3EJ</p></div>
+    <div><p>Contact</p><p>&nbsp;</p><p><a href="mailto:hello@theframeworks.com">hello@theframeworks.com</a><br><a href="#">LinkedIn</a></p></div>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* Opt the reveal styles in only now that the script is definitely running.
+     Set before first paint (the script is at the end of the body), so nothing
+     flashes in and then hides. */
+  document.documentElement.classList.add("js");
+
+  /* Blocks lift in as they arrive — the same one-shot observer the work cards
+     use on the homepage. No stagger here: these are a single column, so they
+     already arrive one at a time. */
+  const revealObserver = new IntersectionObserver((entries, obs) => {
+    for (const entry of entries){
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add("in");
+      obs.unobserve(entry.target);
+    }
+  }, { rootMargin: "0px 0px -12% 0px", threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+})();
+</script>
+</body>
+</html>

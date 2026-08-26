@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Frame of Mind — The Frameworks</title>
+<meta name="description" content="The latest thinking from our insatiably curious Frameworkers." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* ==================================================================== *
+   * The Frameworks — Thinking / Frame of Mind
+   *
+   * Figma: "The F website 2026", page "Claude Full-site", frame 2896:12136
+   * https://www.figma.com/design/8Iz2K9VMKdGd09eOTRl3cQ/The-F-website-2026?node-id=2896-12136
+   *
+   * The dark page — ground is Off Black, ink is white. One file, no build.
+   * Nav and footer are the shared components re-inked for the dark ground.
+   *
+   * ⚠️ Blog cover art is placeholder until the imagery zip arrives — the
+   * slots are .card-media, each carrying the frame's own aspect ratio
+   * (tall / mid / landscape).
+   * ==================================================================== */
+  :root{
+    --black:#272727;
+    --mid-grey:#8F8F8F;
+    --f-red:#F45944;
+    --bg:#1F1F1F;             /* Off Black, as ground */
+    --ink:#FFFFFF;
+    --ph:#2E2E2E;             /* placeholders one step up from the ground */
+
+    --nav-h:clamp(90px,17vh,140px);
+    --page-max:1900px;
+    --pad-x:100px;
+
+    --fs-h2:clamp(34px,4.17vw,60px);
+    --fs-body:18px;
+    --fs-details:15px;
+
+    --ease-out-expo:cubic-bezier(.16,1,.3,1);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{ scrollbar-gutter:stable; background:var(--bg); }
+  body{
+    max-width:var(--page-max); margin-inline:auto;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Geist","Geist Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  img{ display:block; max-width:100%; }
+
+  /* ------------------------------------------------------------------ *
+   * Nav — shared component, re-inked white for the dark ground
+   * ------------------------------------------------------------------ */
+  .nav{
+    height:var(--nav-h);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 var(--pad-x);
+  }
+  .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
+  .logo-mark{width:100%;height:100%;display:block;overflow:visible}
+  .logo-mark polygon{
+    fill:var(--ink);
+    stroke:var(--ink);
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;
+  }
+  .nav-menu{
+    display:none;
+    background:none; border:0; padding:0; margin:0;
+    width:27px; height:27px; cursor:pointer; flex:none;
+  }
+  .nav-menu svg{ display:block; width:100%; height:100%; }
+  .nav-menu path{ fill:var(--ink); }
+  .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
+  .nav-links{display:flex; align-items:center; gap:30px}
+  .nav-links a{
+    font-size:14px; line-height:17px; letter-spacing:.01em;
+    color:var(--mid-grey); text-decoration:none; white-space:nowrap;
+    transition:color .35s ease;
+  }
+  .nav-links a:hover{color:var(--ink)}
+
+  /* ------------------------------------------------------------------ *
+   * Page head
+   * ------------------------------------------------------------------ */
+  .page-head{
+    display:grid; grid-template-columns:repeat(4,1fr); column-gap:30px;
+    align-items:start;
+    padding:100px var(--pad-x) 60px;
+  }
+  .page-head h1{
+    grid-column:1 / span 2;
+    font-weight:300;
+    font-size:var(--fs-h2); line-height:1.15; letter-spacing:-.02em;
+  }
+  @supports (text-box: trim-both cap alphabetic){
+    .page-head h1{ text-box:trim-both cap alphabetic; }
+  }
+  .page-head .intro{
+    grid-column:4;
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Filters + cards
+   * ------------------------------------------------------------------ */
+  .posts{ padding:80px var(--pad-x); }
+  .filters{ display:flex; gap:40px; flex-wrap:wrap; }
+  .filters button{
+    background:none; border:0; padding:0; cursor:pointer;
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.07em;
+    color:var(--mid-grey);
+    transition:color .3s ease;
+  }
+  .filters button:hover{ color:var(--ink); }
+  .filters button[aria-pressed="true"]{ color:var(--ink); }
+  .filters button:focus-visible{ outline:1px solid var(--f-red); outline-offset:4px }
+
+  .post-grid{
+    display:grid; grid-template-columns:repeat(4,1fr);
+    column-gap:30px; row-gap:58px;
+    margin-top:30px;
+    align-items:start;    /* cards hold their own height — the collage look */
+  }
+  .card{
+    display:flex; flex-direction:column; gap:20px;
+    text-decoration:none; color:inherit;
+  }
+  .card[hidden]{ display:none; }
+  .card-media{
+    width:100%;
+    background:var(--ph);
+    border-radius:1px;
+    overflow:hidden; position:relative;
+  }
+  .card.tall .card-media{ aspect-ratio:344.75/431; }
+  .card.mid  .card-media{ aspect-ratio:344.75/287; }
+  .card.land .card-media{ aspect-ratio:344.75/191; }
+  .card-face{
+    position:absolute; inset:0; background:var(--ph);
+    transition:transform .6s var(--ease-out-expo);
+  }
+  .card:hover .card-face{ transform:scale(1.04); }
+  .card h2{
+    font-weight:400;
+    font-size:var(--fs-body); line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink);
+  }
+  .card .excerpt{
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    color:var(--mid-grey);
+  }
+  .card .byline{
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.07em;
+    color:var(--ink);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Fancy a challenge
+   * ------------------------------------------------------------------ */
+  .challenge{ padding:100px var(--pad-x); }
+  .challenge p{
+    font-weight:300;
+    font-size:var(--fs-h2); line-height:1.15; letter-spacing:-.02em;
+    color:var(--ink);
+  }
+  .challenge a{
+    color:var(--f-red); text-decoration:none;
+    display:inline-flex; align-items:center; gap:.08em;
+  }
+  .challenge .arrow{
+    width:.72em; height:.72em; stroke:currentColor; fill:none;
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;
+    transition:transform .35s var(--ease-out-expo);
+  }
+  .challenge a:hover .arrow{ transform:translate(.1em,-.1em); }
+
+  /* ------------------------------------------------------------------ *
+   * Motion — load-in, reveal cascade, filter choreography
+   * ------------------------------------------------------------------ */
+  @media (prefers-reduced-motion: no-preference){
+    .page-head h1{ animation:rise-in .9s var(--ease-out-expo) backwards; }
+    .page-head .intro{ animation:rise-in .8s var(--ease-out-expo) .15s backwards; }
+    .filters{ animation:rise-in .8s var(--ease-out-expo) .25s backwards; }
+  }
+  @keyframes rise-in{
+    from{ opacity:0; transform:translateY(22px); }
+  }
+  .js .reveal{
+    opacity:0; transform:translateY(28px);
+    transition:opacity .7s var(--ease-out-expo), transform .7s var(--ease-out-expo);
+  }
+  .js .reveal.in{ opacity:1; transform:none; }
+  .js .card.step-out{
+    opacity:0; transform:translateY(14px);
+    transition:opacity .26s ease, transform .26s ease;
+  }
+  .js .card.step-in{ opacity:0; transform:translateY(24px); }
+  .js .card.step-in.landed{
+    opacity:1; transform:none;
+    transition:opacity .55s var(--ease-out-expo), transform .55s var(--ease-out-expo);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .js .reveal{ opacity:1; transform:none; transition:none }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Footer — shared component, dark ink.
+   * (The frame paints "1989–2026" in Off Black on the Off Black ground,
+   * which reads as nothing — kept white here; flag if deliberate.)
+   * ------------------------------------------------------------------ */
+  .footer{
+    display:flex; gap:30px; align-items:flex-start;
+    padding:clamp(40px,7vh,100px) var(--pad-x) clamp(50px,8vh,110px);
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.6px; color:var(--ink);
+  }
+  .footer > div{flex:1 1 0; min-width:0}
+  .footer a{ color:var(--mid-grey); text-decoration:none; }
+  .footer a:hover{ color:var(--f-red); }
+  .footer .links a{ margin-right:14px; }
+
+  /* ================================================================== *
+   * Tablet
+   * ================================================================== */
+  @media (max-width:1100px){
+    .post-grid{ grid-template-columns:repeat(2,1fr); }
+    .page-head h1{ grid-column:1 / span 2; }
+    .page-head .intro{ grid-column:2 / span 3; grid-row:2; margin-top:28px; }
+  }
+
+  /* ================================================================== *
+   * Mobile
+   * ================================================================== */
+  @media (max-width:767px){
+    :root{
+      --nav-h:clamp(72px,11vh,92px);
+      --pad-x:clamp(16px,5.5vw,24px);
+      --fs-body:16px;
+      --fs-details:13px;
+    }
+    .logo{ width:40px; height:40px; margin-left:-10px; }
+    .nav-menu{ display:block; }
+    .nav-links{ display:none; }
+
+    .page-head{ display:block; padding-top:32px; padding-bottom:40px; }
+    .page-head .intro{ margin-top:24px; max-width:340px; }
+    .posts{ padding-top:44px; padding-bottom:44px; }
+    .filters{ gap:14px 24px; }
+    .post-grid{ grid-template-columns:1fr; row-gap:44px; margin-top:24px; }
+    .challenge{ padding:56px var(--pad-x); }
+
+    .footer{ flex-wrap:wrap; row-gap:24px; }
+    .footer > div{ flex:1 1 45%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="logo" href="index.html" aria-label="The Frameworks — home">
+    <svg class="logo-mark" viewBox="0 -100 800 800" aria-hidden="true">
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(180 100 100)"></polygon>
+    </svg>
+  </a>
+  <nav class="nav-links">
+    <a href="work.html">Work</a>
+    <a href="services.html">Services</a>
+    <a href="about.html">About</a>
+    <a href="thinking.html" aria-current="page">Thinking</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <button class="nav-menu" type="button" aria-label="Open menu">
+    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
+      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
+    </svg>
+  </button>
+</header>
+
+<main>
+  <section class="page-head">
+    <h1>Frame of Mind</h1>
+    <p class="intro">The latest thinking from our insatiably curious Frameworkers.</p>
+  </section>
+
+  <section class="posts" aria-label="Articles">
+    <div class="filters" role="group" aria-label="Filter articles">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="ai" aria-pressed="false">AI</button>
+      <button type="button" data-filter="business" aria-pressed="false">Business</button>
+      <button type="button" data-filter="creative" aria-pressed="false">Creative</button>
+      <button type="button" data-filter="culture" aria-pressed="false">Culture</button>
+      <button type="button" data-filter="strategy" aria-pressed="false">Strategy</button>
+    </div>
+
+    <!-- ⚠️ Covers are placeholder until the imagery zip arrives; each card
+         keeps the frame's own aspect (tall/mid/land). Categories come from
+         the bylines; "Creative" has no members in the frame yet, so that
+         filter deals a random hand — see the script. -->
+    <div class="post-grid" id="postGrid">
+      <a class="card tall reveal" href="#" data-cat="culture">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>I am challenging: Janelle</h2>
+        <p class="excerpt">Meet the challenging people who own The Frameworks. Janelle, our Senior Writer and Editor, encourages fellow Frameworkers to shake things up with their footwear and B2B brands to get in touch with their musical side.</p>
+        <p class="byline">By Janelle | 18.05.26 | Culture</p>
+      </a>
+      <a class="card land reveal" href="article.html" data-cat="ai">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>The Prompt: Are your brand guidelines ready to deliver behaviour?</h2>
+        <p class="excerpt">Sandra Peat spent 18 months researching how brands create meaning through behaviour. She tells us that most B2B companies are designing for a world that no longer exists.</p>
+        <p class="byline">Don Hoyt Gorman | 11/05/26 | AI</p>
+      </a>
+      <a class="card land reveal" href="#" data-cat="ai">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>The Prompt: AI, ACL tears and building stronger, more resilient brands</h2>
+        <p class="excerpt">How do you future-proof your brand in an AI world? Senior writer Janelle Blasdel explores this question with a leap into skiing and a determination to never tear her ACL again.</p>
+        <p class="byline">By Janelle | 29.04.26 | AI</p>
+      </a>
+      <a class="card tall reveal" href="#" data-cat="culture">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>I am challenging: Charlotte</h2>
+        <p class="excerpt">Meet the challenging people who own The Frameworks. Charlotte, our Senior Writer and Editor, dares brands to say less, not more – and reveals why she tries to look out for life's little absurdities.</p>
+        <p class="byline">By Charlotte | 31.03.26 | Culture</p>
+      </a>
+      <a class="card land reveal" href="#" data-cat="ai">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>The Prompt: AI; didn’t read. Why audiences are craving personality</h2>
+        <p class="excerpt">As AI changes how people view content, how should writers adapt? Our senior writer, Charlotte, speaks to Alys Key, a business and tech journalist, about how – and when – to stand out from the machines.</p>
+        <p class="byline">By Charlotte | 27.03.26 | AI</p>
+      </a>
+      <a class="card tall reveal" href="#" data-cat="culture">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>I am challenging: Rose</h2>
+        <p class="excerpt">Meet the challenging people who own The Frameworks. Rose, our Design Director, challenges herself to get back into drawing and for everyone to find joy in the small things.</p>
+        <p class="byline">By Rose | 24.03.26 | Culture</p>
+      </a>
+      <a class="card land reveal" href="#" data-cat="ai">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>The Prompt: Using AI to create a more accessible (and dynamic) digital future</h2>
+        <p class="excerpt">Welcome back to The Prompt, a series tackling all the big questions about building B2B brands in an AI world.</p>
+        <p class="byline">By Sergio | 17.03.26 | AI</p>
+      </a>
+      <a class="card mid reveal" href="#" data-cat="business">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>Imaginative businesses come out on top. Are you one of them?</h2>
+        <p class="excerpt">At The Frameworks, we know first-hand how valuable imagination is. In today’s climate of rapid transformation and AI, imaginative businesses come out on top.</p>
+        <p class="byline">By Ellie | 10.03.26 | Business</p>
+      </a>
+      <a class="card mid reveal" href="#" data-cat="ai">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>The Prompt: What does AI think of your brand? And why does it matter?</h2>
+        <p class="excerpt">The way people discover and experience brands is changing. Unlike traditional search where a range of responses appear, AI platforms give clear, authoritative answers.</p>
+        <p class="byline">By Charlotte | 04.03.26 | AI</p>
+      </a>
+      <a class="card tall reveal" href="#" data-cat="culture">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>I am challenging: Ross</h2>
+        <p class="excerpt">Meet the challenging people who own The Frameworks. Ross, our Design Director, challenges himself to slow down his creative process and the industry to give the next generation a chance.</p>
+        <p class="byline">By Ross | 26.02.26 | Culture</p>
+      </a>
+      <a class="card mid reveal" href="#" data-cat="ai">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>The Prompt: Why brand matters more than ever in an AI world</h2>
+        <p class="excerpt">Welcome to The Prompt, a series tackling all the big questions about building B2B brands in an AI world.</p>
+        <p class="byline">By Louise | 24.02.26 | AI</p>
+      </a>
+      <a class="card land reveal" href="#" data-cat="strategy">
+        <div class="card-media"><div class="card-face"></div></div>
+        <h2>Why it pays to play in B2B</h2>
+        <p class="excerpt">Games aren’t just for fun – they can shape a serious engagement strategy.</p>
+        <p class="byline">By Rose | 03.02.26 | Strategy</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="challenge reveal">
+    <p>Fancy a challenge?<br>
+      <a href="mailto:hello@theframeworks.com">Let’s talk<svg class="arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
+    </p>
+  </section>
+
+  <footer class="footer">
+    <div>
+      <p>© The Frameworks Ltd</p><p>&nbsp;</p>
+      <p>1989–2026</p>
+      <p class="links"><a href="#">FAQs</a><a href="#">Legal</a><a href="#">Cookies</a></p>
+    </div>
+    <div><p>We own it</p><p>&nbsp;</p><p>Proudly employee-owned<br>since 2024</p></div>
+    <div><p>Office</p><p>&nbsp;</p><p>7th Floor, Fora Building<br>21-33 Great Eastern Street<br>London EC2A 3EJ</p></div>
+    <div><p>Contact</p><p>&nbsp;</p><p><a href="mailto:hello@theframeworks.com">hello@theframeworks.com</a><br><a href="#">LinkedIn</a></p></div>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  document.documentElement.classList.add("js");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+
+  const grid  = document.getElementById("postGrid");
+  const cards = [...grid.querySelectorAll(".card")];
+
+  /* ---- reveal: cards lift in one by one as they arrive ---- */
+  const revealObserver = new IntersectionObserver((entries) => {
+    const arrived = entries.filter(e => e.isIntersecting);
+    arrived.forEach((e, i) => {
+      setTimeout(() => e.target.classList.add("in"), i * 90);
+      revealObserver.unobserve(e.target);
+    });
+  }, { rootMargin: "0px 0px -10% 0px", threshold: 0.1 });
+  cards.forEach(c => revealObserver.observe(c));
+
+  /* ---- filters ----
+     Real categories drive AI / Business / Culture / Strategy. "Creative"
+     has no members in the frame yet, so — per the brief, no matrix yet —
+     it deals a random hand of four. Same out/in choreography as the Work
+     page: old set steps out downward, new set rises in one by one. */
+  const buttons = [...document.querySelectorAll(".filters button")];
+  const OUT_MS = 260, OUT_STAGGER = 18, IN_STAGGER = 55;
+  let animating = false;
+
+  function pickFor(filter){
+    if (filter === "all") return new Set(cards);
+    const real = cards.filter(c => c.dataset.cat === filter);
+    if (real.length) return new Set(real);
+    /* no matrix yet — random four */
+    const pool = [...cards].sort(() => Math.random() - .5).slice(0, 4);
+    return new Set(pool);
+  }
+
+  function activate(btn){
+    if (animating || btn.getAttribute("aria-pressed") === "true") return;
+    buttons.forEach(b => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+    const chosen = pickFor(btn.dataset.filter);
+
+    cards.forEach(c => { c.classList.remove("reveal", "in"); revealObserver.unobserve(c); });
+
+    if (reduced.matches){
+      cards.forEach(c => { c.hidden = !chosen.has(c); });
+      return;
+    }
+
+    animating = true;
+    const visible = cards.filter(c => !c.hidden);
+    visible.forEach((c, i) => {
+      c.style.transitionDelay = (i * OUT_STAGGER) + "ms";
+      c.classList.add("step-out");
+    });
+
+    setTimeout(() => {
+      cards.forEach(c => { c.hidden = !chosen.has(c); });
+      const incoming = cards.filter(c => !c.hidden);
+      incoming.forEach(c => {
+        c.classList.remove("step-out");
+        c.style.transitionDelay = "0ms";
+        c.classList.add("step-in");
+      });
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        incoming.forEach((c, i) => {
+          c.style.transitionDelay = (i * IN_STAGGER) + "ms";
+          c.classList.add("landed");
+        });
+        setTimeout(() => {
+          incoming.forEach(c => {
+            c.classList.remove("step-in", "landed");
+            c.style.transitionDelay = "";
+          });
+          animating = false;
+        }, OUT_MS + incoming.length * IN_STAGGER + 600);
+      }));
+    }, OUT_MS + visible.length * OUT_STAGGER);
+  }
+
+  buttons.forEach(b => b.addEventListener("click", () => activate(b)));
+})();
+</script>
+</body>
+</html>

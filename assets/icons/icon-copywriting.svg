@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Vector">
+<path d="M0 75H25V100H0V75Z" fill="#1F1F1F"/>
+<path d="M25 50H50V75H25V50Z" fill="#1F1F1F"/>
+<path d="M50 25H75V50H50V25Z" fill="#1F1F1F"/>
+<path d="M25 75V50L0 75H25Z" fill="#1F1F1F"/>
+<path d="M50 50V25L25 50H50Z" fill="#1F1F1F"/>
+<path d="M75 25V0L50 25H75Z" fill="#1F1F1F"/>
+<path d="M25 75V100L50 75H25Z" fill="#1F1F1F"/>
+<path d="M50 50V75L75 50H50Z" fill="#1F1F1F"/>
+<path d="M75 25V50L100 25H75Z" fill="#1F1F1F"/>
+<path d="M75 25H100L75 0V25Z" fill="#1F1F1F"/>
+</g>
+</svg>

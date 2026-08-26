@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Contact — The Frameworks</title>
+<meta name="description" content="Your brand matters. Let’s talk about it." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* ==================================================================== *
+   * The Frameworks — Contact
+   *
+   * Figma: "The F website 2026", page "Claude Full-site", frame 2896:12444
+   * https://www.figma.com/design/8Iz2K9VMKdGd09eOTRl3cQ/The-F-website-2026?node-id=2896-12444
+   *
+   * Dark, one viewport tall: nav at the top, the form in the middle, the
+   * footer held to the bottom. The frame shows the form *filled in* — those
+   * values ("Rose", "Stewart"…) are example content, so here they're the
+   * live fields' ghost text, not hard-coded values. Submit stays hidden
+   * until every field has something in it, then rises in.
+   * ==================================================================== */
+  :root{
+    --black:#272727;
+    --mid-grey:#8F8F8F;
+    --f-red:#F45944;
+    --bg:#1F1F1F;
+    --ink:#FFFFFF;
+    --line:#5A5A5A;           /* field underlines */
+
+    --nav-h:clamp(90px,17vh,140px);
+    --page-max:1900px;
+    --pad-x:100px;
+
+    --fs-h3:clamp(26px,2.78vw,40px);   /* everything on this page is H3 — 40 at 1440 */
+    --fs-details:15px;
+
+    --ease-out-expo:cubic-bezier(.16,1,.3,1);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{ scrollbar-gutter:stable; background:var(--bg); }
+  body{
+    max-width:var(--page-max); margin-inline:auto;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Geist","Geist Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+    min-height:100dvh;
+    display:flex; flex-direction:column;
+  }
+  main{ flex:1 0 auto; }
+  img{ display:block; max-width:100%; }
+
+  /* ------------------------------------------------------------------ *
+   * Nav — shared component, dark ink
+   * ------------------------------------------------------------------ */
+  .nav{
+    height:var(--nav-h); flex:none;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 var(--pad-x);
+  }
+  .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
+  .logo-mark{width:100%;height:100%;display:block;overflow:visible}
+  .logo-mark polygon{
+    fill:var(--ink);
+    stroke:var(--ink);
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;
+  }
+  .nav-menu{
+    display:none;
+    background:none; border:0; padding:0; margin:0;
+    width:27px; height:27px; cursor:pointer; flex:none;
+  }
+  .nav-menu svg{ display:block; width:100%; height:100%; }
+  .nav-menu path{ fill:var(--ink); }
+  .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
+  .nav-links{display:flex; align-items:center; gap:30px}
+  .nav-links a{
+    font-size:14px; line-height:17px; letter-spacing:.01em;
+    color:var(--mid-grey); text-decoration:none; white-space:nowrap;
+    transition:color .35s ease;
+  }
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a[aria-current="page"]{ color:var(--ink); }
+
+  /* ------------------------------------------------------------------ *
+   * The ask + the form
+   * ------------------------------------------------------------------ */
+  .contact{
+    display:grid; grid-template-columns:1fr 1fr; column-gap:30px;
+    align-items:start;
+    padding:60px var(--pad-x) 100px;
+  }
+  .contact-lead{
+    font-weight:300;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    max-width:500px;
+  }
+  .contact-lead .red{ color:var(--f-red); }
+  @supports (text-box: trim-both cap alphabetic){
+    .contact-lead{ text-box:trim-both cap alphabetic; }
+  }
+
+  .contact-form{ display:flex; flex-direction:column; gap:30px; }
+  .field-row{ display:flex; gap:50px; }
+  .field-row > *{ flex:1 1 0; min-width:0; }
+
+  .contact-form input,
+  .contact-form textarea{
+    display:block; width:100%;
+    background:none; border:0; border-bottom:1px solid var(--line);
+    border-radius:0;
+    padding:0 0 20px;
+    font-family:inherit; font-weight:300;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    color:var(--ink);
+    transition:border-color .3s ease;
+  }
+  .contact-form input:focus,
+  .contact-form textarea:focus{
+    outline:none; border-bottom-color:var(--ink);
+  }
+  .contact-form ::placeholder{ color:var(--mid-grey); opacity:.55; }
+  .contact-form textarea{
+    resize:none; overflow:hidden;
+    min-height:2.4em;
+  }
+
+  .form-foot{
+    display:flex; align-items:baseline; justify-content:space-between; gap:24px;
+  }
+  .submit{
+    background:none; border:0; padding:0; cursor:pointer;
+    font-family:inherit; font-weight:300;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    color:var(--mid-grey);
+    transition:color .3s ease, opacity .5s var(--ease-out-expo), transform .5s var(--ease-out-expo);
+    opacity:0; transform:translateY(14px); pointer-events:none;
+  }
+  .contact-form.ready .submit{
+    opacity:1; transform:none; pointer-events:auto;
+  }
+  .submit:hover{ color:var(--ink); }
+  .submit:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
+  .form-foot .privacy{
+    font-weight:400;
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    color:var(--mid-grey);
+  }
+  .form-foot .privacy a{ color:inherit; }
+
+  .form-done{
+    font-weight:300;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+  }
+  .form-done .red{ color:var(--f-red); }
+
+  /* ------------------------------------------------------------------ *
+   * Motion — everything rises in once, left before right
+   * ------------------------------------------------------------------ */
+  @media (prefers-reduced-motion: no-preference){
+    .contact-lead{ animation:rise-in .9s var(--ease-out-expo) backwards; }
+    .contact-form > *{ animation:rise-in .8s var(--ease-out-expo) backwards; }
+    .contact-form > :nth-child(1){ animation-delay:.12s }
+    .contact-form > :nth-child(2){ animation-delay:.20s }
+    .contact-form > :nth-child(3){ animation-delay:.28s }
+    .contact-form > :nth-child(4){ animation-delay:.36s }
+  }
+  @keyframes rise-in{
+    from{ opacity:0; transform:translateY(22px); }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Footer — shared component, dark ink, held to the viewport bottom
+   * ------------------------------------------------------------------ */
+  .footer{
+    flex:none; margin-top:auto;
+    display:flex; gap:30px; align-items:flex-start;
+    padding:clamp(40px,7vh,100px) var(--pad-x) clamp(50px,8vh,110px);
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.6px; color:var(--ink);
+  }
+  .footer > div{flex:1 1 0; min-width:0}
+  .footer a{ color:var(--mid-grey); text-decoration:none; }
+  .footer a:hover{ color:var(--f-red); }
+  .footer .links a{ margin-right:14px; }
+
+  /* ================================================================== *
+   * Stacked + mobile
+   * ================================================================== */
+  @media (max-width:1100px){
+    .contact{ display:block; }
+    .contact-form{ margin-top:56px; }
+  }
+  @media (max-width:767px){
+    :root{
+      --nav-h:clamp(72px,11vh,92px);
+      --pad-x:clamp(16px,5.5vw,24px);
+      --fs-details:13px;
+    }
+    .logo{ width:40px; height:40px; margin-left:-10px; }
+    .nav-menu{ display:block; }
+    .nav-links{ display:none; }
+
+    .contact{ padding-top:32px; padding-bottom:64px; }
+    .contact-form{ margin-top:40px; gap:24px; }
+    .field-row{ flex-direction:column; gap:24px; }
+    .form-foot{ flex-direction:column; align-items:flex-start; gap:20px; }
+
+    .footer{ flex-wrap:wrap; row-gap:24px; }
+    .footer > div{ flex:1 1 45%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="logo" href="index.html" aria-label="The Frameworks — home">
+    <svg class="logo-mark" viewBox="0 -100 800 800" aria-hidden="true">
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(180 100 100)"></polygon>
+    </svg>
+  </a>
+  <nav class="nav-links">
+    <a href="work.html">Work</a>
+    <a href="services.html">Services</a>
+    <a href="about.html">About</a>
+    <a href="thinking.html">Thinking</a>
+    <a href="contact.html" aria-current="page">Contact</a>
+  </nav>
+  <button class="nav-menu" type="button" aria-label="Open menu">
+    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
+      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
+    </svg>
+  </button>
+</header>
+
+<main>
+  <section class="contact">
+    <h1 class="contact-lead"><span class="red">Your brand matters.</span><br>Let’s talk about it.</h1>
+
+    <form class="contact-form" id="contactForm" novalidate>
+      <div class="field-row">
+        <input type="text" name="firstname" placeholder="First name" autocomplete="given-name" aria-label="First name">
+        <input type="text" name="lastname" placeholder="Last name" autocomplete="family-name" aria-label="Last name">
+      </div>
+      <input type="email" name="email" placeholder="Email address" autocomplete="email" aria-label="Email address">
+      <textarea name="message" rows="3" placeholder="Tell us about your challenge" aria-label="Tell us about your challenge"></textarea>
+      <div class="form-foot">
+        <button class="submit" type="submit">Submit →</button>
+        <p class="privacy">By submitting this form, you agree to our <a href="#">Privacy Policy</a>.</p>
+      </div>
+    </form>
+  </section>
+</main>
+
+<footer class="footer">
+  <div>
+    <p>© The Frameworks Ltd</p><p>&nbsp;</p>
+    <p>1989–2026</p>
+    <p class="links"><a href="#">FAQs</a><a href="#">Legal</a><a href="#">Cookies</a></p>
+  </div>
+  <div><p>We own it</p><p>&nbsp;</p><p>Proudly employee-owned<br>since 2024</p></div>
+  <div><p>Office</p><p>&nbsp;</p><p>7th Floor, Fora Building<br>21-33 Great Eastern Street<br>London EC2A 3EJ</p></div>
+  <div><p>Contact</p><p>&nbsp;</p><p><a href="mailto:hello@theframeworks.com">hello@theframeworks.com</a><br><a href="#">LinkedIn</a></p></div>
+</footer>
+
+<script>
+(() => {
+  "use strict";
+
+  document.documentElement.classList.add("js");
+
+  const form   = document.getElementById("contactForm");
+  const fields = [...form.querySelectorAll("input, textarea")];
+  const area   = form.querySelector("textarea");
+
+  /* the message field grows with its content, like the comp's tall block */
+  function grow(){
+    area.style.height = "auto";
+    area.style.height = area.scrollHeight + "px";
+  }
+  area.addEventListener("input", grow);
+
+  /* Submit rises in once every field has something in it */
+  function check(){
+    form.classList.toggle("ready", fields.every(f => f.value.trim() !== ""));
+  }
+  fields.forEach(f => f.addEventListener("input", check));
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    if (!fields.every(f => f.value.trim() !== "")) return;
+    /* prototype: no backend — swap in the thank-you state */
+    const done = document.createElement("p");
+    done.className = "form-done";
+    done.innerHTML = '<span class="red">Thank you.</span><br>We’ll be in touch soon.';
+    form.replaceWith(done);
+  });
+})();
+</script>
+</body>
+</html>

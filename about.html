@@ -98,8 +98,24 @@
     height:var(--nav-h);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--pad-x);
-    background:var(--bg);
     z-index:40;
+    /* No bar behind the nav — it sits straight on the page, as the homepage's
+       always has. Legibility instead comes from `mix-blend-mode:difference`:
+       the bar's ink is subtracted from whatever is underneath, so it inverts
+       against the ground and against imagery as the page scrolls past.
+       The ink values below are chosen as *sources* for that subtraction, not
+       as the colours you see — links stay --mid-grey (143) so they land on a
+       mid tone either way, while the logo and hover go pure white so they
+       invert to maximum contrast.
+       ⚠️ Difference has a null point: a source lands invisible where the
+       backdrop is half its value (white vanishes on ~#808080, mid-grey on
+       ~#474747). None of the three page grounds are near those, but B&W
+       photography passing under the bar can be, so it is "adapts to almost
+       anything", not "always". A scrim is the fallback if that ever bites.
+       The element's own transform doesn't interfere: a transform isolates a
+       stacking context for its *children*, while the element itself still
+       blends with its parent's backdrop. */
+    mix-blend-mode:difference;
     transform:translateX(-50%) translateY(0);
     transition:transform .38s var(--ease-out-expo);
   }
@@ -107,8 +123,8 @@
   .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
-    fill:var(--ink-footer);
-    stroke:var(--ink-footer);
+    fill:#fff;
+    stroke:#fff;
     stroke-width:1;
     vector-effect:non-scaling-stroke;
     stroke-linejoin:round;
@@ -119,7 +135,7 @@
     width:27px; height:27px; cursor:pointer; flex:none;
   }
   .nav-menu svg{ display:block; width:100%; height:100%; }
-  .nav-menu path{ fill:var(--ink-footer); }
+  .nav-menu path{ fill:#fff; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
   .nav-links{display:flex; align-items:center; gap:30px}
   .nav-links a{
@@ -127,7 +143,7 @@
     color:var(--mid-grey); text-decoration:none; white-space:nowrap;
     transition:color .35s var(--ease-out-expo);
   }
-  .nav-links a:hover{color:var(--black)}
+  .nav-links a:hover{color:#fff}
 
   /* ------------------------------------------------------------------ *
    * Masthead
@@ -228,12 +244,6 @@
     width:max(182px, calc((min(100vw - var(--sbw), var(--page-max)) - 2 * var(--pad-x)) * 0.14677));
     height:auto; aspect-ratio:182 / 76.632;
   }
-  .owned-body .more{
-    font-size:var(--fs-details); letter-spacing:-.026em;
-    color:var(--ink-footer);
-  }
-  .owned-body .more a{ color:inherit; }
-  .owned-body .more a:hover{ color:var(--f-red); }
 
   /* ------------------------------------------------------------------ *
    * The B&W strip — a slow, draggable carousel
@@ -512,7 +522,6 @@
     <div class="owned-body reveal">
       <p class="lines">Creative. Curious. Challenging.<br>Big thinking. Idea-shaping. Award-winning.<span class="gap" aria-hidden="true"></span>We don’t just love what we do – we own it: we’re one of a growing number of businesses in the UK who are employee owned.</p>
       <img src="assets/logo-eoa.svg" alt="Proudly employee owned — Employee Ownership Association" width="182" height="77">
-      <p class="more">Meet more of our Frameworkers – <a href="contact.html">contact us</a></p>
     </div>
   </section>
 

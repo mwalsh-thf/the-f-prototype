@@ -111,23 +111,25 @@
    * index.html's THEF array (translate col*100, row*100 → rotate about the
    * cell centre), so the two pages can't drift apart.
    * ------------------------------------------------------------------ */
-  /* Ordinary page content, not a fixed overlay — which is how the frame draws
-     it, a flex row at the top of the column rather than a bar over it. So it
-     scrolls away with the article and is only there when you're at the top.
-     index.html's nav is fixed because it has to outlive the scene beneath it;
-     this one has nothing to outlive, and a bar riding over a pinned cover
-     fights it. Nothing passes underneath it, so it needs no background and no
-     script. */
+  /* Fixed and semi-sticky, matching index.html: hides on the way down,
+     returns the moment you scroll up. Capped and centred the same way as
+     index.html's — left:50%+width+max-width+transform, not the plain
+     body{max-width} the rest of the page uses, because a fixed element's
+     containing block is the viewport regardless of any ancestor's own
+     max-width. The show/hide translateY has to share the SAME transform
+     declaration as the centring translateX — a later rule's `transform`
+     replaces the whole value rather than adding to it. */
   .nav{
+    position:fixed; top:0; left:50%; width:100%; max-width:var(--page-max);
     height:var(--nav-h);
     display:flex; align-items:center; justify-content:space-between;
-    /* On the 100px margin with everything else. It was flush to the page edge
-       while the cover bled past it; the cover doesn't bleed any more, so the
-       nav comes back to the shared margin — which is where 2789:434 draws it.
-       The logo's negative margin is what lands the F's own left edge on that
-       line rather than its (wider) box. */
     padding:0 var(--pad-x);
+    background:var(--bg);
+    z-index:40;
+    transform:translateX(-50%) translateY(0);
+    transition:transform .38s var(--ease-out-expo);
   }
+  .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
   .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
@@ -152,7 +154,7 @@
   .nav-links a{
     font-size:14px; line-height:17px; letter-spacing:.01em;
     color:var(--mid-grey); text-decoration:none; white-space:nowrap;
-    transition:color .35s ease;
+    transition:color .35s var(--ease-out-expo);
   }
   .nav-links a:hover{color:var(--black)}
 
@@ -160,7 +162,10 @@
    * Article shell
    * ------------------------------------------------------------------ */
   .article{
-    padding:50px var(--pad-x) 30px;
+    /* The nav is fixed now, so it no longer contributes its own height to
+       the flow — this has to clear it explicitly, or the title starts out
+       underneath the bar. */
+    padding:calc(var(--nav-h) + 50px) var(--pad-x) 30px;
   }
   .article-grid{
     display:grid;
@@ -360,7 +365,7 @@
      what's behind .reveal here is the entire piece. */
   .js .reveal{
     opacity:0; transform:translateY(28px);
-    transition:opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+    transition:opacity .8s var(--ease-out-expo), transform .8s var(--ease-out-expo);
   }
   .js .reveal.in{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
@@ -436,7 +441,7 @@
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .article{ padding-top:32px; }
+    .article{ padding-top:calc(var(--nav-h) + 32px); }
     .article-meta{ gap:28px 20px; margin-top:36px; }
     .article-meta > div{ gap:10px; }
     .article-standfirst + .prose{ margin-top:28px; }
@@ -581,6 +586,22 @@
      Set before first paint (the script is at the end of the body), so nothing
      flashes in and then hides. */
   document.documentElement.classList.add("js");
+
+  /* Fixed, semi-sticky nav — same behaviour as index.html: hides on the way
+     down, returns the moment you scroll up, and stays put on mobile since
+     the nav is the only way back to the rest of the site there. */
+  const navEl = document.querySelector(".nav");
+  const NAV_HIDE_DELTA = 6;
+  let lastNavY = 0;
+  function syncNav(){
+    const y = window.scrollY || 0;
+    if (innerWidth <= 767){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
+    const dy = y - lastNavY;
+    if (Math.abs(dy) < NAV_HIDE_DELTA) return;
+    navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
+    lastNavY = y;
+  }
+  addEventListener("scroll", syncNav, {passive:true});
 
   /* Blocks lift in as they arrive — the same one-shot observer the work cards
      use on the homepage. No stagger here: these are a single column, so they

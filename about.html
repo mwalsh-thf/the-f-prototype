@@ -60,11 +60,25 @@
   /* ------------------------------------------------------------------ *
    * Nav — shared component (see article.html)
    * ------------------------------------------------------------------ */
+  /* Fixed and semi-sticky, matching index.html: hides on the way down,
+     returns the moment you scroll up. Capped and centred the same way as
+     index.html's — left:50%+width+max-width+transform, not the plain
+     body{max-width} the rest of the page uses, because a fixed element's
+     containing block is the viewport regardless of any ancestor's own
+     max-width. The show/hide translateY has to share the SAME transform
+     declaration as the centring translateX — a later rule's `transform`
+     replaces the whole value rather than adding to it. */
   .nav{
+    position:fixed; top:0; left:50%; width:100%; max-width:var(--page-max);
     height:var(--nav-h);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--pad-x);
+    background:var(--bg);
+    z-index:40;
+    transform:translateX(-50%) translateY(0);
+    transition:transform .38s var(--ease-out-expo);
   }
+  .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
   .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
@@ -86,14 +100,14 @@
   .nav-links a{
     font-size:14px; line-height:17px; letter-spacing:.01em;
     color:var(--mid-grey); text-decoration:none; white-space:nowrap;
-    transition:color .35s ease;
+    transition:color .35s var(--ease-out-expo);
   }
   .nav-links a:hover{color:var(--black)}
 
   /* ------------------------------------------------------------------ *
    * Masthead
    * ------------------------------------------------------------------ */
-  .masthead{ padding:60px var(--pad-x) 0; }
+  .masthead{ padding:calc(var(--nav-h) + 60px) var(--pad-x) 0; }
   .masthead h1{
     font-weight:300;
     font-size:var(--fs-h1); line-height:1.15; letter-spacing:-.02em;
@@ -226,7 +240,7 @@
     color:var(--ink-footer);
   }
   .hq-address .contact-lines{ color:var(--mid-grey); margin-top:1.15em; }
-  .hq-address a{ color:inherit; text-decoration:none; transition:color .3s ease; }
+  .hq-address a{ color:inherit; text-decoration:none; transition:color .3s var(--ease-out-expo); }
   .hq-address a:hover{ color:var(--f-red); }
 
   /* ------------------------------------------------------------------ *
@@ -261,7 +275,7 @@
   }
   .js .reveal{
     opacity:0; transform:translateX(-28px);
-    transition:opacity .7s var(--ease-out-expo), transform .7s var(--ease-out-expo);
+    transition:opacity .8s var(--ease-out-expo), transform .8s var(--ease-out-expo);
     transition-delay:var(--d, 0ms);
   }
   .js .reveal.in{ opacity:1; transform:none; }
@@ -314,7 +328,7 @@
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .masthead{ padding-top:32px; }
+    .masthead{ padding-top:calc(var(--nav-h) + 32px); }
     .masthead-intro{ padding:32px var(--pad-x) 40px; }
     .team{ grid-template-columns:1fr; row-gap:40px; padding-block:24px 56px; }
     .owned{ padding-top:56px; }
@@ -456,6 +470,21 @@
   "use strict";
 
   document.documentElement.classList.add("js");
+  /* Fixed, semi-sticky nav — same behaviour as index.html: hides on the way
+     down, returns the moment you scroll up, and stays put on mobile since
+     the nav is the only way back to the rest of the site there. */
+  const navEl = document.querySelector(".nav");
+  const NAV_HIDE_DELTA = 6;
+  let lastNavY = 0;
+  function syncNav(){
+    const y = window.scrollY || 0;
+    if (innerWidth <= 767){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
+    const dy = y - lastNavY;
+    if (Math.abs(dy) < NAV_HIDE_DELTA) return;
+    navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
+    lastNavY = y;
+  }
+  addEventListener("scroll", syncNav, {passive:true});
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 
   /* ---- reveal, left → right, staggered per arriving batch ---- */

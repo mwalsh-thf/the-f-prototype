@@ -55,11 +55,25 @@
   /* ------------------------------------------------------------------ *
    * Nav — shared component (see article.html)
    * ------------------------------------------------------------------ */
+  /* Fixed and semi-sticky, matching index.html: hides on the way down,
+     returns the moment you scroll up. Capped and centred the same way as
+     index.html's — left:50%+width+max-width+transform, not the plain
+     body{max-width} the rest of the page uses, because a fixed element's
+     containing block is the viewport regardless of any ancestor's own
+     max-width. The show/hide translateY has to share the SAME transform
+     declaration as the centring translateX — a later rule's `transform`
+     replaces the whole value rather than adding to it. */
   .nav{
+    position:fixed; top:0; left:50%; width:100%; max-width:var(--page-max);
     height:var(--nav-h);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--pad-x);
+    background:var(--bg);
+    z-index:40;
+    transform:translateX(-50%) translateY(0);
+    transition:transform .38s var(--ease-out-expo);
   }
+  .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
   .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
@@ -81,7 +95,7 @@
   .nav-links a{
     font-size:14px; line-height:17px; letter-spacing:.01em;
     color:var(--mid-grey); text-decoration:none; white-space:nowrap;
-    transition:color .35s ease;
+    transition:color .35s var(--ease-out-expo);
   }
   .nav-links a:hover{color:var(--black)}
 
@@ -91,7 +105,7 @@
   .page-head{
     display:grid; grid-template-columns:repeat(4,1fr); column-gap:30px;
     align-items:start;
-    padding:100px var(--pad-x);
+    padding:calc(var(--nav-h) + 100px) var(--pad-x) 100px;
   }
   .statement{
     font-weight:300;
@@ -136,38 +150,35 @@
     display:inline-block; margin-top:15px;
     font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
     color:var(--mid-grey); text-decoration:none;
-    transition:color .3s ease;
+    transition:color .3s var(--ease-out-expo);
   }
   .service .s-link:hover{ color:var(--f-red); }
 
-  /* ---- the icon unfold ----
-     Every mark expands from a single triangle into its full square — the
-     0% clip is a triangle (fourth point collapsed onto the third so the
-     polygon can interpolate), the 100% is the square. `backwards` holds
-     the triangle through each icon's stagger delay; after the animation
-     ends the *base* clip-path applies, which is what lets the hover
-     transition below work — a fill-mode:forwards would pin the keyframe
-     value and dead-end the hover. */
+  /* ---- the icon build ----
+     Every mark starts as one small square at its own centre and grows out
+     to fill the full 100x100 box: inset() pulls in 45% from each side at
+     0%, leaving a small square in the middle, then relaxes to 0 on every
+     side by 100%. `backwards` holds that small square through each icon's
+     stagger delay so nothing flashes full-size before its turn.
+
+     Hover is a separate concern on a separate property (transform, not
+     clip-path), so the two motions can't collide: JS drives a small
+     cursor-following nudge, on the same transition every other hover
+     feedback on the site uses, and lets it ease back to rest the moment
+     the pointer leaves — one square moving, then moving back. */
   .s-icon img{
-    clip-path:polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    transition:clip-path .45s var(--ease-out-expo), transform .45s var(--ease-out-expo);
+    clip-path:inset(0 0 0 0);
+    transition:clip-path .9s var(--ease-out-expo), transform .4s var(--ease-out-expo);
   }
-  @keyframes icon-unfold{
-    0%  { opacity:0; clip-path:polygon(0 0, 100% 0, 0 100%, 0 100%); transform:scale(.55); transform-origin:top left; }
-    45% { opacity:1; }
-    100%{ opacity:1; clip-path:polygon(0 0, 100% 0, 100% 100%, 0 100%); transform:none; }
+  @keyframes icon-build{
+    0%  { opacity:0; clip-path:inset(45% 45% 45% 45%); }
+    100%{ opacity:1; clip-path:inset(0 0 0 0); }
   }
   @media (prefers-reduced-motion: no-preference){
     .js .service:not(.in) .s-icon img{ opacity:0; }
     .service.in .s-icon img{
-      animation:icon-unfold .85s var(--ease-out-expo) backwards;
+      animation:icon-build .9s var(--ease-out-expo) backwards;
       animation-delay:var(--d, 0ms);
-    }
-    /* the subtle re-fold on hover: one corner tucks in and springs back */
-    .service:hover .s-icon img{
-      clip-path:polygon(0 0, 100% 0, 100% 72%, 0 100%);
-      transform:scale(.96);
-      transform-origin:top left;
     }
   }
 
@@ -203,7 +214,7 @@
     font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
     font-size:10px; line-height:17px; letter-spacing:.07em;
     color:var(--mid-grey);
-    transition:color .3s ease;
+    transition:color .3s var(--ease-out-expo);
   }
   .awards-head button:hover{ color:var(--black); }
   .awards-head button[aria-sort]{ color:var(--ink-footer); }
@@ -227,15 +238,15 @@
     from{ opacity:0; transform:translateY(22px); }
   }
   .js .reveal{
-    opacity:0; transform:translateY(24px);
-    transition:opacity .65s var(--ease-out-expo), transform .65s var(--ease-out-expo);
+    opacity:0; transform:translateY(28px);
+    transition:opacity .8s var(--ease-out-expo), transform .8s var(--ease-out-expo);
     transition-delay:var(--d, 0ms);
   }
   .js .reveal.in{ opacity:1; transform:none; }
   /* rows stepping out before a re-sort */
   .js .award-row.step-out{
     opacity:0; transform:translateY(10px);
-    transition:opacity .2s ease, transform .2s ease;
+    transition:opacity .3s var(--ease-out-expo), transform .3s var(--ease-out-expo);
     transition-delay:var(--d, 0ms);
   }
   @media (prefers-reduced-motion: reduce){
@@ -286,7 +297,7 @@
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .page-head{ display:block; padding-top:32px; padding-bottom:56px; }
+    .page-head{ display:block; padding-top:calc(var(--nav-h) + 32px); padding-bottom:56px; }
     .page-head .intro{ margin-top:24px; max-width:340px; }
     .services{ grid-template-columns:1fr; row-gap:48px; padding-bottom:64px; }
     .service{ padding-right:0; }
@@ -457,6 +468,43 @@
   "use strict";
 
   document.documentElement.classList.add("js");
+  /* Fixed, semi-sticky nav — same behaviour as index.html: hides on the way
+     down, returns the moment you scroll up, and stays put on mobile since
+     the nav is the only way back to the rest of the site there. */
+  const navEl = document.querySelector(".nav");
+  const NAV_HIDE_DELTA = 6;
+  let lastNavY = 0;
+  function syncNav(){
+    const y = window.scrollY || 0;
+    if (innerWidth <= 767){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
+    const dy = y - lastNavY;
+    if (Math.abs(dy) < NAV_HIDE_DELTA) return;
+    navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
+    lastNavY = y;
+  }
+  addEventListener("scroll", syncNav, {passive:true});
+
+  /* ---- magnetic icon hover ----
+     Each icon nudges a few pixels toward the cursor as it moves overhead,
+     and eases back to rest the moment the pointer leaves — the icon read
+     as "one square", so this is that square moving, then moving back.
+     Bound tight (8px) so it reads as a nudge, not a drag; skipped entirely
+     under reduced motion, matching every other animation on the page. */
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const MAGNET_RANGE = 8; // max px of travel in any one direction
+    document.querySelectorAll(".s-icon").forEach(wrap => {
+      const img = wrap.querySelector("img");
+      wrap.addEventListener("mousemove", e => {
+        const r = wrap.getBoundingClientRect();
+        const relX = (e.clientX - r.left) / r.width - 0.5;   // -0.5..0.5
+        const relY = (e.clientY - r.top) / r.height - 0.5;
+        img.style.transform =
+          `translate(${(relX * MAGNET_RANGE * 2).toFixed(1)}px, ${(relY * MAGNET_RANGE * 2).toFixed(1)}px)`;
+      });
+      wrap.addEventListener("mouseleave", () => { img.style.transform = ""; });
+    });
+  }
+
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 
   /* ---- generic reveal with per-group stagger: elements that arrive in the

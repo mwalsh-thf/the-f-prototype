@@ -37,6 +37,15 @@
     --bottom-band:0px; /* reserved space below the hero for a stacked copy/highlight row —
                            only non-zero on mobile, see the breakpoint below and fit() in JS */
 
+    /* --- layout, continued ---
+       Matches the site-wide cap used on every other page (article, work,
+       services, about, thinking, contact). The homepage's chrome (nav,
+       sub-menu, copy, highlight) and the released page content (work grid,
+       logos, contact, footer) all respect it below; see the notes on .nav
+       and .scene for why capping a position:fixed element takes a different
+       technique than the plain body{max-width} the other pages use. */
+    --page-max:2000px;
+
     /* --- motion --- */
     --ease-out-expo:cubic-bezier(.16,1,.3,1);
     --ease-in-expo:cubic-bezier(.7,0,.84,0);
@@ -46,8 +55,12 @@
   /* Reserve the scrollbar track at all times. The document is locked while
      the experience runs and unlocked afterwards, and without this the
      scrollbar appearing at that moment would shift the whole layout. */
-  html{ scrollbar-gutter:stable; }
+  /* Ground lives on html, not body: body is now the capped, centred page (see
+     below), so a background painted there would stop at 2000px and leave
+     bare canvas either side on anything wider. */
+  html{ scrollbar-gutter:stable; background:var(--bg); }
   body{
+    max-width:var(--page-max); margin-inline:auto;
     background:var(--bg);
     color:var(--black);
     font-family:"Geist","Geist Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
@@ -81,8 +94,28 @@
    * footer release; being a plain full-viewport container, transforming
    * it carries every child along together.
    * ------------------------------------------------------------------ */
+  /* Capped and centred, same reasoning as .nav above. inset:0 (the old
+     rule) can't just gain a max-width: with both left AND right pinned to 0,
+     the browser has no auto margin to absorb the difference once max-width
+     clamps the box narrower, so it would end up flush-left instead of
+     centred (a genuinely different code path than .strip-wrap's breakout on
+     the About page, which is a normal-flow element and can use
+     margin-inline:calc(50% - 50vw)). left:50% + a single explicit width +
+     transform:translateX(-50%) sidesteps that: only one horizontal edge is
+     pinned, so there's nothing left to be "over-constrained".
+
+     Every piece of chrome positioned off --edge-x (.submenu, .copy,
+     .highlight) is a descendant of .scene and measures against ITS box, not
+     the viewport's — so capping .scene here is what carries the cap through
+     to all of them, with no changes needed at their own rules. .hero centres
+     itself within whatever box it's given, so it also follows for free.
+
+     fit() still has to be told about this cap separately — see PAGE_MAX in
+     the script — because it computes --s (the hero's scale) from innerWidth
+     directly, which knows nothing about this box's max-width. */
   .scene{
-    position:fixed; inset:0;
+    position:fixed; top:0; bottom:0; left:50%; width:100%; max-width:var(--page-max);
+    transform:translateX(-50%);
     will-change:transform,opacity;
   }
   /* Released, the experience is no longer pinned: it becomes a normal
@@ -90,7 +123,8 @@
      the work grid following it down the page rather than sliding over
      the top of it. .page-spacer is what reserves its place in flow. */
   body.released .scene{
-    position:absolute; top:0; left:0; right:0; bottom:auto;
+    position:absolute; top:0; left:50%; width:100%; max-width:var(--page-max);
+    bottom:auto; transform:translateX(-50%);
     height:100vh;
   }
   .hero-stage{
@@ -118,17 +152,27 @@
      away with the page once the experience is done, and the nav has to
      outlive it. Deliberately transparent — content passes underneath it
      rather than being masked by a bar. */
+  /* Capped and centred like every other fixed/absolute piece of chrome on
+     this page (see .scene below for the full explanation of why a
+     position:fixed element needs left:50%+transform rather than the plain
+     body{max-width} the rest of the site uses). translateX(-50%) does the
+     centring and has to live in the SAME transform declaration as the
+     show/hide translateY below — a later rule's `transform` replaces the
+     whole value rather than adding to it, so if is-hidden only said
+     translateY(-100%) the bar would un-centre itself the moment it hid. */
   .nav{
-    position:fixed; left:0; top:0; width:100%; height:var(--nav-h);
+    position:fixed; left:50%; top:0; width:100%; max-width:var(--page-max);
+    height:var(--nav-h);
     box-sizing:border-box;
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--edge-x);
     z-index:40;
+    transform:translateX(-50%) translateY(0);
     transition:transform .38s var(--ease-out-expo);
   }
   /* Semi-sticky: on desktop the bar gets out of the way while you're reading
      downwards and comes straight back the moment you scroll up. */
-  .nav.is-hidden{ transform:translateY(-100%); }
+  .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
   /* The box is square and larger than the F itself because the morphed
      states are wider than the F — it has to hold the widest one. The
      negative margin is always a quarter of the width, cancelling the extra
@@ -158,7 +202,7 @@
   .nav-links a{
     font-size:14px; line-height:17px; letter-spacing:.14px;
     color:var(--mid-grey); text-decoration:none; white-space:nowrap;
-    transition:color .35s ease;
+    transition:color .35s var(--ease-out-expo);
   }
   .nav-links a:hover{color:var(--black)}
 
@@ -274,7 +318,7 @@
     /* bottom-right anchor: the box grows up and to the left on hover,
        so its bottom edge never shifts and the caption below stays put */
     transform-origin:bottom right;
-    transition:transform .5s cubic-bezier(.4,0,.2,1);
+    transition:transform .5s var(--ease-out-expo);
   }
   .highlight .thumb img{
     position:absolute; max-width:none; object-fit:cover; pointer-events:none;
@@ -289,7 +333,7 @@
   }
   .highlight .cap .proj{
     color:var(--mid-grey);
-    transition:color .5s cubic-bezier(.4,0,.2,1);
+    transition:color .5s var(--ease-out-expo);
   }
   .highlight:hover .cap .proj{
     color:var(--f-red);
@@ -361,7 +405,7 @@
   .card-kicker{ font-size:15px; line-height:1.2; color:var(--mid-grey); }
   .card-title{
     font-size:clamp(16px,1.4vw,19px); line-height:1.3; letter-spacing:-.3px;
-    margin-top:8px; transition:color .4s cubic-bezier(.4,0,.2,1);
+    margin-top:8px; transition:color .4s var(--ease-out-expo);
   }
   .card:hover .card-title{ color:var(--f-red); }
   .card-tag{
@@ -377,7 +421,7 @@
      and the left card of each row is given a head start over the right */
   .reveal{
     opacity:0; transform:translateY(28px);
-    transition:opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+    transition:opacity .8s var(--ease-out-expo), transform .8s var(--ease-out-expo);
   }
   .reveal.in{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
@@ -446,7 +490,7 @@
     margin-left:.12em;
     vertical-align:.22em;
     fill:none; stroke:currentColor; stroke-width:2;
-    transition:transform .35s cubic-bezier(.4,0,.2,1);
+    transition:transform .35s var(--ease-out-expo);
   }
   /* the invitation is the movement — the arrow steps out to the right */
   .contact-cta:hover .contact-arrow,
@@ -480,7 +524,7 @@
     font-size:10px; letter-spacing:.6px; text-transform:uppercase;
     font-family:"Geist Mono",ui-monospace,monospace;
     color:var(--mid-grey); opacity:.65; z-index:9;
-    transition:opacity .6s ease;
+    transition:opacity .6s var(--ease-out-expo);
     pointer-events:none;
   }
   .hint.hide{opacity:0}
@@ -1024,6 +1068,10 @@
    * ------------------------------------------------------------------ */
   const MIN_S = .34, MAX_S = 1.6, MIN_S_MOBILE = .22;
   const MOBILE = 767;
+  const PAGE_MAX = 2000; // keep in step with --page-max in the stylesheet —
+                          // .scene is capped/centred at this width, so the
+                          // hero's scale has to be solved against it rather
+                          // than the raw (possibly wider) viewport
   const ICON_W = 800, ICON_H = 600; // the icon's own box within the 1440×900 hero canvas
   /* In state 1 the tiles only occupy columns 1–5 of that box (x 100→700),
      so the visible square is 600 wide, centred, with 100 of empty box either
@@ -1098,7 +1146,11 @@
     // over that canvas — Empathy's starts almost at its left edge) always
     // stays safely on screen. See --icon-boost below for making the icon
     // itself bigger without dragging headlines along with it.
-    const s = Math.min(innerWidth / 1440, heightFit);
+    // Solved against the *capped* width, not the raw viewport — .scene
+    // stops growing past --page-max, so beyond that point the hero must too,
+    // or it would size itself for space it was never actually given.
+    const availW = Math.min(innerWidth, PAGE_MAX);
+    const s = Math.min(availW / 1440, heightFit);
     const minS = mobile ? MIN_S_MOBILE : MIN_S;
     const finalS = Math.max(minS, Math.min(MAX_S, s));
     document.documentElement.style.setProperty("--s", finalS);

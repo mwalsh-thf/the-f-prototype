@@ -59,11 +59,25 @@
   /* ------------------------------------------------------------------ *
    * Nav — shared component (see article.html)
    * ------------------------------------------------------------------ */
+  /* Fixed and semi-sticky, matching index.html: hides on the way down,
+     returns the moment you scroll up. Capped and centred the same way as
+     index.html's — left:50%+width+max-width+transform, not the plain
+     body{max-width} the rest of the page uses, because a fixed element's
+     containing block is the viewport regardless of any ancestor's own
+     max-width. The show/hide translateY has to share the SAME transform
+     declaration as the centring translateX — a later rule's `transform`
+     replaces the whole value rather than adding to it. */
   .nav{
+    position:fixed; top:0; left:50%; width:100%; max-width:var(--page-max);
     height:var(--nav-h);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--pad-x);
+    background:var(--bg);
+    z-index:40;
+    transform:translateX(-50%) translateY(0);
+    transition:transform .38s var(--ease-out-expo);
   }
+  .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
   .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
@@ -85,7 +99,7 @@
   .nav-links a{
     font-size:14px; line-height:17px; letter-spacing:.01em;
     color:var(--mid-grey); text-decoration:none; white-space:nowrap;
-    transition:color .35s ease;
+    transition:color .35s var(--ease-out-expo);
   }
   .nav-links a:hover{color:var(--black)}
 
@@ -95,7 +109,7 @@
   .page-head{
     display:grid; grid-template-columns:repeat(4,1fr); column-gap:30px;
     align-items:start;
-    padding:100px var(--pad-x) 50px;
+    padding:calc(var(--nav-h) + 100px) var(--pad-x) 50px;
   }
   .page-head h1{
     grid-column:1 / span 3;
@@ -131,7 +145,7 @@
     font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
     font-size:10px; line-height:17px; letter-spacing:.07em;
     color:var(--mid-grey);
-    transition:color .3s ease;
+    transition:color .3s var(--ease-out-expo);
   }
   .filters button:hover{ color:var(--black); }
   .filters button[aria-pressed="true"]{ color:var(--ink-footer); }
@@ -192,7 +206,7 @@
     font-weight:400;
     font-size:20px; line-height:1.2; letter-spacing:-.02em;
     color:var(--ink-tile);
-    transition:color .4s cubic-bezier(.4,0,.2,1);   /* matches .card-title on index.html */
+    transition:color .4s var(--ease-out-expo);   /* matches .card-title on index.html */
   }
   .tile:hover .tile-title{ color:var(--f-red); }
   .tile-tags{
@@ -227,21 +241,21 @@
 
   .js .reveal{
     opacity:0; transform:translateY(28px);
-    transition:opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+    transition:opacity .8s var(--ease-out-expo), transform .8s var(--ease-out-expo);
   }
   .js .reveal.in{ opacity:1; transform:none; }
 
   /* filter choreography — driven by JS, expressed here */
   .js .tile.step-out{
     opacity:0; transform:translateY(14px);
-    transition:opacity .26s ease, transform .26s ease;
+    transition:opacity .3s var(--ease-out-expo), transform .3s var(--ease-out-expo);
   }
   .js .tile.step-in{
     opacity:0; transform:translateY(24px);
   }
   .js .tile.step-in.landed{
     opacity:1; transform:none;
-    transition:opacity .55s var(--ease-out-expo), transform .55s var(--ease-out-expo);
+    transition:opacity .65s var(--ease-out-expo), transform .65s var(--ease-out-expo);
   }
   @media (prefers-reduced-motion: reduce){
     .js .reveal{ opacity:1; transform:none; transition:none }
@@ -284,7 +298,7 @@
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .page-head{ display:block; padding-top:32px; }
+    .page-head{ display:block; padding-top:calc(var(--nav-h) + 32px); }
     .page-head .intro{ margin-top:24px; max-width:340px; }
     .work{ padding-top:44px; padding-bottom:44px; }
     .filters{ gap:14px 24px; }
@@ -503,6 +517,21 @@
   "use strict";
 
   document.documentElement.classList.add("js");
+  /* Fixed, semi-sticky nav — same behaviour as index.html: hides on the way
+     down, returns the moment you scroll up, and stays put on mobile since
+     the nav is the only way back to the rest of the site there. */
+  const navEl = document.querySelector(".nav");
+  const NAV_HIDE_DELTA = 6;
+  let lastNavY = 0;
+  function syncNav(){
+    const y = window.scrollY || 0;
+    if (innerWidth <= 767){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
+    const dy = y - lastNavY;
+    if (Math.abs(dy) < NAV_HIDE_DELTA) return;
+    navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
+    lastNavY = y;
+  }
+  addEventListener("scroll", syncNav, {passive:true});
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 
   /* ---- scroll reveal — tiles lift in as they arrive, staggered by index

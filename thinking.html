@@ -18,9 +18,9 @@
    * The dark page — ground is Off Black, ink is white. One file, no build.
    * Nav and footer are the shared components re-inked for the dark ground.
    *
-   * ⚠️ Blog cover art is placeholder until the imagery zip arrives — the
-   * slots are .card-media, each carrying the frame's own aspect ratio
-   * (tall / mid / landscape).
+   * Cover art is real, exported per card from Figma 2896:12136 into
+   * assets/thinking/. Each .card-media carries the frame's own aspect ratio
+   * (tall / sq / land / icon).
    * ==================================================================== */
   :root{
     --black:#272727;
@@ -169,11 +169,19 @@
     border-radius:1px;
     overflow:hidden; position:relative;
   }
-  .card.tall .card-media{ aspect-ratio:344.75/431; }
-  .card.mid  .card-media{ aspect-ratio:344.75/287; }
-  .card.land .card-media{ aspect-ratio:344.75/191; }
+  /* The frame's four media ratios, on its own 363px column. `tall` is the
+     portrait 363x453.82, `sq` the square, `land` the two wide crops (241 and
+     239 tall — folded into one ratio, 0.8% apart and indistinguishable), and
+     `icon` the 363x302 artwork card. */
+  .card.tall .card-media{ aspect-ratio:363/454; }
+  .card.sq   .card-media{ aspect-ratio:1/1; }
+  .card.land .card-media{ aspect-ratio:363/240; }
+  .card.icon .card-media{ aspect-ratio:363/302; }
   .card-face{
-    position:absolute; inset:0; background:var(--ph);
+    position:absolute; inset:0;
+    width:100%; height:100%; display:block;
+    object-fit:cover; object-position:center;
+    background:var(--ph);          /* holds the grey while the image loads */
     transition:transform .6s var(--ease-out-expo);
   }
   .card:hover .card-face{ transform:scale(1.04); }
@@ -365,77 +373,101 @@
          the bylines; "Creative" has no members in the frame yet, so that
          filter deals a random hand — see the script. -->
     <div class="post-grid" id="postGrid">
+      <a class="card sq reveal" href="#" data-cat="ai">
+        <div class="card-media"><img class="card-face" src="assets/thinking/01-brand-answers.png" alt="" loading="lazy" decoding="async"></div>
+        <h2>Your brand has answers: AI just can’t find them</h2>
+        <p class="excerpt">You don’t need to create a second universe of AI content. You just need to make the gold you already have accessible to AI.</p>
+        <p class="byline">By Louise | 17/08/06 | AI</p>
+      </a>
       <a class="card tall reveal" href="#" data-cat="culture">
-        <div class="card-media"><div class="card-face"></div></div>
+        <div class="card-media"><img class="card-face" src="assets/thinking/02-janelle.jpg" alt="" loading="lazy" decoding="async"></div>
         <h2>I am challenging: Janelle</h2>
         <p class="excerpt">Meet the challenging people who own The Frameworks. Janelle, our Senior Writer and Editor, encourages fellow Frameworkers to shake things up with their footwear and B2B brands to get in touch with their musical side.</p>
         <p class="byline">By Janelle | 18.05.26 | Culture</p>
       </a>
-      <a class="card land reveal" href="article.html" data-cat="ai">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>The Prompt: Are your brand guidelines ready to deliver behaviour?</h2>
-        <p class="excerpt">Sandra Peat spent 18 months researching how brands create meaning through behaviour. She tells us that most B2B companies are designing for a world that no longer exists.</p>
-        <p class="byline">Don Hoyt Gorman | 11/05/26 | AI</p>
-      </a>
       <a class="card land reveal" href="#" data-cat="ai">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>The Prompt: AI, ACL tears and building stronger, more resilient brands</h2>
-        <p class="excerpt">How do you future-proof your brand in an AI world? Senior writer Janelle Blasdel explores this question with a leap into skiing and a determination to never tear her ACL again.</p>
-        <p class="byline">By Janelle | 29.04.26 | AI</p>
+        <div class="card-media"><img class="card-face" src="assets/thinking/03-storytelling.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h2>Storytelling and imagination in the age of AI</h2>
+        <p class="excerpt">Once upon a time there was a creative strategist...</p>
+        <p class="byline">By Sophie | 27.03.26 | AI</p>
       </a>
       <a class="card tall reveal" href="#" data-cat="culture">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>I am challenging: Charlotte</h2>
-        <p class="excerpt">Meet the challenging people who own The Frameworks. Charlotte, our Senior Writer and Editor, dares brands to say less, not more – and reveals why she tries to look out for life's little absurdities.</p>
-        <p class="byline">By Charlotte | 31.03.26 | Culture</p>
-      </a>
-      <a class="card land reveal" href="#" data-cat="ai">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>The Prompt: AI; didn’t read. Why audiences are craving personality</h2>
-        <p class="excerpt">As AI changes how people view content, how should writers adapt? Our senior writer, Charlotte, speaks to Alys Key, a business and tech journalist, about how – and when – to stand out from the machines.</p>
-        <p class="byline">By Charlotte | 27.03.26 | AI</p>
-      </a>
-      <a class="card tall reveal" href="#" data-cat="culture">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>I am challenging: Rose</h2>
-        <p class="excerpt">Meet the challenging people who own The Frameworks. Rose, our Design Director, challenges herself to get back into drawing and for everyone to find joy in the small things.</p>
-        <p class="byline">By Rose | 24.03.26 | Culture</p>
-      </a>
-      <a class="card land reveal" href="#" data-cat="ai">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>The Prompt: Using AI to create a more accessible (and dynamic) digital future</h2>
-        <p class="excerpt">Welcome back to The Prompt, a series tackling all the big questions about building B2B brands in an AI world.</p>
-        <p class="byline">By Sergio | 17.03.26 | AI</p>
-      </a>
-      <a class="card mid reveal" href="#" data-cat="business">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>Imaginative businesses come out on top. Are you one of them?</h2>
-        <p class="excerpt">At The Frameworks, we know first-hand how valuable imagination is. In today’s climate of rapid transformation and AI, imaginative businesses come out on top.</p>
-        <p class="byline">By Ellie | 10.03.26 | Business</p>
-      </a>
-      <a class="card mid reveal" href="#" data-cat="ai">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>The Prompt: What does AI think of your brand? And why does it matter?</h2>
-        <p class="excerpt">The way people discover and experience brands is changing. Unlike traditional search where a range of responses appear, AI platforms give clear, authoritative answers.</p>
-        <p class="byline">By Charlotte | 04.03.26 | AI</p>
-      </a>
-      <a class="card tall reveal" href="#" data-cat="culture">
-        <div class="card-media"><div class="card-face"></div></div>
+        <div class="card-media"><img class="card-face" src="assets/thinking/04-ross.jpg" alt="" loading="lazy" decoding="async"></div>
         <h2>I am challenging: Ross</h2>
         <p class="excerpt">Meet the challenging people who own The Frameworks. Ross, our Design Director, challenges himself to slow down his creative process and the industry to give the next generation a chance.</p>
         <p class="byline">By Ross | 26.02.26 | Culture</p>
       </a>
-      <a class="card mid reveal" href="#" data-cat="ai">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>The Prompt: Why brand matters more than ever in an AI world</h2>
-        <p class="excerpt">Welcome to The Prompt, a series tackling all the big questions about building B2B brands in an AI world.</p>
+      <a class="card sq reveal" href="#" data-cat="ai">
+        <div class="card-media"><img class="card-face" src="assets/thinking/05-moving-target.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h2>Your audience isn’t a persona it’s a moving target</h2>
+        <p class="excerpt">The supply of brand knowledge is changing – but so is the demand. Brands must understand the evolving questions, needs and cares of the people they want to get close to.</p>
         <p class="byline">By Louise | 24.02.26 | AI</p>
       </a>
-      <a class="card land reveal" href="#" data-cat="strategy">
-        <div class="card-media"><div class="card-face"></div></div>
-        <h2>Why it pays to play in B2B</h2>
-        <p class="excerpt">Games aren’t just for fun – they can shape a serious engagement strategy.</p>
-        <p class="byline">By Rose | 03.02.26 | Strategy</p>
+      <a class="card tall reveal" href="#" data-cat="culture">
+        <div class="card-media"><img class="card-face" src="assets/thinking/06-rose.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h2>I am challenging: Rose</h2>
+        <p class="excerpt">Meet the challenging people who own The Frameworks. Rose, our Design Director, challenges herself to get back into drawing and for everyone to find joy in the small things.</p>
+        <p class="byline">By Rose | 24.03.26 | Culture</p>
+      </a>
+      <a class="card sq reveal" href="#" data-cat="strategy">
+        <div class="card-media"><img class="card-face" src="assets/thinking/07-gameplan.png" alt="" loading="lazy" decoding="async"></div>
+        <h2>A gameplan for success</h2>
+        <p class="excerpt">It’s been an incredible summer of sport, from the Euros to the Olympics. For B2B brands, this offers a unique opportunity to explore human stories – and capture hearts and minds.</p>
+        <p class="byline">By Ellie | 17.03.26 | Strategy</p>
+      </a>
+      <a class="card tall reveal" href="#" data-cat="ai">
+        <div class="card-media"><img class="card-face" src="assets/thinking/08-being-known.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h2>Being known is no longer enough in an AI world</h2>
+        <p class="excerpt">In the early days of the internet, the idea that anyone would buy something virtually felt inconceivable. To part with your hard-earned cash, you needed to see and feel a product for yourself, or build a personal relationship with a salesperson.</p>
+        <p class="byline">By Ellie | 31.03.26 | AI</p>
+      </a>
+      <a class="card sq reveal" href="#" data-cat="culture">
+        <div class="card-media"><img class="card-face" src="assets/thinking/09-moments-calm.png" alt="" loading="lazy" decoding="async"></div>
+        <h2>Different ways to find moments of calm</h2>
+        <p class="excerpt">From a short walk outside to a couple of minutes spent learning something new, these are some of the little things we do each day.</p>
+        <p class="byline">By Rose | 03.02.26 | Culture</p>
+      </a>
+      <a class="card land reveal" href="#" data-cat="ai">
+        <div class="card-media"><img class="card-face" src="assets/thinking/10-uae.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h2>Putting AI first: how the UAE is transforming conversations, brands and societies</h2>
+        <p class="excerpt">Ben Bush reflects on an inspiring week at GITEX GLOBAL, where 200,000 people descended on Dubai from more than 180 countries. And all of them wanted to talk about AI.</p>
+        <p class="byline">By Ben | 24.02.26 | AI</p>
+      </a>
+      <a class="card tall reveal" href="#" data-cat="ai">
+        <div class="card-media"><img class="card-face" src="assets/thinking/11-cracking-code.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h2>Cracking the code</h2>
+        <p class="excerpt">When you’re faced with a jaw-dropping deadline for a show-stopping digital project, the heat is on.</p>
+        <p class="byline">By Sergio | 24.02.26 | AI</p>
+      </a>
+      <a class="card sq reveal" href="article.html" data-cat="ai">
+        <div class="card-media"><img class="card-face" src="assets/thinking/12-what-ai-thinks.png" alt="" loading="lazy" decoding="async"></div>
+        <h2>The Prompt: What does AI think of your brand? And why does it matter?</h2>
+        <p class="excerpt">The way people discover and experience brands is changing. Unlike traditional search where a range of responses appear, AI platforms give clear, authoritative answers.</p>
+        <p class="byline">By Charlotte | 04.03.26 | AI</p>
+      </a>
+      <a class="card icon reveal" href="#" data-cat="business">
+        <div class="card-media"><img class="card-face" src="assets/thinking/13-imaginative.png" alt="" loading="lazy" decoding="async"></div>
+        <h2>Imaginative businesses come out on top. Are you one of them?</h2>
+        <p class="excerpt">At The Frameworks, we know first-hand how valuable imagination is. In today’s climate of rapid transformation and AI, imaginative businesses come out on top.</p>
+        <p class="byline">By Ellie | 10.03.26 | Business</p>
+      </a>
+      <a class="card tall reveal" href="#" data-cat="business">
+        <div class="card-media"><img class="card-face" src="assets/thinking/14-perfectionism.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h2>How to avoid perfectionism paralysis</h2>
+        <p class="excerpt">Can our work ever really be “perfect” – and does it matter? Sophie navigates the doubts, debates, tricks and triumphs that make up a standard day in the life of a creative strategist.</p>
+        <p class="byline">By dON | 10.03.26 | Business</p>
+      </a>
+      <a class="card tall reveal" href="#" data-cat="business">
+        <div class="card-media"><img class="card-face" src="assets/thinking/15-new-chapter.png" alt="" loading="lazy" decoding="async"></div>
+        <h2>A new chapter and the new frameworker</h2>
+        <p class="excerpt">The region had been on our radar as a hotbed of tech innovation for some time.</p>
+        <p class="byline">By Ben | 10.03.26 | Business</p>
+      </a>
+      <a class="card sq reveal" href="#" data-cat="ai">
+        <div class="card-media"><img class="card-face" src="assets/thinking/16-missing-metric.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h2>Imagination: the missing metric in business strategy</h2>
+        <p class="excerpt">Imagine an alternative world where humans were incapable of conceptual thought.</p>
+        <p class="byline">By Louise | 24.02.26 | AI</p>
       </a>
     </div>
   </section>

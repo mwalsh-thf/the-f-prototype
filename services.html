@@ -300,9 +300,21 @@
    * ------------------------------------------------------------------ */
   .awards{ padding:100px var(--pad-x) 60px; }
   .awards .statement{ margin-bottom:62px; }
+  /* The table is set to the footer's columns, so the two read as one grid
+     down the page rather than two systems that happen to share a margin.
+     The footer is four flex children at `flex:1 1 0` with a 30px gap, so a
+     footer column is F = (W - 90)/4, i.e. `25% - 22.5px` of the same content
+     width the table spans (both sit on --pad-x).
+     Project / Awarding body / Category take one F each. Level and Year share
+     the fourth, so they have to satisfy c4 + 30 + c5 = F — Year is given a
+     flat 45px (ample for four digits at this size) and Level takes the rest,
+     F - 30 - 45 = 25% - 97.5px.
+     The first three are left as 1fr rather than written out: once the last
+     two tracks are fixed, the space left over is exactly 3F, so they resolve
+     to F on their own and stay correct if the cap or the inset ever moves. */
   .awards-head, .award-row{
     display:grid;
-    grid-template-columns:1.4fr 1.2fr 1.4fr .55fr .45fr;
+    grid-template-columns:1fr 1fr 1fr calc(25% - 97.5px) 45px;
     column-gap:30px; align-items:baseline;
   }
   .awards-head button{

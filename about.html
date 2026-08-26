@@ -19,9 +19,9 @@
    * from article.html deliberately.
    *
    * ⚠️ This page's ground is #DFDFDF — the one page that isn't off-white.
-   * ⚠️ All photography (headshots + the B&W carousel) is placeholder grey
-   * until real imagery arrives. Headshot slots are .tm-photo; carousel
-   * slides are .strip-slide.
+   * All photography is real, pulled from Figma 2896:11715: the 21 headshots
+   * per-card into assets/team/, the 13 carousel slides into assets/strip/.
+   * The strip sources are colour in Figma — the B&W is baked into the files.
    * ==================================================================== */
   :root{
     --black:#272727;
@@ -165,7 +165,11 @@
     overflow:hidden; position:relative;
   }
   .tm-face{
-    position:absolute; inset:0; background:var(--ph);
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    /* Sources are square; cover keeps the crop honest if one ever isn't. */
+    object-fit:cover; display:block;
+    background:var(--ph);          /* holds the grey while the JPEG loads */
     transition:transform .6s var(--ease-out-expo), filter .6s ease;
   }
   .tm:hover .tm-face{ transform:scale(1.05); filter:brightness(.94); }
@@ -201,7 +205,18 @@
     font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
   }
   .owned-body .lines .gap{ display:block; height:1.2em; }
-  .owned-body img{ width:182px; height:auto; }
+  /* EOA logo — Figma draws it 182 x 76.632 on the 1240 content area.
+   * aspect-ratio pins the shape exactly (the width/height attributes round
+   * 76.632 to 77, which is a visibly different box once it scales up), and
+   * the width tracks the content area at Figma's own 182/1240 ratio so the
+   * mark grows with the page instead of staying pinned at 1440's size.
+   * max() floors it at Figma's 182px, so it only ever scales up.
+   * --sbw is subtracted for the same reason the full-bleed breakouts do it:
+   * 100vw counts the scrollbar gutter and the content box doesn't. */
+  .owned-body img{
+    width:max(182px, calc((min(100vw - var(--sbw), var(--page-max)) - 2 * var(--pad-x)) * 0.14677));
+    height:auto; aspect-ratio:182 / 76.632;
+  }
   .owned-body .more{
     font-size:var(--fs-details); letter-spacing:-.026em;
     color:var(--ink-footer);
@@ -241,11 +256,24 @@
   }
   .strip-slide{
     height:380px; flex:none;
-    background:var(--ph);
+    background:var(--ph);          /* holds the grey while the JPEG loads */
+    overflow:hidden;
   }
-  /* ⚠️ placeholder widths echo the frame's own rhythm of wide/square/tall
-     crops — swap each div for an <img> of the same height when the real
-     B&W photography lands */
+  /* The slide holds the crop; the image fills it, centred.
+     ⚠️ Figma's codegen labels several of these fills `object-bottom`. That
+     hint is wrong — anchoring to the bottom drops the subject out of frame
+     on the portrait sources (slide 3 shows bare floor). Figma's own render
+     of each node is centred, which is what `cover` + `center` reproduces.
+     Verified slide by slide against the frame; don't reinstate per-slide
+     anchors from the codegen without checking the render first.
+     The B&W is baked into the files, not a CSS filter: the track drifts
+     continuously, and compositing grayscale() over 26 large images every
+     frame is work the GPU doesn't need to repeat. */
+  .strip-slide img{
+    width:100%; height:100%; display:block;
+    object-fit:cover; object-position:center;
+  }
+  /* widths are the frame's own, per slide */
   .strip-slide.w-lg{ width:507px; }
   .strip-slide.w-sq{ width:380px; }
   .strip-slide.w-md{ width:304px; }
@@ -432,27 +460,27 @@
        Note: the Figma frame's Terry Brissenden card reads "Challenge Ross
        to…" — corrected to Terry here; flag if that was deliberate. -->
   <section class="team" aria-label="The team">
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Mayuri Premdjee</span><span>Account Director</span></p><div class="tm-ask"><p class="q">Challenge Mayuri to…</p><p>Navigate your challenges with ease.<br>Give you the ultimate introduction to crafting.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Terry Brissenden</span><span>Founder</span></p><div class="tm-ask"><p class="q">Challenge Terry to…</p><p>Make you see things differently.<br>A game of poker.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Ross Sweetmore</span><span>Design Director</span></p><div class="tm-ask"><p class="q">Challenge Ross to…</p><p>Suggest your next holiday destination.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Ben Bush</span><span>Partner and Head of Strategy</span></p><div class="tm-ask"><p class="q">Challenge Ben to…</p><p>Come up with your next big idea.<br>Set you a cryptic crossword.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Louise Sheeran</span><span>Content Director</span></p><div class="tm-ask"><p class="q">Challenge Louise to…</p><p>Design your brand voice.<br>Recommend a great music documentary.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Sharon Booth</span><span>Partner, Finance</span></p><div class="tm-ask"><p class="q">Challenge Sharon to…</p><p>Crunch the numbers.<br>Teach you how to ride a horse.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Nick Caruana</span><span>Technical Account Director</span></p><div class="tm-ask"><p class="q">Challenge Nick to…</p><p>Make your technical project flow.<br>Show you his volleyball jump serve.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Sheri Brissenden</span><span>Partner, HR</span></p><div class="tm-ask"><p class="q">Challenge Sheri to…</p><p>Suggest your next read.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Chris Beavis</span><span>Partner, BD and Digital</span></p><div class="tm-ask"><p class="q">Challenge Chris to…</p><p>Navigate his way out of an escape room.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Sergio Agosti</span><span>Lead Developer</span></p><div class="tm-ask"><p class="q">Challenge Sergio to…</p><p>Code more efficiently with AI.<br>Teach you the Karate basics.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Ellie Hennessey</span><span>Strategist and Insights Lead</span></p><div class="tm-ask"><p class="q">Challenge Ellie to…</p><p>Change your perspective on your business.<br>Create your next running route.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Myles Walsh</span><span>Middleweight Designer</span></p><div class="tm-ask"><p class="q">Challenge Myles to…</p><p>Get you Glasto tickets.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>James Trowman</span><span>Partner and General Manager</span></p><div class="tm-ask"><p class="q">Challenge James to…</p><p>Take a run at a black slope.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Sophie Meadows</span><span>Creative Strategist</span></p><div class="tm-ask"><p class="q">Challenge Sophie to…</p><p>Recommend your next culture hit.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Clive Stevens</span><span>Chairman</span></p><div class="tm-ask"><p class="q">Challenge Clive to…</p><p>Offer invaluable business advice.<br>Give you a crash course in stamps.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Daisy Lockheart</span><span>Senior Account Director</span></p><div class="tm-ask"><p class="q">Challenge Daisy to…</p><p>Get your brand noticed.<br>Show you her crow pose.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Charlotte Irwin</span><span>Senior Writer and Editor</span></p><div class="tm-ask"><p class="q">Challenge Charlotte to…</p><p>Tell your brand’s story with heart.<br>Complete a word game in record time.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Rose Stewart</span><span>Design Director</span></p><div class="tm-ask"><p class="q">Challenge Rose to…</p><p>Design a campaign with heart.<br>Name the films you need to catch on the big screen.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>David Alexander</span><span>Creative Director and Head of Studio</span></p><div class="tm-ask"><p class="q">Challenge David to…</p><p>Show you how AI can supercharge design.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Janelle Blasdel</span><span>Senior Writer and Editor</span></p><div class="tm-ask"><p class="q">Challenge Janelle to…</p><p>Craft your brand narrative.<br>Hop onstage for an improv set.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><div class="tm-face"></div></div><p class="tm-name"><span>Don Hoyt Gorman</span><span>Strategy Director</span></p><div class="tm-ask"><p class="q">Challenge Don to…</p><p>Reinvent your strategy.<br>Give you the low-down on all things sailing.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/mayuri-premdjee.jpg" alt="" width="293" height="293" loading="eager" fetchpriority="high" decoding="async"></div><p class="tm-name"><span>Mayuri Premdjee</span><span>Account Director</span></p><div class="tm-ask"><p class="q">Challenge Mayuri to…</p><p>Navigate your challenges with ease.<br>Give you the ultimate introduction to crafting.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/terry-brissenden.jpg" alt="" width="640" height="640" loading="eager" fetchpriority="high" decoding="async"></div><p class="tm-name"><span>Terry Brissenden</span><span>Founder</span></p><div class="tm-ask"><p class="q">Challenge Terry to…</p><p>Make you see things differently.<br>A game of poker.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/ross-sweetmore.jpg" alt="" width="293" height="293" loading="eager" fetchpriority="high" decoding="async"></div><p class="tm-name"><span>Ross Sweetmore</span><span>Design Director</span></p><div class="tm-ask"><p class="q">Challenge Ross to…</p><p>Suggest your next holiday destination.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/ben-bush.jpg" alt="" width="585" height="585" loading="eager" fetchpriority="high" decoding="async"></div><p class="tm-name"><span>Ben Bush</span><span>Partner and Head of Strategy</span></p><div class="tm-ask"><p class="q">Challenge Ben to…</p><p>Come up with your next big idea.<br>Set you a cryptic crossword.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/louise-sheeran.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Louise Sheeran</span><span>Content Director</span></p><div class="tm-ask"><p class="q">Challenge Louise to…</p><p>Design your brand voice.<br>Recommend a great music documentary.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/sharon-booth.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Sharon Booth</span><span>Partner, Finance</span></p><div class="tm-ask"><p class="q">Challenge Sharon to…</p><p>Crunch the numbers.<br>Teach you how to ride a horse.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/nick-caruana.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Nick Caruana</span><span>Technical Account Director</span></p><div class="tm-ask"><p class="q">Challenge Nick to…</p><p>Make your technical project flow.<br>Show you his volleyball jump serve.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/sheri-brissenden.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Sheri Brissenden</span><span>Partner, HR</span></p><div class="tm-ask"><p class="q">Challenge Sheri to…</p><p>Suggest your next read.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/chris-beavis.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Chris Beavis</span><span>Partner, BD and Digital</span></p><div class="tm-ask"><p class="q">Challenge Chris to…</p><p>Navigate his way out of an escape room.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/sergio-agosti.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Sergio Agosti</span><span>Lead Developer</span></p><div class="tm-ask"><p class="q">Challenge Sergio to…</p><p>Code more efficiently with AI.<br>Teach you the Karate basics.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/ellie-hennessey.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Ellie Hennessey</span><span>Strategist and Insights Lead</span></p><div class="tm-ask"><p class="q">Challenge Ellie to…</p><p>Change your perspective on your business.<br>Create your next running route.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/myles-walsh.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Myles Walsh</span><span>Middleweight Designer</span></p><div class="tm-ask"><p class="q">Challenge Myles to…</p><p>Get you Glasto tickets.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/james-trowman.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>James Trowman</span><span>Partner and General Manager</span></p><div class="tm-ask"><p class="q">Challenge James to…</p><p>Take a run at a black slope.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/sophie-meadows.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Sophie Meadows</span><span>Creative Strategist</span></p><div class="tm-ask"><p class="q">Challenge Sophie to…</p><p>Recommend your next culture hit.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/clive-stevens.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Clive Stevens</span><span>Chairman</span></p><div class="tm-ask"><p class="q">Challenge Clive to…</p><p>Offer invaluable business advice.<br>Give you a crash course in stamps.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/daisy-lockheart.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Daisy Lockheart</span><span>Senior Account Director</span></p><div class="tm-ask"><p class="q">Challenge Daisy to…</p><p>Get your brand noticed.<br>Show you her crow pose.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/charlotte-irwin.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Charlotte Irwin</span><span>Senior Writer and Editor</span></p><div class="tm-ask"><p class="q">Challenge Charlotte to…</p><p>Tell your brand’s story with heart.<br>Complete a word game in record time.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/rose-stewart.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Rose Stewart</span><span>Design Director</span></p><div class="tm-ask"><p class="q">Challenge Rose to…</p><p>Design a campaign with heart.<br>Name the films you need to catch on the big screen.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/david-alexander.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>David Alexander</span><span>Creative Director and Head of Studio</span></p><div class="tm-ask"><p class="q">Challenge David to…</p><p>Show you how AI can supercharge design.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/janelle-blasdel.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Janelle Blasdel</span><span>Senior Writer and Editor</span></p><div class="tm-ask"><p class="q">Challenge Janelle to…</p><p>Craft your brand narrative.<br>Hop onstage for an improv set.</p></div></div>
+    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/don-hoyt-gorman.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Don Hoyt Gorman</span><span>Strategy Director</span></p><div class="tm-ask"><p class="q">Challenge Don to…</p><p>Reinvent your strategy.<br>Give you the low-down on all things sailing.</p></div></div>
   </section>
 
   <section class="owned">
@@ -464,22 +492,25 @@
     </div>
   </section>
 
-  <!-- ⚠️ Placeholder carousel — drifts on its own, grab to scrub. Swap the
-       grey slides for the real B&W photography (heights 380, widths per
-       slide) when it arrives. -->
+  <!-- The B&W strip. 13 slides in the frame's own order and widths; the
+       script duplicates the set once for the seamless wrap. Widths live on
+       the slide, not the img, so scrollWidth measures right before the
+       photographs have loaded. -->
   <section class="strip-wrap" id="strip" aria-label="Life at The Frameworks">
     <div class="strip" id="stripTrack">
-      <div class="strip-slide w-lg"></div>
-      <div class="strip-slide w-sq"></div>
-      <div class="strip-slide w-sq"></div>
-      <div class="strip-slide w-lg"></div>
-      <div class="strip-slide w-xs"></div>
-      <div class="strip-slide w-lg"></div>
-      <div class="strip-slide w-nr"></div>
-      <div class="strip-slide w-wd"></div>
-      <div class="strip-slide w-nr"></div>
-      <div class="strip-slide w-md"></div>
-      <div class="strip-slide w-sq"></div>
+      <div class="strip-slide w-lg"><img src="assets/strip/01-img7944.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-sq"><img src="assets/strip/02-img1936.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-sq"><img src="assets/strip/03-img4016.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-lg"><img src="assets/strip/04-img7938.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-xs"><img src="assets/strip/05-img6207.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-lg"><img src="assets/strip/06-chris-group.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-nr"><img src="assets/strip/07-img6526.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-wd"><img src="assets/strip/08-img8050.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-nr"><img src="assets/strip/09-img0618.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-nr"><img src="assets/strip/10-img4249.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-md"><img src="assets/strip/11-img6384.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-sq"><img src="assets/strip/12-photo2023.jpg" alt="" loading="lazy" decoding="async"></div>
+      <div class="strip-slide w-lg"><img src="assets/strip/13-image81.jpg" alt="" loading="lazy" decoding="async"></div>
     </div>
   </section>
 

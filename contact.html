@@ -30,7 +30,7 @@
     --line:#5A5A5A;           /* field underlines */
 
     --nav-h:clamp(90px,17vh,140px);
-    --page-max:1900px;
+    --page-max:2000px;
     --pad-x:100px;
 
     --fs-h3:clamp(26px,2.78vw,40px);   /* everything on this page is H3 — 40 at 1440 */
@@ -94,7 +94,7 @@
   .contact{
     display:grid; grid-template-columns:1fr 1fr; column-gap:30px;
     align-items:start;
-    padding:60px var(--pad-x) 100px;
+    padding:120px var(--pad-x) 100px;   /* top doubled from 60px, per request */
   }
   .contact-lead{
     font-weight:300;
@@ -207,7 +207,7 @@
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .contact{ padding-top:32px; padding-bottom:64px; }
+    .contact{ padding-top:64px; padding-bottom:64px; }   /* doubled from 32px, matching the desktop change */
     .contact-form{ margin-top:40px; gap:24px; }
     .field-row{ flex-direction:column; gap:24px; }
     .form-foot{ flex-direction:column; align-items:flex-start; gap:20px; }

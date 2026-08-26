@@ -32,7 +32,7 @@
     --ph:#CDCDCD;             /* placeholders sit a step darker than the ground */
 
     --nav-h:clamp(90px,17vh,140px);
-    --page-max:1900px;
+    --page-max:2000px;
     --pad-x:100px;
 
     --fs-h1:clamp(38px,5.97vw,86px);   /* the big masthead — 86 at 1440 */
@@ -180,7 +180,19 @@
    * when the scroll position passes one full set-width it snaps back by
    * exactly that width, which is invisible.
    * ------------------------------------------------------------------ */
-  .strip-wrap{ overflow:hidden; padding:50px 0; cursor:grab; }
+  /* Full-bleed: breaks out of the 2000px capped, centred body regardless of
+     viewport width. width:100vw + margin-inline:calc(50% - 50vw) works
+     because the 50% resolves against .strip-wrap's containing block (the
+     capped, centred body content box) — that value exactly cancels the
+     auto-margin the body uses to centre itself, so the two negative margins
+     pull the element flush to the true viewport edges rather than the
+     body's capped ones. Only holds while .strip-wrap has no padded ancestor
+     between it and body (there isn't one) and no ancestor clips overflow-x. */
+  .strip-wrap{
+    overflow:hidden; padding:50px 0; cursor:grab;
+    width:100vw;
+    margin-inline:calc(50% - 50vw);
+  }
   .strip-wrap.dragging{ cursor:grabbing; }
   .strip{
     display:flex; gap:30px; width:max-content;
@@ -423,7 +435,7 @@
 
   <section class="challenge reveal">
     <p>Fancy a challenge?<br>
-      <a href="mailto:hello@theframeworks.com">Let’s talk<svg class="arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
+      <a href="contact.html">Let’s talk<svg class="arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
     </p>
   </section>
 

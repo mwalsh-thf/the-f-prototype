@@ -200,7 +200,17 @@
   @supports (text-box: trim-both cap alphabetic){
     .statement{ text-box:trim-both cap alphabetic; }
   }
-  .owned-body{ max-width:430px; display:flex; flex-direction:column; gap:49px; }
+  /* ⚠️ The 430px cap belongs on the text, NOT on the flex item.
+   * Figma splits this row into two equal 679 halves on its 1388 content area
+   * (gap 30), with a 430-wide block left-aligned at the top of the right one.
+   * Putting `max-width:430px` on `.owned-body` itself looks equivalent and
+   * isn't: it's a `flex:1 1 0` item, so the clamped 175px doesn't stay put —
+   * flexbox redistributes it to the only other item, and the heading grew to
+   * 780px and shunted the body from 51% of the content area across to 65%.
+   * Capping the paragraphs instead leaves both halves at a true 1fr and the
+   * body block sitting where the frame draws it. */
+  .owned-body{ display:flex; flex-direction:column; gap:49px; }
+  .owned-body > p{ max-width:430px; }
   .owned-body .lines{
     font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
   }

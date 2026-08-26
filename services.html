@@ -29,6 +29,7 @@
     --rule:#E3E1DE;           /* awards hairlines */
 
     --nav-h:clamp(90px,17vh,140px);
+    --logo-h:52.44px;         /* the nav mark; the header balance solves against it */
     --page-max:2000px;
     --pad-x:100px;
 
@@ -89,7 +90,7 @@
     transition:transform .38s var(--ease-out-expo);
   }
   .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
-  .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
+  .logo{width:var(--logo-h);height:var(--logo-h);display:block;margin-left:-13.11px;flex:none}
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
     fill:var(--ink-footer);
@@ -117,10 +118,26 @@
   /* ------------------------------------------------------------------ *
    * Header — statement + intro on the 4-col grid
    * ------------------------------------------------------------------ */
+  /* The headline sits in equal *visible* space top and bottom.
+   *
+   * The subtlety is that --nav-h (140) is the nav's box, not its ink: the
+   * mark is --logo-h tall and centred in it, so it stops (nav-h - logo-h)/2
+   * short of the box edge — 43.8px of empty bar. Padding the header by a
+   * flat 100px top and bottom therefore *looks* lopsided, 143.8 above the
+   * headline against 100 below, even though both paddings read 100.
+   * (Figma has the same asymmetry: nav box 140, logo ending at 90, cap at
+   * 240, icons at 460 — 150 of air above, 100 below.)
+   *
+   * So the bottom is padded to match what the eye actually sees above:
+   * 100px plus the nav's own empty tail. --head-air resolves to 143.78 at
+   * the desktop nav height, and re-solves on its own if either token moves.
+   * The headline is cap-trimmed, so its box edges are its ink edges and the
+   * measurement holds. */
   .page-head{
+    --head-air:calc(100px + (var(--nav-h) - var(--logo-h)) / 2);
     display:grid; grid-template-columns:repeat(4,1fr); column-gap:30px;
     align-items:start;
-    padding:calc(var(--nav-h) + 100px) var(--pad-x) 100px;
+    padding:calc(var(--nav-h) + 100px) var(--pad-x) var(--head-air);
   }
   .statement{
     font-weight:300;
@@ -352,12 +369,15 @@
       --pad-x:clamp(16px,5.5vw,24px);
       --fs-body:16px;
       --fs-details:13px;
+      --logo-h:40px;
     }
-    .logo{ width:40px; height:40px; margin-left:-10px; }
+    .logo{ margin-left:-10px; }
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .page-head{ display:block; padding-top:calc(var(--nav-h) + 32px); padding-bottom:56px; }
+    /* same balance on the mobile rhythm — see --head-air above */
+    .page-head{ display:block; padding-top:calc(var(--nav-h) + 32px);
+      padding-bottom:calc(32px + (var(--nav-h) - var(--logo-h)) / 2); }
     .page-head .intro{ margin-top:24px; max-width:340px; }
     .services{ grid-template-columns:1fr; row-gap:48px; padding-bottom:64px; }
     .service{ padding-right:0; }

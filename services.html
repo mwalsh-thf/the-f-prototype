@@ -158,7 +158,10 @@
    * ------------------------------------------------------------------ */
   .services{
     display:grid; grid-template-columns:repeat(4,1fr);
-    column-gap:30px; row-gap:60px;
+    column-gap:30px;
+    /* Figma's row gap here is 60. Opened up on Myles' note that the rows sat
+       too close; 100 puts it on the page's own 100px rhythm. Tune here. */
+    row-gap:100px;
     padding:0 var(--pad-x) 100px;
   }
   .service{
@@ -166,13 +169,30 @@
     min-height:277px;
     padding-right:30px;
   }
-  /* the icon zone flexes so every title in a row sits on the same line,
-     whatever the copy above it does */
-  .s-icon{ flex:1 0 auto; min-height:140px; }
+  /* ⚠️ The icon zone is a FIXED 140 (Figma's own: a 100 mark plus 40 of air),
+     deliberately not a flex grower.
+     It used to be `flex:1 0 auto`, which absorbed each card's leftover height
+     and pushed its text to the card's *bottom*. Because a grid row stretches
+     every card to the tallest, that bottom-aligned the copy — so a card with
+     a one-line title got a 193px icon zone against its neighbour's 140, and
+     the descriptions in one row started at 254 / 232 / 254 / 254. Nothing
+     shared a line. Holding the zone at 140 starts every title at the same y.
+     Note this is where the build parts company with the frame: Figma lets the
+     description follow its own title (y=80 after a two-line title, y=49 after
+     a one-line one), so its descriptions do NOT share a line. Myles asked for
+     them to, which is what the h2 min-height below buys. */
+  .s-icon{ flex:none; height:140px; }
   .s-icon img{ width:100px; height:100px; }
   .service h2{
     font-weight:300;
     font-size:var(--fs-h4); line-height:1.15; letter-spacing:-.02em;
+    /* Reserve two lines whatever the title runs to, so every description in
+       the grid starts on the same line. 2.3em = 2 x the 1.15 line-height, in
+       em so it tracks --fs-h4 rather than going stale at one breakpoint.
+       A three-line title would push its own description down and break the
+       row; none of the ten runs to three at any width, but that is the
+       constraint to re-check if the copy grows. */
+    min-height:2.3em;
     margin-bottom:30px;
   }
   .service p{

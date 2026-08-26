@@ -48,6 +48,17 @@
 
     /* --- motion --- */
     --ease-out-expo:cubic-bezier(.16,1,.3,1);
+
+    /* --- the reveal ---
+       One entrance for the whole site. Slow and long-travelled on purpose:
+       at 1.1s over 44px the move is legible as a glide rather than a pop,
+       which is the whole difference between "animated" and "premium". The
+       curve is the same ease-out every other transition on the site uses,
+       so nothing arrives on a different feel. --reveal-stagger is mirrored
+       in the script (REVEAL_STAGGER) — change one and change the other. */
+    --reveal-dur:1.1s;
+    --reveal-shift:44px;
+    --reveal-stagger:.13s;   /* load-in only; scroll reveals stagger in JS */
     --ease-in-expo:cubic-bezier(.7,0,.84,0);
   }
 
@@ -417,15 +428,29 @@
   .card.stack .card-meta{ display:block }
   .card.stack .card-tag{ margin-top:10px }
 
-  /* cards lift in as they arrive; .in is added by an IntersectionObserver,
-     and the left card of each row is given a head start over the right */
-  .reveal{
-    opacity:0; transform:translateY(28px);
-    transition:opacity .8s var(--ease-out-expo), transform .8s var(--ease-out-expo);
+  /* ------------------------------------------------------------------ *
+   * Reveal — the site's one entrance
+   *
+   * Everything that arrives on scroll uses this, on every page: a slow
+   * glide in from the left. translate3d rather than translateX so the
+   * element sits on its own compositor layer for the whole move — a long,
+   * slow translate is exactly where a non-composited transform starts to
+   * step on weaker hardware.
+   *
+   * --d carries the left-to-right stagger and is set per element by the
+   * observer in the script; see revealObserver there for how the cascade
+   * is ordered.
+   * ------------------------------------------------------------------ */
+  .js .reveal{
+    opacity:0;
+    transform:translate3d(calc(var(--reveal-shift) * -1), 0, 0);
+    transition:opacity var(--reveal-dur) var(--ease-out-expo),
+               transform var(--reveal-dur) var(--ease-out-expo);
+    transition-delay:var(--d, 0ms);
   }
-  .reveal.in{ opacity:1; transform:none; }
+  .js .reveal.in{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
-    .reveal{ opacity:1; transform:none; transition:none }
+    .js .reveal{ opacity:1; transform:none; transition:none }
   }
 
   /* ------------------------------------------------------------------ *
@@ -967,6 +992,12 @@
 <script>
 (() => {
   "use strict";
+
+  /* Opt the reveal styles in only now that the script is definitely running.
+     Set before first paint (this script is at the end of the body), so
+     nothing flashes in and then hides. Without it a blocked or broken script
+     would leave every .reveal on the page permanently invisible. */
+  document.documentElement.classList.add("js");
 
   const STEP    = 100;                // grid step in px — half a 200px cell (see KEYS below)
   const NSTATES = 5;                  // Clarity / Proximity / Imagination / Empathy / Momentum
@@ -1546,17 +1577,38 @@
    * document. The stagger is per row — index within the row, not the page —
    * so each row plays the same left-then-right beat as it arrives.
    * ------------------------------------------------------------------ */
-  const REVEAL_STAGGER = 140;   // ms between the left card and the right one
+  /* ---- reveal ----
+     One entrance for the whole site: elements glide in from the left as
+     they arrive.
+
+     The stagger is computed per *visual row*, not per observer batch:
+     arrivals are grouped by their top edge, then ordered by their left
+     edge, so the cascade always reads left-to-right however many elements
+     the observer happens to report at once. Indexing the batch instead
+     would keep accumulating delay down a long grid — fast-scroll a 21-card
+     page and the last one would sit still for seconds before appearing.
+     boundingClientRect comes free with the entry, so grouping costs no
+     extra layout work. */
+  const REVEAL_STAGGER = 130;   // ms between neighbours in a row; mirrors --reveal-stagger
+  const ROW_TOLERANCE  = 40;    // px of top-edge drift still counted as the same row
   const revealObserver = new IntersectionObserver((entries, obs) => {
+    const rows = new Map();
     for (const entry of entries){
       if (!entry.isIntersecting) continue;
-      const card = entry.target;
-      const row  = card.closest(".work-row");
-      const i    = row ? [...row.children].indexOf(card) : 0;
-      setTimeout(() => card.classList.add("in"), i * REVEAL_STAGGER);
-      obs.unobserve(card);      // one-shot; it shouldn't replay on the way back
+      const box = entry.boundingClientRect;
+      const key = Math.round(box.top / ROW_TOLERANCE);
+      if (!rows.has(key)) rows.set(key, []);
+      rows.get(key).push({ el: entry.target, x: box.left });
+      obs.unobserve(entry.target);      // one-shot; it shouldn't replay on the way back
     }
-  }, { rootMargin: "0px 0px -12% 0px", threshold: 0.15 });
+    for (const items of rows.values()){
+      items.sort((a, b) => a.x - b.x);
+      items.forEach(({ el }, i) => {
+        el.style.setProperty("--d", (i * REVEAL_STAGGER) + "ms");
+        el.classList.add("in");
+      });
+    }
+  }, { rootMargin: "0px 0px -12% 0px", threshold: 0.1 });
   document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
 
   /* ------------------------------------------------------------------ *

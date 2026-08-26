@@ -19,9 +19,10 @@
    * from article.html deliberately.
    *
    * ⚠️ This page's ground is #DFDFDF — the one page that isn't off-white.
-   * All photography is real, pulled from Figma 2896:11715: the 21 headshots
-   * per-card into assets/team/, the 13 carousel slides into assets/strip/.
-   * The strip sources are colour in Figma — the B&W is baked into the files.
+   * All photography is real. The 21 headshots were pulled per-card from
+   * Figma 2896:11715 into assets/team/. The 13 carousel slides in
+   * assets/strip/ are Myles' own colour-graded exports, pre-cropped to the
+   * slide ratios — not the Figma renders, and not to be re-graded in code.
    * ==================================================================== */
   :root{
     --black:#272727;
@@ -270,15 +271,21 @@
     overflow:hidden;
   }
   /* The slide holds the crop; the image fills it, centred.
-     ⚠️ Figma's codegen labels several of these fills `object-bottom`. That
-     hint is wrong — anchoring to the bottom drops the subject out of frame
-     on the portrait sources (slide 3 shows bare floor). Figma's own render
-     of each node is centred, which is what `cover` + `center` reproduces.
-     Verified slide by slide against the frame; don't reinstate per-slide
-     anchors from the codegen without checking the render first.
-     The B&W is baked into the files, not a CSS filter: the track drifts
-     continuously, and compositing grayscale() over 26 large images every
-     frame is work the GPU doesn't need to repeat. */
+     The 13 files are Myles' own colour-graded exports, supplied already
+     cropped to each slide's exact aspect ratio at 3x (1140 = 380 x 3) and
+     resampled here to 2x. Because the ratios match to within a rounding
+     hair, `cover` never actually crops — it's kept as insurance against a
+     future replacement whose ratio is off.
+     ⚠️ Don't re-grade these in code. They arrive neutral but as RGB, and the
+     set they replaced was desaturated here with a grey ICC profile; running
+     that over a graded file would shift the tone the grade was chosen for.
+     They're not filtered in CSS either: the track drifts continuously and
+     duplicates its set, so grayscale() would have the compositor re-grading
+     26 large images every frame for no change at all.
+     ⚠️ Still true of the frame: Figma's codegen labels several of these
+     fills `object-bottom`, and that hint is wrong — anchoring to the bottom
+     drops the subject out of frame on the portrait crops. Figma's own
+     per-node render is centred. */
   .strip-slide img{
     width:100%; height:100%; display:block;
     object-fit:cover; object-position:center;

@@ -259,6 +259,13 @@
     overflow:hidden; padding:50px 0; cursor:grab;
     width:calc(100vw - var(--sbw));
     margin-inline:calc(50% - 50vw + var(--sbw) / 2);
+    /* Both of these are what make the grab feel like the homepage ticker's
+       rather than sticky. Without user-select the drag selects the page
+       around it; without touch-action the browser arbitrates the gesture
+       before the handlers see it. pan-y keeps vertical page scrolling
+       working over the strip. Copied from .logos on index.html. */
+    user-select:none; -webkit-user-select:none;
+    touch-action:pan-y;
   }
   .strip-wrap.dragging{ cursor:grabbing; }
   .strip{
@@ -637,7 +644,7 @@
 
   const SPEED = 22;      // px/s of idle drift
   let x = 0, setW = 0, dragging = false, lastT = 0, vel = 0;
-  let pointerX = 0, grabX = 0;
+  let pointerX = 0, grabX = 0, pointerId = null, moveT = 0;
 
   function measure(){ setW = track.scrollWidth / 2; }
   measure();
@@ -659,24 +666,41 @@
   requestAnimationFrame(frame);
 
   wrap.addEventListener("pointerdown", e => {
-    dragging = true; wrap.classList.add("dragging");
-    wrap.setPointerCapture(e.pointerId);
-    pointerX = grabX = e.clientX; vel = 0;
+    dragging = true; pointerId = e.pointerId;
+    wrap.classList.add("dragging");
+    wrap.setPointerCapture(pointerId);
+    pointerX = grabX = e.clientX; vel = 0; moveT = e.timeStamp;
   });
   wrap.addEventListener("pointermove", e => {
-    if (!dragging) return;
+    if (!dragging || e.pointerId !== pointerId) return;
     const dx = e.clientX - pointerX;
-    /* track velocity for the release flick */
-    vel = -dx * 60;
+    /* Velocity for the release flick, measured against the clock rather than
+       assumed. This used to be `vel = -dx * 60`, which reads "this many px
+       per frame, at 60fps" — on a 120Hz pointer that halves every estimate,
+       and on a coalesced burst it inflates it, so the same flick threw the
+       strip a different distance each time. Timing the gap between moves
+       makes it px/s for real. The 0.7/0.3 blend keeps one twitchy last event
+       before you let go from deciding the whole throw. */
+    const dt = Math.max(1, e.timeStamp - moveT);
+    const sample = -dx / dt * 1000;
+    vel = vel * 0.7 + sample * 0.3;
+    moveT = e.timeStamp;
     x -= dx;
     pointerX = e.clientX;
   });
-  function release(){
-    dragging = false; wrap.classList.remove("dragging");
+  function release(e){
+    if (!dragging || (pointerId !== null && e && e.pointerId !== pointerId)) return;
+    dragging = false; pointerId = null;
+    wrap.classList.remove("dragging");
     vel = Math.max(-1200, Math.min(1200, vel));
   }
   wrap.addEventListener("pointerup", release);
   wrap.addEventListener("pointercancel", release);
+  /* ⚠️ Without this the browser starts its own image drag the moment you
+     pull on a slide — you get the ghost thumbnail and the pointer stream is
+     taken away mid-gesture, which is exactly what made this feel worse than
+     the homepage ticker. index.html's ticker has had this line all along. */
+  wrap.addEventListener("dragstart", e => e.preventDefault());
 })();
 </script>
 </body>

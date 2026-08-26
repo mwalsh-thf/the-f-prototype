@@ -192,13 +192,17 @@
     column-gap:30px; row-gap:60px;
     margin-top:30px;                       /* filter row to grid, per the frame */
   }
-  /* The frame builds a tile as four siblings on one 20px rhythm — media,
-     client, title, tags. The build nests the last three in a <figcaption>
-     for the semantics, so the same 20 has to be set twice: once on the tile
-     (media to caption) and once inside the caption (line to line). Change
-     one and change the other, or the rhythm goes lopsided. */
-  .tile{ display:flex; flex-direction:column; gap:20px; }
-  .tile figcaption{ display:flex; flex-direction:column; gap:20px; }
+  /* The frame builds a tile as four siblings on one flat 20px rhythm —
+     media, client, title, tags. The build runs 20 / 15 / 20 instead: the
+     client line sits closer to the title it belongs to, which reads as one
+     block with a caption over it rather than three evenly spaced lines.
+     That 15 is Myles' call, so don't "correct" it back to the frame's 20.
+     The last three are nested in a <figcaption> for the semantics, so the
+     gaps are margins on the lines rather than one `gap` on the column. */
+  .tile{ display:flex; flex-direction:column; gap:20px; }   /* media to caption */
+  .tile figcaption{ display:flex; flex-direction:column; }
+  .tile-client{ margin-bottom:15px; }                        /* grey line to title */
+  .tile-title{ margin-bottom:20px; }                         /* title to tags */
   .tile.span-3{ grid-column:span 3; }
   .tile.span-2{ grid-column:span 2; }
   .work-grid.is-filtered .tile{ grid-column:auto; }

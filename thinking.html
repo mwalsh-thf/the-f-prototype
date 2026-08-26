@@ -523,10 +523,33 @@
      it deals a random hand of four. Same out/in choreography as the Work
      page: old set steps out downward, new set rises in one by one. */
   const buttons = [...document.querySelectorAll(".filters button")];
-  /* Kept in step with the reveal: the incoming set uses the same
-     --reveal-dur glide, so IN_STAGGER matches REVEAL_STAGGER and the cleanup
-     timeout below has to wait out the longer 1.1s transition. */
-  const OUT_MS = 300, OUT_STAGGER = 18, IN_STAGGER = REVEAL_STAGGER;
+  /* Stagger a set the way the scroll reveal does — by visual row, left to
+     right, each row restarting at zero. A flat index across the whole set
+     would make the last of 17 tiles wait 17 x the stagger (over four seconds
+     at the current value) before it even starts: fine for four cards
+     arriving on scroll, far too long for a filter the user just clicked.
+     Returns the longest delay so the caller can time its cleanup. */
+  function staggerByRow(els){
+    const rows = new Map();
+    for (const el of els){
+      const box = el.getBoundingClientRect();
+      const key = Math.round(box.top / ROW_TOLERANCE);
+      if (!rows.has(key)) rows.set(key, []);
+      rows.get(key).push({ el, x: box.left });
+    }
+    let longest = 0;
+    for (const items of rows.values()){
+      items.sort((a, b) => a.x - b.x);
+      items.forEach(({ el }, i) => {
+        const d = i * REVEAL_STAGGER;
+        el.style.transitionDelay = d + "ms";
+        if (d > longest) longest = d;
+      });
+    }
+    return longest;
+  }
+
+  const OUT_MS = 300, OUT_STAGGER = 18;
   let animating = false;
 
   function pickFor(filter){
@@ -565,19 +588,29 @@
         c.style.transitionDelay = "0ms";
         c.classList.add("step-in");
       });
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        incoming.forEach((c, i) => {
-          c.style.transitionDelay = (i * IN_STAGGER) + "ms";
-          c.classList.add("landed");
-        });
+      /* Commit the rise on the next frame, so the hidden→shown layout lands
+         before the transition starts. Guarded and idempotent because it has
+         two triggers: a double rAF (correct — it waits for real layout) and
+         a short timer (a fallback). rAF is paused in background tabs and in
+         some embedded viewers, and the incoming set starts at opacity 0, so
+         without the fallback a filter clicked in a paused context would
+         leave the grid permanently blank rather than merely un-animated. */
+      let committed = false;
+      const commit = () => {
+        if (committed) return;
+        committed = true;
+        const longest = staggerByRow(incoming);
+        incoming.forEach(c => c.classList.add("landed"));
         setTimeout(() => {
           incoming.forEach(c => {
             c.classList.remove("step-in", "landed");
             c.style.transitionDelay = "";
           });
           animating = false;
-        }, OUT_MS + incoming.length * IN_STAGGER + 1200);
-      }));
+        }, OUT_MS + longest + 2400);   /* + the 2.2s glide, rounded up */
+      };
+      requestAnimationFrame(() => requestAnimationFrame(commit));
+      setTimeout(commit, 120);
     }, OUT_MS + visible.length * OUT_STAGGER);
   }
 

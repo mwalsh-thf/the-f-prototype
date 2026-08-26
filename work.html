@@ -19,9 +19,10 @@
    * dependencies. Tokens, nav and footer are deliberately duplicated from
    * article.html — change one there and it changes here too.
    *
-   * ⚠️ Project imagery is deliberately absent: every tile is a grey
-   * placeholder box (--ph) until real assets arrive. The markup slots are
-   * .tile-media — drop an <img> in each and the layout needs no changes.
+   * Project imagery lives in assets/work/, one JPEG per tile, exported from
+   * each tile's own media box in Figma so composited overlays (logos, type
+   * set over photography) come through as drawn. --ph is now only the
+   * colour that shows through while an image loads.
    * ==================================================================== */
   :root{
     --black:#272727;
@@ -203,13 +204,19 @@
     overflow:hidden;
     position:relative;
   }
-  /* the inner face exists so hover can move something inside the clipped box
-     even while it's just a grey placeholder — when real images land they go
-     inside .tile-face and inherit the behaviour */
+  /* .tile-face is the moving layer inside the clipped box — it holds the
+     artwork and is what scales on hover, so the crop stays put while the
+     image drifts inside it. --ph shows through only while an image is
+     loading or if one is ever missing. */
   .tile-face{
     position:absolute; inset:0;
     background:var(--ph);
     transition:transform .6s var(--ease-out-expo);
+  }
+  .tile-face img{
+    width:100%; height:100%;
+    object-fit:cover; object-position:center;
+    display:block;
   }
   .tile:hover .tile-face{ transform:scale(1.04); }
 
@@ -391,12 +398,14 @@
       <button type="button" data-filter="experience" aria-pressed="false">Experiences&nbsp;<span class="count" aria-hidden="true"></span></button>
     </div>
 
-    <!-- ⚠️ Placeholder media throughout — grey boxes until real imagery
-         arrives. Real images go inside .tile-face. Tags double as the
-         filter index via data-tags. -->
+    <!-- Content and imagery from frame 2896:11570. Each tile's artwork is the
+         composited export of that tile's own media box in Figma, so overlays
+         and logos that sit on top of the photography in the design come
+         through as drawn rather than needing to be rebuilt. Tags double as
+         the filter index via data-tags. -->
     <div class="work-grid" id="workGrid">
       <figure class="tile span-3 reveal" data-tags="brand strategy award">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/ust.jpg" alt="UST — A human connection" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">UST</p>
           <p class="tile-title">A human connection</p>
@@ -404,7 +413,7 @@
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="brand strategy award">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/inception.jpg" alt="Inception — Unlocking invention through authenticity" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">Inception</p>
           <p class="tile-title">Unlocking invention through authenticity</p>
@@ -412,7 +421,7 @@
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="brand experience award">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/botim.jpg" alt="botim — Making money move through play" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">botim</p>
           <p class="tile-title">Making money move through play</p>
@@ -420,115 +429,115 @@
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="experience award">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/g42.jpg" alt="G42 — Creating the blueprint for intelligent storytelling" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">G42</p>
           <p class="tile-title">Creating the blueprint for intelligent storytelling</p>
           <p class="tile-tags">Event Experience, Award-winning</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="experience">
-        <div class="tile-media"><div class="tile-face"></div></div>
-        <figcaption>
-          <p class="tile-client">Khazna</p>
-          <p class="tile-title">Telling the story behind hyperscale transformation</p>
-          <p class="tile-tags">Event Experience</p>
-        </figcaption>
-      </figure>
       <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/raiff.jpg" alt="Responsible AI Future Foundation — Building a brand that advocates for balance" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">Responsible AI Future Foundation</p>
           <p class="tile-title">Building a brand that advocates for balance</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="content">
-        <div class="tile-media"><div class="tile-face"></div></div>
-        <figcaption>
-          <p class="tile-client">WellSaid</p>
-          <p class="tile-title">Shaping a leader in AI voice</p>
-          <p class="tile-tags">Content development</p>
-        </figcaption>
-      </figure>
       <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/wates.jpg" alt="Wates — Building a brand with care, legacy and leadership" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Everywhen</p>
-          <p class="tile-title">A unifying insurance brand that makes business personal</p>
+          <p class="tile-client">Wates</p>
+          <p class="tile-title">Building a brand with care, legacy and leadership</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
+      <figure class="tile reveal" data-tags="brand">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/level.jpg" alt="Level — Shaping a global brand that balances climate and community" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">Level</p>
+          <p class="tile-title">Shaping a global brand that balances climate and community</p>
+          <p class="tile-tags">Brand</p>
+        </figcaption>
+      </figure>
+      <figure class="tile reveal" data-tags="brand campaign">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/genius-sports.jpg" alt="Genius Sports — A brand campaign for a new world of sport" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">Genius Sports</p>
+          <p class="tile-title">A brand campaign for a new world of sport</p>
+          <p class="tile-tags">Brand, Campaign</p>
+        </figcaption>
+      </figure>
       <figure class="tile span-2 reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/yokogawa.jpg" alt="Yokogawa — Elevating sustainability – precisely" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">Yokogawa</p>
           <p class="tile-title">Elevating sustainability – precisely</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="experience">
-        <div class="tile-media"><div class="tile-face"></div></div>
-        <figcaption>
-          <p class="tile-client">Khazna</p>
-          <p class="tile-title">Telling the story behind hyperscale transformation</p>
-          <p class="tile-tags">Event Experience</p>
-        </figcaption>
-      </figure>
       <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"></div></div>
-        <figcaption>
-          <p class="tile-client">Wates</p>
-          <p class="tile-title">Building a brand with care, legacy and leadership</p>
-          <p class="tile-tags">Brand, Strategy</p>
-        </figcaption>
-      </figure>
-      <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/teledyne-health.jpg" alt="Teledyne Healthcare — Bringing multiple brands under one roof" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">Teledyne Healthcare</p>
           <p class="tile-title">Bringing multiple brands under one roof</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="brand campaign">
-        <div class="tile-media"><div class="tile-face"></div></div>
+      <figure class="tile reveal" data-tags="brand strategy experience">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/ibm-wimbledon.jpg" alt="IBM x Wimbledon — Two iconic brands. Three decades." loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Genius Sports</p>
-          <p class="tile-title">A brand campaign for a new world of sport</p>
-          <p class="tile-tags">Brand, Campaign</p>
+          <p class="tile-client">IBM x Wimbledon</p>
+          <p class="tile-title">Two iconic brands. Three decades.</p>
+          <p class="tile-tags">Brand, Activations, Strategy</p>
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/toshiba.jpg" alt="Toshiba — Togetherness" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Teledyne Healthcare</p>
-          <p class="tile-title">Bringing multiple brands under one roof</p>
+          <p class="tile-client">Toshiba</p>
+          <p class="tile-title">Togetherness</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="brand campaign">
-        <div class="tile-media"><div class="tile-face"></div></div>
+      <figure class="tile reveal" data-tags="brand">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/price-forbes.jpg" alt="Price Forbes — A fresh take on heritage." loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Genius Sports</p>
-          <p class="tile-title">A brand campaign for a new world of sport</p>
-          <p class="tile-tags">Brand, Campaign</p>
+          <p class="tile-client">Price Forbes</p>
+          <p class="tile-title">A fresh take on heritage.</p>
+          <p class="tile-tags">Brand, Website</p>
+        </figcaption>
+      </figure>
+      <figure class="tile reveal" data-tags="content">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/wellsaid.jpg" alt="WellSaid — Shaping a leader in AI voice" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">WellSaid</p>
+          <p class="tile-title">Shaping a leader in AI voice</p>
+          <p class="tile-tags">Content</p>
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/teledyne.jpg" alt="Teledyne — How cancer-fighting technology inspired a dynamic brand" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Wates</p>
-          <p class="tile-title">Building a brand with care, legacy and leadership</p>
+          <p class="tile-client">Teledyne</p>
+          <p class="tile-title">How cancer-fighting technology inspired a dynamic brand</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"></div></div>
+      <figure class="tile reveal" data-tags="brand">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/ibm.jpg" alt="IBM — This is IBM" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Everywhen</p>
-          <p class="tile-title">A unifying insurance brand that makes business personal</p>
-          <p class="tile-tags">Brand, Strategy</p>
+          <p class="tile-client">IBM</p>
+          <p class="tile-title">This is IBM</p>
+          <p class="tile-tags">Brand, Awareness</p>
+        </figcaption>
+      </figure>
+      <figure class="tile reveal" data-tags="brand">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/durrell.jpg" alt="Durrell — The lonely Dodo" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">Durrell</p>
+          <p class="tile-title">The lonely Dodo</p>
+          <p class="tile-tags">Brand, Awareness</p>
         </figcaption>
       </figure>
     </div>
@@ -610,10 +619,33 @@
      out; the new set steps in upward one by one. All timings live here
      because the stagger depends on how many tiles are in play. */
   const buttons = [...document.querySelectorAll(".filters button")];
-  /* Kept in step with the reveal: the incoming set uses the same
-     --reveal-dur glide, so IN_STAGGER matches REVEAL_STAGGER and the cleanup
-     timeout below has to wait out the longer 1.1s transition. */
-  const OUT_MS = 300, OUT_STAGGER = 18, IN_STAGGER = REVEAL_STAGGER;
+  /* Stagger a set the way the scroll reveal does — by visual row, left to
+     right, each row restarting at zero. A flat index across the whole set
+     would make the last of 17 tiles wait 17 x the stagger (over four seconds
+     at the current value) before it even starts: fine for four cards
+     arriving on scroll, far too long for a filter the user just clicked.
+     Returns the longest delay so the caller can time its cleanup. */
+  function staggerByRow(els){
+    const rows = new Map();
+    for (const el of els){
+      const box = el.getBoundingClientRect();
+      const key = Math.round(box.top / ROW_TOLERANCE);
+      if (!rows.has(key)) rows.set(key, []);
+      rows.get(key).push({ el, x: box.left });
+    }
+    let longest = 0;
+    for (const items of rows.values()){
+      items.sort((a, b) => a.x - b.x);
+      items.forEach(({ el }, i) => {
+        const d = i * REVEAL_STAGGER;
+        el.style.transitionDelay = d + "ms";
+        if (d > longest) longest = d;
+      });
+    }
+    return longest;
+  }
+
+  const OUT_MS = 300, OUT_STAGGER = 18;
   let animating = false;
 
   function matches(tile, filter){
@@ -659,13 +691,20 @@
         t.style.transitionDelay = "0ms";
         t.classList.add("step-in");
       });
-      /* double rAF so the hidden→shown layout commits before the rise */
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        incoming.forEach((t, i) => {
-          t.style.transitionDelay = (i * IN_STAGGER) + "ms";
-          t.classList.add("landed");
-        });
-        const total = OUT_MS + incoming.length * IN_STAGGER + 1200;
+      /* Commit the rise on the next frame, so the hidden→shown layout lands
+         before the transition starts. Guarded and idempotent because it has
+         two triggers: a double rAF (correct — it waits for real layout) and
+         a short timer (a fallback). rAF is paused in background tabs and in
+         some embedded viewers, and the incoming set starts at opacity 0, so
+         without the fallback a filter clicked in a paused context would
+         leave the grid permanently blank rather than merely un-animated. */
+      let committed = false;
+      const commit = () => {
+        if (committed) return;
+        committed = true;
+        const longest = staggerByRow(incoming);
+        incoming.forEach(t => t.classList.add("landed"));
+        const total = OUT_MS + longest + 2400;   /* + the 2.2s glide, rounded up */
         setTimeout(() => {
           incoming.forEach(t => {
             t.classList.remove("step-in", "landed");
@@ -673,7 +712,9 @@
           });
           animating = false;
         }, total);
-      }));
+      };
+      requestAnimationFrame(() => requestAnimationFrame(commit));
+      setTimeout(commit, 120);
     }, OUT_MS + visible.length * OUT_STAGGER);
   }
 

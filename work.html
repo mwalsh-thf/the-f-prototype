@@ -44,15 +44,19 @@
     --ease-out-expo:cubic-bezier(.16,1,.3,1);
 
     /* --- the reveal ---
-       One entrance for the whole site. Slow and long-travelled on purpose:
-       at 1.1s over 44px the move is legible as a glide rather than a pop,
-       which is the whole difference between "animated" and "premium". The
-       curve is the same ease-out every other transition on the site uses,
-       so nothing arrives on a different feel. --reveal-stagger is mirrored
-       in the script (REVEAL_STAGGER) — change one and change the other. */
-    --reveal-dur:1.1s;
+       One entrance for the whole site: objects rise up into place, and
+       within a row the leftmost goes first. Slow on purpose — at 2.2s over
+       44px the move is unmistakably a settle rather than a pop, which is
+       the whole difference between "animated" and "premium".
+
+       --reveal-stagger is mirrored in the script (REVEAL_STAGGER) — change
+       one and change the other. It compounds across a row (four columns =
+       3x the stagger before the last one even starts), so it's the value to
+       reach for first if the cascade ever feels drawn out; --reveal-dur
+       only affects how long each individual item takes. */
+    --reveal-dur:2.2s;
     --reveal-shift:44px;
-    --reveal-stagger:.13s;   /* load-in only; scroll reveals stagger in JS */
+    --reveal-stagger:.26s;   /* load-in only; scroll reveals stagger in JS */
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
@@ -249,7 +253,7 @@
   /* The load-in twin of .reveal — same distance, same curve, same duration,
      so the masthead and everything below it read as one continuous idea. */
   @keyframes reveal-in{
-    from{ opacity:0; transform:translate3d(calc(var(--reveal-shift) * -1), 0, 0); }
+    from{ opacity:0; transform:translate3d(0, var(--reveal-shift), 0); }
   }
 
   /* ------------------------------------------------------------------ *
@@ -267,7 +271,7 @@
    * ------------------------------------------------------------------ */
   .js .reveal{
     opacity:0;
-    transform:translate3d(calc(var(--reveal-shift) * -1), 0, 0);
+    transform:translate3d(0, var(--reveal-shift), 0);
     transition:opacity var(--reveal-dur) var(--ease-out-expo),
                transform var(--reveal-dur) var(--ease-out-expo);
     transition-delay:var(--d, 0ms);
@@ -280,7 +284,7 @@
     transition:opacity .3s var(--ease-out-expo), transform .3s var(--ease-out-expo);
   }
   .js .tile.step-in{
-    opacity:0; transform:translate3d(calc(var(--reveal-shift) * -1), 0, 0);
+    opacity:0; transform:translate3d(0, var(--reveal-shift), 0);
   }
   .js .tile.step-in.landed{
     opacity:1; transform:none;
@@ -576,7 +580,7 @@
      page and the last card would sit still for seconds before appearing.
      boundingClientRect comes free with the entry, so grouping costs no
      extra layout work. */
-  const REVEAL_STAGGER = 130;   // ms between neighbours in a row; mirrors --reveal-stagger
+  const REVEAL_STAGGER = 260;   // ms between neighbours in a row; mirrors --reveal-stagger
   const ROW_TOLERANCE  = 40;    // px of top-edge drift still counted as the same row
   const revealObserver = new IntersectionObserver((entries, obs) => {
     const rows = new Map();

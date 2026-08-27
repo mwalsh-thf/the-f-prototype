@@ -44,7 +44,7 @@
        logos, contact, footer) all respect it below; see the notes on .nav
        and .scene for why capping a position:fixed element takes a different
        technique than the plain body{max-width} the other pages use. */
-    --page-max:2000px;
+    --page-max:2200px;
     /* Scrollbar width, measured once by the script. Full-bleed breakouts
        need it: 100vw counts the scrollbar gutter, the page's content box
        doesn't, so a naive 100vw breakout overhangs the right edge by
@@ -80,7 +80,7 @@
      the experience runs and unlocked afterwards, and without this the
      scrollbar appearing at that moment would shift the whole layout. */
   /* Ground lives on html, not body: body is now the capped, centred page (see
-     below), so a background painted there would stop at 2000px and leave
+     below), so a background painted there would stop at 2200px and leave
      bare canvas either side on anything wider. */
   html{ scrollbar-gutter:stable; background:var(--bg); }
   body{
@@ -470,7 +470,7 @@
    * Logo wall — ticks along on its own, drag to scrub, lets go and resumes
    * ------------------------------------------------------------------ */
   /* Full-bleed, the same treatment as the B&W carousel on About: the strip
-     runs off both edges of the viewport rather than stopping at the 2000px
+     runs off both edges of the viewport rather than stopping at the 2200px
      page cap, so it reads as a continuous band rather than a boxed-in
      element. See the note on --sbw for why the scrollbar gutter has to be
      subtracted — 100vw counts it, the page's content box doesn't. */
@@ -1132,7 +1132,7 @@
    * ------------------------------------------------------------------ */
   const MIN_S = .34, MAX_S = 1.6, MIN_S_MOBILE = .22;
   const MOBILE = 767;
-  const PAGE_MAX = 2000; // keep in step with --page-max in the stylesheet —
+  const PAGE_MAX = 2200; // keep in step with --page-max in the stylesheet —
                           // .scene is capped/centred at this width, so the
                           // hero's scale has to be solved against it rather
                           // than the raw (possibly wider) viewport

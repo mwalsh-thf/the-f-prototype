@@ -267,12 +267,13 @@
     margin-bottom:30px;
   }
   .a-sec p{
-    font-size:var(--fs-body); line-height:1.2; letter-spacing:-.02em;
+    font-size:var(--fs-body); line-height:1.3; letter-spacing:-.02em;
     color:var(--ink-body);
   }
   /* The frame spaces paragraphs with an empty line rather than a margin.
-     A margin of one line-height reproduces it without the empty <p>. */
-  .a-sec p + p{ margin-top:1.2em; }
+     A margin of one line-height reproduces it without the empty <p> — so it
+     tracks the body leading and has to move with it. */
+  .a-sec p + p{ margin-top:1.3em; }
   .a-sec a{ text-decoration:underline; text-underline-position:from-font; }
   .a-sec a:hover{ color:var(--f-red); }
   /* A pull quote is a blockquote, not a heading — same size as the

@@ -145,17 +145,17 @@
   /* Text blocks auto-place down column 1. They are not given explicit rows —
      only the media is (below) — so adding or removing a section just works. */
   .a-head, .a-sec{ grid-column:1 / span 5; min-width:0; }
-  /* Figma gives both articles' mastheads the same fixed height, so the body
-     copy starts on the same line on every article however long the headline
-     runs — that is the point of it, not the number.
-     425 rather than the frame's 421: our masthead lays out 4px taller than
-     Figma's at the same sizes, and 421 left the longer of the two headlines
-     overflowing its own block by exactly that. It didn't collide with
-     anything, but a block overflowing on purpose is a bug waiting for
-     someone to add overflow:hidden.
-     min-height, not height: a headline longer than these two should push the
-     page down rather than spill. */
-  .a-head{ padding:50px 0 40px; min-height:425px; }
+  /* No fixed height. The masthead sizes to its own content so the gap down
+     to the first section is the same 80px on every article — 40 here plus
+     40 on .a-sec — whatever the headline runs to.
+     ⚠️ This is a deliberate reversal. The masthead used to be pinned to a
+     fixed 425px so both articles started their body copy on the same line;
+     a shorter headline then left more air beneath it (140px on article 2
+     against 83 on article 1). An even gap and a shared start line are
+     mutually exclusive once two headlines differ in length, and the even
+     gap is the one that was chosen. Don't reinstate a height here without
+     knowing you are trading the rhythm back. */
+  .a-head{ padding:50px 0 40px; }
   .a-sec{ padding:40px 0; }
 
   /* ---- the sticky media column -------------------------------------

@@ -137,7 +137,17 @@
   /* Text blocks auto-place down column 1. They are not given explicit rows —
      only the media is (below) — so adding or removing a section just works. */
   .a-head, .a-sec{ grid-column:1 / span 5; min-width:0; }
-  .a-head{ padding:50px 0 30px; }
+  /* Figma gives both articles' mastheads the same fixed height, so the body
+     copy starts on the same line on every article however long the headline
+     runs — that is the point of it, not the number.
+     425 rather than the frame's 421: our masthead lays out 4px taller than
+     Figma's at the same sizes, and 421 left the longer of the two headlines
+     overflowing its own block by exactly that. It didn't collide with
+     anything, but a block overflowing on purpose is a bug waiting for
+     someone to add overflow:hidden.
+     min-height, not height: a headline longer than these two should push the
+     page down rather than spill. */
+  .a-head{ padding:50px 0 30px; min-height:425px; }
   .a-sec{ padding:30px 0; }
 
   /* ---- the sticky media column -------------------------------------
@@ -163,6 +173,12 @@
      layout's rules further down — an inline style beats a stylesheet rule
      whatever the media query — and the images kept their desktop rows on a
      phone, which put the cover above the headline. */
+  /* ⚠️ Span an explicit row COUNT, never `1 / -1`. `-1` addresses the end of
+     the *explicit* grid, and these rows are all implicit (there is no
+     grid-template-rows), so `1 / -1` silently collapses to a single row.
+     That traps the image in row 1: it inflates that row to the image's full
+     height — pushing the text down the page — and leaves the range exactly
+     as tall as the image, so there is no travel and sticky never engages. */
   @media (min-width:900px){
     .a-media{ grid-row:var(--row); }
   }
@@ -172,7 +188,26 @@
   }
   .a-cover{ grid-column:7 / span 6; }
   .a-cover img{ background:#fff; }
-  .a-inline{ grid-column:7 / span 4; }
+  /* The second image starts level with the BODY COPY of the section it
+     belongs to, not with that section's subheading — so it reads as sitting
+     beside the prose rather than heading it. The frame does this with an
+     invisible duplicate of the subheading pushing the image down; the same
+     offset, composed from the values that actually produce it:
+        30px  the section's own top padding
+      + 24px  one line of the subheading (--fs-h5 at its 1.2 line-height)
+      + 30px  the subheading's margin-bottom
+     = 84px. Measured: image top and body copy top both land on 1882.62.
+     It also opens the same 84px between this image and the cover as they
+     pass each other, which is what stops them reading as one column.
+     Holds while the subheading is a single line, which it is at every width
+     down to 900px — below that the layout stacks and the offset is dropped. */
+  .a-inline{
+    grid-column:7 / span 4;
+    padding-top:calc(30px + (var(--fs-h5) * 1.2) + 30px);
+  }
+  @media (max-width:899px){
+    .a-inline{ padding-top:0; }
+  }
 
   /* ---- type ---------------------------------------------------------
    * Straight from the frame's named styles. Letter-spacing is in em, not px:
@@ -201,6 +236,12 @@
   .a-meta dd{
     font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
     color:var(--ink-body);
+  }
+  /* The frame cap-trims these, which is what makes the 16px and 42px gaps
+     read as the measured distances between ink rather than between line
+     boxes — and is why its masthead fits the fixed height below. */
+  @supports (text-box: trim-both cap alphabetic){
+    .a-meta dt, .a-meta dd{ text-box:trim-both cap alphabetic; }
   }
   .a-standfirst{
     font-weight:300;

@@ -185,9 +185,19 @@
   @media (min-width:900px){
     .a-media{ grid-row:var(--row); }
   }
-  .a-media img{
-    position:sticky; top:var(--cover-stick);
-    width:100%; height:auto;
+  .a-media img{ width:100%; height:auto; }
+  /* Whatever actually pins carries .a-stick — the image itself normally, or
+     a frame around it where the image needs a box to sit inside (below). */
+  .a-media .a-stick{ position:sticky; top:var(--cover-stick); }
+  /* A square viewport for a portrait image: the frame takes the column's
+     full width and is square, the image is capped to that height and sits
+     against the frame's right edge. Keeps a tall portrait from running past
+     the square the rest of the page is built on, and — because the frame is
+     what pins — the anchor maths below measures the square, not the photo. */
+  .a-frame{ aspect-ratio:1 / 1; }
+  .a-frame img{
+    width:auto; height:100%; max-width:100%;
+    margin-left:auto;            /* portrait sits right inside the square */
   }
   /* ⚠️ The 100px top above is only right for an image SHORTER than the
      viewport. A taller one would pin 100px down with its bottom cut off
@@ -239,7 +249,12 @@
   @supports (text-box: trim-both cap alphabetic){
     .a-meta dt, .a-meta dd{ text-box:trim-both cap alphabetic; }
   }
-  .a-standfirst{
+  /* ⚠️ These two are scoped under .a-sec deliberately. `.a-sec p` is (0,1,1)
+     and a bare `.a-standfirst` / `.a-quote` is only (0,1,0), so the plain
+     body rule won every one of these and the frame's 27px intro and pull
+     quote both rendered at 18px — identical to the body copy around them.
+     Keep a class on both sides of the selector, or this silently regresses. */
+  .a-sec .a-standfirst{
     font-weight:300;
     font-size:var(--fs-h4); line-height:1.2; letter-spacing:-.02em;
     color:var(--ink-body);
@@ -262,12 +277,16 @@
   .a-sec a:hover{ color:var(--f-red); }
   /* A pull quote is a blockquote, not a heading — same size as the
      standfirst, with the attribution in mid grey beneath it. */
-  .a-quote{
+  .a-sec .a-quote p{
     font-weight:300;
     font-size:var(--fs-h4); line-height:1.2; letter-spacing:-.02em;
-    color:var(--ink-footer);
+    color:var(--ink-footer);          /* the frame sets the quote in Off Black */
   }
-  .a-quote footer{ color:var(--mid-grey); margin-top:1.2em; }
+  .a-sec .a-quote footer{
+    font-weight:300;
+    font-size:var(--fs-h4); line-height:1.2; letter-spacing:-.02em;
+    color:var(--mid-grey); margin-top:1.2em;
+  }
 
   /* ------------------------------------------------------------------ *
    * Related articles
@@ -374,7 +393,11 @@
     .article{ grid-template-columns:1fr; }
     .a-head, .a-sec, .a-media{ grid-column:1 / -1; }
     .a-media{ padding:20px 0; }
-    .a-media img{ position:static; }
+    .a-media .a-stick{ position:static; }
+    /* full width at natural ratio once stacked — the square was only there
+       to hold the portrait inside the desktop column */
+    .a-frame{ aspect-ratio:auto; }
+    .a-frame img{ width:100%; height:auto; margin-left:0; }
     .related-grid{ grid-template-columns:1fr; row-gap:56px; }
   }
 
@@ -454,7 +477,9 @@
     </header>
 
     <div class="a-media a-cover" style="--row:1 / span 6">
-      <img src="assets/article/a2-cover.jpg" alt="" width="1216" height="1623" loading="eager" decoding="async">
+      <div class="a-frame a-stick">
+        <img src="assets/article/a2-cover.jpg" alt="" width="1216" height="1623" loading="eager" decoding="async">
+      </div>
     </div>
 
     <section class="a-sec reveal">
@@ -556,7 +581,7 @@
      in view — --cover-foot of air under it — and then locks. Re-measured on
      resize, and on each image's load as a belt-and-braces (the width/height
      attributes already reserve the right box before the pixels arrive). */
-  const mediaImgs = [...document.querySelectorAll(".a-media img")];
+  const mediaImgs = [...document.querySelectorAll(".a-media .a-stick")];
   function tuneSticky(){
     const cs = getComputedStyle(document.documentElement);
     const stick = parseFloat(cs.getPropertyValue("--cover-stick")) || 100;
@@ -567,7 +592,10 @@
   }
   tuneSticky();
   addEventListener("resize", tuneSticky, {passive:true});
-  mediaImgs.forEach(i => i.addEventListener("load", tuneSticky, {once:true}));
+  mediaImgs.forEach(el => {
+    const img = el.tagName === "IMG" ? el : el.querySelector("img");
+    if (img) img.addEventListener("load", tuneSticky, {once:true});
+  });
 
   /* Blocks lift in as they arrive. One shot — it should not replay on the
      way back up. No stagger: this is a single column of text, so things

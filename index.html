@@ -215,12 +215,27 @@
     stroke-linejoin:round;
   }
   .nav-menu{
-    display:none;                      /* desktop uses the text links instead */
+    display:none;
     background:none; border:0; padding:0; margin:0;
-    width:27px; height:27px; cursor:pointer; flex:none;
+    width:30px; height:30px; cursor:pointer; flex:none;
+    position:relative;
   }
-  .nav-menu svg{ display:block; width:100%; height:100%; }
-  .nav-menu path{ fill:var(--ink-footer); }
+  /* Four 10px squares (mobile Nav frames 3142:9937 / 3142:9923). Opening
+     drops the bottom pair and stretches the top-left square across the top
+     row into the frame's 30x10 minus — the left square sliding across to
+     cover the right one. Ink is #fff: like everything in the bar it is a
+     source for the difference blend, not the colour you see. */
+  .nav-menu span{
+    position:absolute; width:10px; height:10px; background:#fff;
+    transition:width .45s var(--ease-out-expo), opacity .45s var(--ease-out-expo);
+  }
+  .nav-menu span:nth-child(1){ left:0; top:0; }
+  .nav-menu span:nth-child(2){ right:0; top:0; }
+  .nav-menu span:nth-child(3){ left:0; bottom:0; }
+  .nav-menu span:nth-child(4){ right:0; bottom:0; }
+  body.menu-open .nav-menu span:nth-child(1){ width:30px; }
+  body.menu-open .nav-menu span:nth-child(3),
+  body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
   .nav-links{display:flex; align-items:center; gap:30px}
   .nav-links a{
@@ -737,6 +752,58 @@
     .intro-title{ font-size:clamp(34px,9.2vw,52px); }
     .intro-sub{ font-size:clamp(15px,4.1vw,19px); width:min(420px,88vw); }
   }
+
+  /* ------------------------------------------------------------------ *
+   * Mobile menu — frames "mobile Nav Unselected" / "mobile Nav Selected"
+   * A full-screen dark overlay under the bar: a 2-column grid of bordered
+   * cells (Work/Services, About/Thinking, a diagonal, Contact), labels
+   * bottom-left. Tapping a cell fills it F Red, then navigates. The
+   * shared 1px edges are real: every link cell carries a full border and
+   * the doubled edges collapse with -1px margins. The diagonal cell has
+   * no border of its own — its right edge is Contact's border, its top
+   * edge is About's, and the diagonal and bottom line are drawn.
+   * Only reachable on mobile (the button only exists there); the width
+   * guard and the resize handler close it if the viewport grows.
+   * ------------------------------------------------------------------ */
+  .mobile-menu{
+    display:none;
+    position:fixed; inset:0; z-index:30;
+    background:#1F1F1F;
+    padding:var(--nav-h) 25px 40px;
+    overflow:auto;
+  }
+  body.menu-open .mobile-menu{ display:block; }
+  @media (min-width:768px){ .mobile-menu{ display:none !important; } }
+  .mm-grid{
+    list-style:none; margin:0; padding:0;
+    display:grid; grid-template-columns:1fr 1fr;
+  }
+  .mm-grid li{ aspect-ratio:215/214; min-width:0; position:relative; }
+  .mm-grid a{
+    position:absolute; inset:0;
+    display:flex; align-items:flex-end;
+    padding:26px;
+    border:1px solid #fff;
+    font-weight:300; font-size:clamp(24px,6.7vw,32px); line-height:1.15;
+    letter-spacing:-.02em; color:#fff; text-decoration:none;
+    transition:background .35s var(--ease-out-expo);
+  }
+  .mm-grid li:nth-child(2n) a{ margin-left:-1px; }
+  .mm-grid li:nth-child(n+3) a{ margin-top:-1px; }
+  .mm-grid a.sel{ background:var(--f-red); }
+  .mm-tri svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .mm-tri line{ stroke:#fff; stroke-width:1; vector-effect:non-scaling-stroke; }
+  /* the cells rise in, top row first — committed by the class the script
+     adds a frame after display flips (with the usual timer fallback) */
+  .mm-grid li{
+    opacity:0; transform:translate3d(0,24px,0);
+    transition:opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
+    transition-delay:calc(var(--mi) * 90ms);
+  }
+  .mobile-menu.in .mm-grid li{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .mm-grid li{ transition:none; opacity:1; transform:none; }
+  }
 </style>
 </head>
 <body>
@@ -768,12 +835,22 @@
     <a href="contact.html">Contact</a>
   </nav>
   <!-- mobile only: Figma's 2x2 mark, four 9px squares in a 27px box -->
-  <button class="nav-menu" type="button" aria-label="Open menu">
-    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
-      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
-    </svg>
+  <button class="nav-menu" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mobileMenu">
+    <span></span><span></span><span></span><span></span>
   </button>
 </header>
+
+<!-- Mobile menu — see the .mobile-menu styles for the frame references -->
+<nav class="mobile-menu" id="mobileMenu" aria-label="Site menu">
+  <ul class="mm-grid">
+    <li style="--mi:0"><a href="work.html">Work</a></li>
+    <li style="--mi:1"><a href="services.html">Services</a></li>
+    <li style="--mi:2"><a href="about.html">About</a></li>
+    <li style="--mi:3"><a href="thinking.html">Thinking</a></li>
+    <li class="mm-tri" style="--mi:4" aria-hidden="true"><svg viewBox="0 0 215 214" preserveAspectRatio="none"><line x1="215" y1="0" x2="0" y2="214"/><line x1="0" y1="214" x2="215" y2="214"/></svg></li>
+    <li style="--mi:5"><a href="contact.html">Contact</a></li>
+  </ul>
+</nav>
 
 
 <div class="scene" id="scene">
@@ -1738,6 +1815,51 @@
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot);
   else boot();
+})();
+</script>
+<script>
+/* Mobile menu — self-contained so it drops into every page's shell.
+   The button morphs (squares to minus) purely in CSS off body.menu-open;
+   this only owns state, ARIA, the entrance commit and the red tap-fill. */
+(() => {
+  "use strict";
+  const menuBtn = document.querySelector(".nav-menu");
+  const menuEl  = document.getElementById("mobileMenu");
+  if (!menuBtn || !menuEl) return;
+  const mmReduced = matchMedia("(prefers-reduced-motion: reduce)");
+  let menuOpen = false;
+  /* the cells start hidden and display flips from none, so the entrance
+     must be committed AFTER layout lands — double rAF plus a timer
+     fallback, the same pattern as the filter grids (rAF alone is paused
+     in background tabs and embedded panes and would leave the menu
+     permanently blank there) */
+  function commitIn(){
+    let done = false;
+    const go = () => { if (done) return; done = true; menuEl.classList.add("in"); };
+    requestAnimationFrame(() => requestAnimationFrame(go));
+    setTimeout(go, 120);
+  }
+  function setMenu(open){
+    menuOpen = open;
+    document.body.classList.toggle("menu-open", open);
+    menuBtn.setAttribute("aria-expanded", String(open));
+    /* the page must not scroll behind the overlay */
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    if (open) commitIn(); else menuEl.classList.remove("in");
+  }
+  menuBtn.addEventListener("click", () => setMenu(!menuOpen));
+  addEventListener("keydown", e => { if (e.key === "Escape" && menuOpen) setMenu(false); });
+  addEventListener("resize", () => { if (menuOpen && innerWidth > 767) setMenu(false); }, {passive:true});
+  /* tap: the cell fills F Red, then the page follows — instant under
+     reduced motion */
+  menuEl.querySelectorAll("a").forEach(a => {
+    a.addEventListener("click", e => {
+      if (mmReduced.matches) return;
+      e.preventDefault();
+      a.classList.add("sel");
+      setTimeout(() => { location.href = a.href; }, 350);
+    });
+  });
 })();
 </script>
 </body>

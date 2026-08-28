@@ -29,6 +29,7 @@
     --rule:#E3E1DE;           /* awards hairlines */
 
     --nav-h:clamp(90px,17vh,140px);
+    --sbw:0px;
     --logo-h:52.44px;         /* the nav mark; the header balance solves against it */
     --page-max:2200px;
     --pad-x:100px;
@@ -118,10 +119,25 @@
   .nav-menu{
     display:none;
     background:none; border:0; padding:0; margin:0;
-    width:27px; height:27px; cursor:pointer; flex:none;
+    width:30px; height:30px; cursor:pointer; flex:none;
+    position:relative;
   }
-  .nav-menu svg{ display:block; width:100%; height:100%; }
-  .nav-menu path{ fill:#fff; }
+  /* Four 10px squares (mobile Nav frames 3142:9937 / 3142:9923). Opening
+     drops the bottom pair and stretches the top-left square across the top
+     row into the frame's 30x10 minus — the left square sliding across to
+     cover the right one. Ink is #fff: like everything in the bar it is a
+     source for the difference blend, not the colour you see. */
+  .nav-menu span{
+    position:absolute; width:10px; height:10px; background:#fff;
+    transition:width .45s var(--ease-out-expo), opacity .45s var(--ease-out-expo);
+  }
+  .nav-menu span:nth-child(1){ left:0; top:0; }
+  .nav-menu span:nth-child(2){ right:0; top:0; }
+  .nav-menu span:nth-child(3){ left:0; bottom:0; }
+  .nav-menu span:nth-child(4){ right:0; bottom:0; }
+  body.menu-open .nav-menu span:nth-child(1){ width:30px; }
+  body.menu-open .nav-menu span:nth-child(3),
+  body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
   .nav-links{display:flex; align-items:center; gap:30px}
   .nav-links a{
@@ -255,47 +271,38 @@
   /* ------------------------------------------------------------------ *
    * Client logos
    * ------------------------------------------------------------------ */
-  .clients{ padding:100px var(--pad-x) 25px; }
+  .clients{ padding:100px var(--pad-x); }
   .clients .statement{ max-width:calc(50% - 20px); }
-  /* The wall scales as one block. Figma draws it on the 1240 content area:
-     six 181.667 cells, 30px column gap, 74px row gap. Both gaps are written
-     as that same fraction of the live content width, so the whole grid grows
-     with the page instead of holding 1440's pixel sizes. At 1440 they resolve
-     to Figma's 30 and 74 exactly.
-     `cqw` — 1% of .clients' content box — rather than `vw`: the content box
-     is precisely what the wall spans, so this needs no --sbw correction and
-     can't drift with the scrollbar gutter the way a vw formula does. A plain
-     percentage would do for column-gap, but percentage `row-gap` resolves
-     against the container's block size, which is indefinite here and collapses
-     to 0 — so both are in cqw to keep the pair honest. */
-  .clients{ container-type:inline-size; }
-  .logo-wall{
-    display:grid; grid-template-columns:repeat(6,1fr);
-    column-gap:2.41935cqw;   /* 30/1240 */
-    row-gap:5.96774cqw;      /* 74/1240 */
-    padding:50px 0;
-    margin-top:40px;
+  /* The wall is gone. The reworked frame runs the marks as TWO full-bleed
+     bands that drift like the homepage ticker — the top row leftward, the
+     bottom row rightward — and both can be grabbed and scrubbed. Same
+     implementation as index.html's .logos (drift + pointer drag, set
+     duplicated for the seamless wrap), instantiated twice with opposite
+     directions. The three drag guards travel with it: dragstart
+     preventDefault, user-select:none, touch-action:pan-y.
+     Full-bleed needs the --sbw correction — see the README's full-bleed
+     section; the naive 100vw overhangs by the scrollbar width. */
+  .logo-rows{ margin-top:100px; display:flex; flex-direction:column; gap:100px; }
+  .logo-row{
+    width:calc(100vw - var(--sbw));
+    margin-inline:calc(50% - 50vw + var(--sbw) / 2);
+    overflow:hidden;
+    cursor:grab;
+    user-select:none; -webkit-user-select:none;
+    touch-action:pan-y;
   }
-  /* The cell holds the frame's own 182 x 78 box, so the rows sit on a fixed
-     rhythm however wide the page gets. The mark fills the cell's width and
-     keeps its own height — that is what locks each logo's aspect ratio and
-     holds the marks at their true relative sizes. A few (AArete, AGIA, 2XE)
-     are drawn taller than the cell in Figma too; they overflow it centred,
-     and because the row gap scales with everything else they never collide. */
-  .logo-cell{
-    aspect-ratio:182 / 78;
+  .logo-row.dragging{ cursor:grabbing; }
+  .logo-track{ display:flex; width:max-content; will-change:transform; }
+  .logo-set{ display:flex; align-items:center; }
+  /* The frame's own cell: 182 x 78, 30 apart. Each mark keeps its true
+     height inside that box (the files are all 182 units wide), so relative
+     sizes hold exactly as they did on the wall. */
+  .logo-set .cell{
+    width:182px; height:78px; flex:none;
     display:flex; align-items:center; justify-content:center;
-    /* ⚠️ min-width/min-height:0 are load-bearing. A grid item's automatic
-       minimum size is its content, and `aspect-ratio` transfers a block
-       minimum back into the inline axis — so the marks drawn taller than the
-       cell (AArete is 124 units) were forcing each 1fr track to at least
-       124 x 182/78 = 289px. Six of those overflowed the 1240 wall by 640px
-       and raised a horizontal scrollbar. Zeroing the automatic minimum lets
-       1fr mean 1fr again and lets the tall marks overflow the cell, centred,
-       exactly as Figma draws them. */
-    min-width:0; min-height:0;
+    margin-right:30px;
   }
-  .logo-cell img{ width:100%; height:auto; display:block; }
+  .logo-set img{ width:100%; height:auto; display:block; pointer-events:none; }
 
   /* ------------------------------------------------------------------ *
    * Awards — sortable table, rows cascade in
@@ -405,7 +412,6 @@
     .service{ min-height:0; }
     .s-icon{ min-height:0; margin-bottom:40px; }
     .clients .statement{ max-width:none; }
-    .logo-wall{ grid-template-columns:repeat(4,1fr); }
     .awards-head, .award-row{ grid-template-columns:1.6fr 1.2fr .55fr .45fr; }
     .awards-head .c-cat, .award-row .c-cat{ display:none; }
   }
@@ -415,8 +421,8 @@
    * ================================================================== */
   @media (max-width:767px){
     :root{
-      --nav-h:clamp(72px,11vh,92px);
-      --pad-x:clamp(16px,5.5vw,24px);
+      --nav-h:90px;              /* the refined mobile bar (mobile frames) */
+      --pad-x:25px;              /* the refined mobile inset (mobile frames) */
       --fs-body:16px;
       --fs-details:13px;
       --logo-h:40px;
@@ -434,8 +440,8 @@
     .s-icon{ margin-bottom:28px; }
     .s-icon img{ width:80px; height:80px; }
     .clients{ padding-top:64px; }
-    .logo-wall{ grid-template-columns:repeat(3,1fr); padding:32px 0; }
-    .logo-cell img{ max-height:30px; }
+    .logo-rows{ margin-top:48px; gap:48px; }
+    .logo-set .cell{ width:120px; height:52px; margin-right:20px; }
     .awards{ padding-top:64px; }
     .awards .statement{ margin-bottom:36px; }
     .awards-head, .award-row{ grid-template-columns:1.8fr .7fr .5fr; column-gap:16px; }
@@ -444,6 +450,58 @@
 
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Mobile menu — frames "mobile Nav Unselected" / "mobile Nav Selected"
+   * A full-screen dark overlay under the bar: a 2-column grid of bordered
+   * cells (Work/Services, About/Thinking, a diagonal, Contact), labels
+   * bottom-left. Tapping a cell fills it F Red, then navigates. The
+   * shared 1px edges are real: every link cell carries a full border and
+   * the doubled edges collapse with -1px margins. The diagonal cell has
+   * no border of its own — its right edge is Contact's border, its top
+   * edge is About's, and the diagonal and bottom line are drawn.
+   * Only reachable on mobile (the button only exists there); the width
+   * guard and the resize handler close it if the viewport grows.
+   * ------------------------------------------------------------------ */
+  .mobile-menu{
+    display:none;
+    position:fixed; inset:0; z-index:30;
+    background:#1F1F1F;
+    padding:var(--nav-h) 25px 40px;
+    overflow:auto;
+  }
+  body.menu-open .mobile-menu{ display:block; }
+  @media (min-width:768px){ .mobile-menu{ display:none !important; } }
+  .mm-grid{
+    list-style:none; margin:0; padding:0;
+    display:grid; grid-template-columns:1fr 1fr;
+  }
+  .mm-grid li{ aspect-ratio:215/214; min-width:0; position:relative; }
+  .mm-grid a{
+    position:absolute; inset:0;
+    display:flex; align-items:flex-end;
+    padding:26px;
+    border:1px solid #fff;
+    font-weight:300; font-size:clamp(24px,6.7vw,32px); line-height:1.15;
+    letter-spacing:-.02em; color:#fff; text-decoration:none;
+    transition:background .35s var(--ease-out-expo);
+  }
+  .mm-grid li:nth-child(2n) a{ margin-left:-1px; }
+  .mm-grid li:nth-child(n+3) a{ margin-top:-1px; }
+  .mm-grid a.sel{ background:var(--f-red); }
+  .mm-tri svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .mm-tri line{ stroke:#fff; stroke-width:1; vector-effect:non-scaling-stroke; }
+  /* the cells rise in, top row first — committed by the class the script
+     adds a frame after display flips (with the usual timer fallback) */
+  .mm-grid li{
+    opacity:0; transform:translate3d(0,24px,0);
+    transition:opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
+    transition-delay:calc(var(--mi) * 90ms);
+  }
+  .mobile-menu.in .mm-grid li{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .mm-grid li{ transition:none; opacity:1; transform:none; }
   }
 </style>
 </head>
@@ -471,12 +529,22 @@
     <a href="thinking.html">Thinking</a>
     <a href="contact.html">Contact</a>
   </nav>
-  <button class="nav-menu" type="button" aria-label="Open menu">
-    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
-      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
-    </svg>
+  <button class="nav-menu" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mobileMenu">
+    <span></span><span></span><span></span><span></span>
   </button>
 </header>
+
+<!-- Mobile menu — see the .mobile-menu styles for the frame references -->
+<nav class="mobile-menu" id="mobileMenu" aria-label="Site menu">
+  <ul class="mm-grid">
+    <li style="--mi:0"><a href="work.html">Work</a></li>
+    <li style="--mi:1"><a href="services.html">Services</a></li>
+    <li style="--mi:2"><a href="about.html">About</a></li>
+    <li style="--mi:3"><a href="thinking.html">Thinking</a></li>
+    <li class="mm-tri" style="--mi:4" aria-hidden="true"><svg viewBox="0 0 215 214" preserveAspectRatio="none"><line x1="215" y1="0" x2="0" y2="214"/><line x1="0" y1="214" x2="215" y2="214"/></svg></li>
+    <li style="--mi:5"><a href="contact.html">Contact</a></li>
+  </ul>
+</nav>
 
 <main>
   <section class="page-head">
@@ -540,41 +608,49 @@
 
   <section class="clients">
     <h2 class="statement reveal">We’ve crafted meaningful work for some of the world’s biggest B2B brands.</h2>
-    <!-- The frame's full wall: 30 marks, 6 x 5, in its own reading order.
-         Each is exported from its own Listitem node, so every file shares
-         the cell's 182-unit width and carries its own height — which is
-         what keeps the marks at their true relative sizes. -->
-    <div class="logo-wall" aria-label="Client logos">
-      <div class="logo-cell reveal"><img src="assets/logos/01-bloomberg.svg" alt="Bloomberg" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/02-ibm.svg" alt="IBM" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/03-microsoft.svg" alt="Microsoft" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/04-adobe.svg" alt="Adobe" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/05-maersk.svg" alt="Maersk" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/06-siemens.svg" alt="Siemens" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/07-toshiba.svg" alt="Toshiba" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/08-dassault-systemes.svg" alt="Dassault Systèmes" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/09-tata.svg" alt="Tata" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/10-tcs.svg" alt="Tata Consultancy Services" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/11-ust.svg" alt="UST" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/12-g42.svg" alt="G42" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/13-khazna.svg" alt="Khazna" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/14-2xe.svg" alt="2XE" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/15-champion-homes.svg" alt="Champion Homes" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/16-teledyne.svg" alt="Teledyne" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/17-hiscox.svg" alt="Hiscox" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/18-wates.svg" alt="Wates" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/19-yokogawa.svg" alt="Yokogawa" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/20-genius-sports.svg" alt="Genius Sports" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/21-ardonagh.svg" alt="The Ardonagh Group" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/22-dematic.svg" alt="Dematic" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/23-wellsaid.svg" alt="WellSaid" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/24-aarete.svg" alt="AArete" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/25-startech.svg" alt="StarTech.com" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/26-agia-affinity.svg" alt="AGIA Affinity" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/27-everywhen.svg" alt="everywhen" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/28-inception42.svg" alt="inception42" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/29-price-forbes.svg" alt="Price Forbes" loading="lazy" decoding="async"></div>
-      <div class="logo-cell reveal"><img src="assets/logos/30-core42.svg" alt="Core42" loading="lazy" decoding="async"></div>
+    <!-- The frame's band: the 30 marks split into two full-bleed rows —
+         01-15 above, 16-30 below, in the wall's own order. Row one drifts
+         left, row two right; both are draggable. The set is duplicated by
+         the script to cover the wrap, exactly as index.html's ticker. -->
+    <div class="logo-rows" aria-label="Client logos">
+      <div class="logo-row" data-dir="-1">
+        <div class="logo-track"><div class="logo-set">
+        <div class="cell"><img src="assets/logos/01-bloomberg.svg" alt="Bloomberg" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/02-ibm.svg" alt="IBM" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/03-microsoft.svg" alt="Microsoft" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/04-adobe.svg" alt="Adobe" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/05-maersk.svg" alt="Maersk" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/06-siemens.svg" alt="Siemens" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/07-toshiba.svg" alt="Toshiba" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/08-dassault-systemes.svg" alt="Dassault Systèmes" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/09-tata.svg" alt="Tata" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/10-tcs.svg" alt="Tata Consultancy Services" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/11-ust.svg" alt="UST" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/12-g42.svg" alt="G42" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/13-khazna.svg" alt="Khazna" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/14-2xe.svg" alt="2XE" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/15-champion-homes.svg" alt="Champion Homes" loading="lazy" decoding="async"></div>
+        </div></div>
+      </div>
+      <div class="logo-row" data-dir="1">
+        <div class="logo-track"><div class="logo-set">
+        <div class="cell"><img src="assets/logos/16-teledyne.svg" alt="Teledyne" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/17-hiscox.svg" alt="Hiscox" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/18-wates.svg" alt="Wates" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/19-yokogawa.svg" alt="Yokogawa" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/20-genius-sports.svg" alt="Genius Sports" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/21-ardonagh.svg" alt="The Ardonagh Group" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/22-dematic.svg" alt="Dematic" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/23-wellsaid.svg" alt="WellSaid" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/24-aarete.svg" alt="AArete" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/25-startech.svg" alt="StarTech.com" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/26-agia-affinity.svg" alt="AGIA Affinity" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/27-everywhen.svg" alt="Everywhen" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/28-inception42.svg" alt="Inception" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/29-price-forbes.svg" alt="Price Forbes" loading="lazy" decoding="async"></div>
+        <div class="cell"><img src="assets/logos/30-core42.svg" alt="Core42" loading="lazy" decoding="async"></div>
+        </div></div>
+      </div>
     </div>
   </section>
 
@@ -680,6 +756,78 @@
       });
     }
   }, { rootMargin: "0px 0px -12% 0px", threshold: 0.1 });
+
+  /* ---- scrollbar width — the logo rows are full-bleed ---- */
+  function measureScrollbar(){
+    const w = window.innerWidth - document.documentElement.clientWidth;
+    document.documentElement.style.setProperty("--sbw", Math.max(0, w) + "px");
+  }
+  measureScrollbar();
+  addEventListener("resize", measureScrollbar, {passive:true});
+
+  /* ---- the two logo rows ----
+     index.html's ticker, instantiated per row with a direction. Constant
+     drift (suspended while dragging), pointer drag 1:1, offset wrapped at
+     one set's width, set cloned to cover any viewport. Slow on purpose —
+     the rows are a texture, not a carousel. */
+  const ROW_SPEED = 22;   // px per second; the homepage runs 28
+  document.querySelectorAll(".logo-row").forEach(rowEl => {
+    const trackEl = rowEl.querySelector(".logo-track");
+    const dir = parseFloat(rowEl.dataset.dir) || -1;
+    let offset = 0, lastT = 0, dragging = false, pointerId = null;
+    let dragLastX = 0, setW = 0;
+
+    const measure = () => {
+      const first = trackEl.querySelector(".logo-set");
+      setW = first ? first.getBoundingClientRect().width : 0;
+      if (setW > 0 && first){
+        const needed = Math.ceil((innerWidth + setW) / setW) + 1;
+        while (trackEl.children.length < needed){
+          const copy = first.cloneNode(true);
+          copy.setAttribute("aria-hidden", "true");
+          copy.querySelectorAll("img").forEach(i => i.alt = "");
+          trackEl.appendChild(copy);
+        }
+      }
+    };
+    addEventListener("resize", measure, {passive:true});
+    if (document.readyState === "complete") measure();
+    else addEventListener("load", measure, {once:true});
+    measure();
+
+    function tick(now){
+      if (!lastT) lastT = now;
+      const dt = Math.min(64, now - lastT) / 1000;
+      lastT = now;
+      if (!dragging && !reduced.matches) offset += dir * ROW_SPEED * dt;
+      if (setW > 0){
+        offset = ((offset % setW) + setW) % setW - setW;
+      }
+      trackEl.style.transform = `translate3d(${offset.toFixed(2)}px,0,0)`;
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    rowEl.addEventListener("pointerdown", e => {
+      dragging = true; pointerId = e.pointerId; dragLastX = e.clientX;
+      rowEl.classList.add("dragging");
+      rowEl.setPointerCapture(pointerId);
+    });
+    rowEl.addEventListener("pointermove", e => {
+      if (!dragging || e.pointerId !== pointerId) return;
+      offset += e.clientX - dragLastX;
+      dragLastX = e.clientX;
+    });
+    const endDrag = e => {
+      if (!dragging || (pointerId !== null && e.pointerId !== pointerId)) return;
+      dragging = false; pointerId = null;
+      rowEl.classList.remove("dragging");
+    };
+    rowEl.addEventListener("pointerup", endDrag);
+    rowEl.addEventListener("pointercancel", endDrag);
+    rowEl.addEventListener("dragstart", e => e.preventDefault());
+  });
+
   document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
 
   /* ---- awards: data + render + sort ----
@@ -789,6 +937,51 @@
     obs.disconnect();
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
   tableObserver.observe(tbody);
+})();
+</script>
+<script>
+/* Mobile menu — self-contained so it drops into every page's shell.
+   The button morphs (squares to minus) purely in CSS off body.menu-open;
+   this only owns state, ARIA, the entrance commit and the red tap-fill. */
+(() => {
+  "use strict";
+  const menuBtn = document.querySelector(".nav-menu");
+  const menuEl  = document.getElementById("mobileMenu");
+  if (!menuBtn || !menuEl) return;
+  const mmReduced = matchMedia("(prefers-reduced-motion: reduce)");
+  let menuOpen = false;
+  /* the cells start hidden and display flips from none, so the entrance
+     must be committed AFTER layout lands — double rAF plus a timer
+     fallback, the same pattern as the filter grids (rAF alone is paused
+     in background tabs and embedded panes and would leave the menu
+     permanently blank there) */
+  function commitIn(){
+    let done = false;
+    const go = () => { if (done) return; done = true; menuEl.classList.add("in"); };
+    requestAnimationFrame(() => requestAnimationFrame(go));
+    setTimeout(go, 120);
+  }
+  function setMenu(open){
+    menuOpen = open;
+    document.body.classList.toggle("menu-open", open);
+    menuBtn.setAttribute("aria-expanded", String(open));
+    /* the page must not scroll behind the overlay */
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    if (open) commitIn(); else menuEl.classList.remove("in");
+  }
+  menuBtn.addEventListener("click", () => setMenu(!menuOpen));
+  addEventListener("keydown", e => { if (e.key === "Escape" && menuOpen) setMenu(false); });
+  addEventListener("resize", () => { if (menuOpen && innerWidth > 767) setMenu(false); }, {passive:true});
+  /* tap: the cell fills F Red, then the page follows — instant under
+     reduced motion */
+  menuEl.querySelectorAll("a").forEach(a => {
+    a.addEventListener("click", e => {
+      if (mmReduced.matches) return;
+      e.preventDefault();
+      a.classList.add("sel");
+      setTimeout(() => { location.href = a.href; }, 350);
+    });
+  });
 })();
 </script>
 </body>

@@ -32,7 +32,8 @@
     --bg:#F8F8F8;
     --ink-footer:#1F1F1F;
     --ink-body:#373636;
-    --ink-tile:#29262A;       /* tile titles in this frame */
+    --ink-tile:#1F1F1F;       /* tile titles — the reworked frame inks them
+                                 Off Black, not the old #29262A */
     --ph:#E6E6E6;             /* placeholder ground for missing imagery */
 
     --nav-h:clamp(90px,17vh,140px);
@@ -122,10 +123,25 @@
   .nav-menu{
     display:none;
     background:none; border:0; padding:0; margin:0;
-    width:27px; height:27px; cursor:pointer; flex:none;
+    width:30px; height:30px; cursor:pointer; flex:none;
+    position:relative;
   }
-  .nav-menu svg{ display:block; width:100%; height:100%; }
-  .nav-menu path{ fill:#fff; }
+  /* Four 10px squares (mobile Nav frames 3142:9937 / 3142:9923). Opening
+     drops the bottom pair and stretches the top-left square across the top
+     row into the frame's 30x10 minus — the left square sliding across to
+     cover the right one. Ink is #fff: like everything in the bar it is a
+     source for the difference blend, not the colour you see. */
+  .nav-menu span{
+    position:absolute; width:10px; height:10px; background:#fff;
+    transition:width .45s var(--ease-out-expo), opacity .45s var(--ease-out-expo);
+  }
+  .nav-menu span:nth-child(1){ left:0; top:0; }
+  .nav-menu span:nth-child(2){ right:0; top:0; }
+  .nav-menu span:nth-child(3){ left:0; bottom:0; }
+  .nav-menu span:nth-child(4){ right:0; bottom:0; }
+  body.menu-open .nav-menu span:nth-child(1){ width:30px; }
+  body.menu-open .nav-menu span:nth-child(3),
+  body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
   .nav-links{display:flex; align-items:center; gap:30px}
   .nav-links a{
@@ -203,28 +219,31 @@
    * subsets come and go leaves holes. The flattening happens by class on the
    * grid (.is-filtered), not by rewriting tiles.
    * ------------------------------------------------------------------ */
-  /* Figma 2896:11592: 30 across, 60 down. The two are no longer the same
-     number, so don't collapse this back to a single `gap`. */
+  /* The reworked frame runs 30 both ways. Rows are NOT uniform height —
+     a span-2 tile is taller than a single and the row takes the tallest;
+     tiles top-align and the air sits below the short ones, as drawn. */
   .work-grid{
     display:grid; grid-template-columns:repeat(4,1fr);
-    column-gap:30px; row-gap:60px;
+    column-gap:30px; row-gap:30px;
+    align-items:start;
     margin-top:30px;                       /* filter row to grid, per the frame */
   }
-  /* The frame builds a tile as four siblings on one flat 20px rhythm —
-     media, client, title, tags. The build runs 20 / 10 / 20 instead: the
-     client line sits closer to the title it belongs to, which reads as one
-     block with a caption over it rather than three evenly spaced lines.
-     That 10 is Myles' call, so don't "correct" it back to the frame's 20.
-     The last three are nested in a <figcaption> for the semantics, so the
-     gaps are margins on the lines rather than one `gap` on the column. */
+  /* The reworked frame sets the caption as ONE two-line block — client in
+     mid grey directly over the title in Off Black, both 20px at 1.2 — with
+     the tags 10 below it. So the rhythm is now 20 (media to caption), the
+     bare line-height between client and title, then 10 to the tags. The
+     old 20 / 10 / 20 with a 15px client is gone with the old frame.
+     One outlier: the frame's Strategy Object tile still carries the old
+     15px client — normalised to the 20px pattern here, flagged in the
+     notes. The caption stays a <figcaption> for the semantics. */
   .tile{ display:flex; flex-direction:column; gap:20px; position:relative; }   /* media to caption */
   /* A tile that has a page gets a stretched link over the whole card —
      the one markup shape that keeps figure > figcaption valid. Only botim
      carries one so far (case-study.html). */
   .tile-link{ position:absolute; inset:0; z-index:1; }
   .tile figcaption{ display:flex; flex-direction:column; }
-  .tile-client{ margin-bottom:10px; }                        /* grey line to title */
-  .tile-title{ margin-bottom:20px; }                         /* title to tags */
+  .tile-client{ margin-bottom:0; }                           /* title directly beneath */
+  .tile-title{ margin-bottom:10px; }                         /* caption block to tags */
   .tile.span-3{ grid-column:span 3; }
   .tile.span-2{ grid-column:span 2; }
   .work-grid.is-filtered .tile{ grid-column:auto; }
@@ -256,7 +275,7 @@
   .tile:hover .tile-face{ transform:scale(1.04); }
 
   .tile-client{
-    font-size:var(--fs-details); line-height:1.5; letter-spacing:-.02em;
+    font-size:20px; line-height:1.2; letter-spacing:-.02em;
     color:var(--mid-grey);
   }
   .tile-title{
@@ -366,24 +385,89 @@
    * ================================================================== */
   @media (max-width:767px){
     :root{
-      --nav-h:clamp(72px,11vh,92px);
-      --pad-x:clamp(16px,5.5vw,24px);
+      --nav-h:90px;              /* the refined mobile bar (mobile frames) */
+      --pad-x:25px;              /* the refined mobile inset (mobile frames) */
       --fs-details:13px;
     }
     .logo{ width:40px; height:40px; margin-left:-10px; }
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .page-head{ display:block; padding-top:calc(var(--nav-h) + 32px); }
+    .page-head{ display:block; padding-top:calc(var(--nav-h) + 50px); }
     .page-head .intro{ margin-top:24px; max-width:340px; }
     .work{ padding-top:44px; padding-bottom:44px; }
-    .filters{ gap:14px 24px; }
-    .work-grid{ grid-template-columns:1fr; gap:40px; margin-top:24px; }
+    /* The mobile frame runs the filter row as one line that scrolls off
+       the right edge of the page — no wrapping. The row bleeds out of the
+       inset and pads back in, so the first button sits on the page margin
+       while the trailing ones disappear off the bezel; the scrollbar is
+       hidden (the cut-off row is the affordance). */
+    .filters{
+      flex-wrap:nowrap; gap:21px;
+      overflow-x:auto;
+      margin-inline:calc(-1 * var(--pad-x)); padding-inline:var(--pad-x);
+      scrollbar-width:none;
+    }
+    .filters::-webkit-scrollbar{ display:none; }
+    .filters button{ flex:none; }
+    .work-grid{ grid-template-columns:1fr; gap:30px; margin-top:24px; }
     .tile.span-3, .tile.span-2{ grid-column:auto; }
-    .tile{ gap:10px; }
+    .tile{ gap:18px; }                 /* the mobile frame's media-to-caption */
+    .tile-client{ font-size:18px; }    /* 18 on mobile, 20 on desktop */
 
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Mobile menu — frames "mobile Nav Unselected" / "mobile Nav Selected"
+   * A full-screen dark overlay under the bar: a 2-column grid of bordered
+   * cells (Work/Services, About/Thinking, a diagonal, Contact), labels
+   * bottom-left. Tapping a cell fills it F Red, then navigates. The
+   * shared 1px edges are real: every link cell carries a full border and
+   * the doubled edges collapse with -1px margins. The diagonal cell has
+   * no border of its own — its right edge is Contact's border, its top
+   * edge is About's, and the diagonal and bottom line are drawn.
+   * Only reachable on mobile (the button only exists there); the width
+   * guard and the resize handler close it if the viewport grows.
+   * ------------------------------------------------------------------ */
+  .mobile-menu{
+    display:none;
+    position:fixed; inset:0; z-index:30;
+    background:#1F1F1F;
+    padding:var(--nav-h) 25px 40px;
+    overflow:auto;
+  }
+  body.menu-open .mobile-menu{ display:block; }
+  @media (min-width:768px){ .mobile-menu{ display:none !important; } }
+  .mm-grid{
+    list-style:none; margin:0; padding:0;
+    display:grid; grid-template-columns:1fr 1fr;
+  }
+  .mm-grid li{ aspect-ratio:215/214; min-width:0; position:relative; }
+  .mm-grid a{
+    position:absolute; inset:0;
+    display:flex; align-items:flex-end;
+    padding:26px;
+    border:1px solid #fff;
+    font-weight:300; font-size:clamp(24px,6.7vw,32px); line-height:1.15;
+    letter-spacing:-.02em; color:#fff; text-decoration:none;
+    transition:background .35s var(--ease-out-expo);
+  }
+  .mm-grid li:nth-child(2n) a{ margin-left:-1px; }
+  .mm-grid li:nth-child(n+3) a{ margin-top:-1px; }
+  .mm-grid a.sel{ background:var(--f-red); }
+  .mm-tri svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .mm-tri line{ stroke:#fff; stroke-width:1; vector-effect:non-scaling-stroke; }
+  /* the cells rise in, top row first — committed by the class the script
+     adds a frame after display flips (with the usual timer fallback) */
+  .mm-grid li{
+    opacity:0; transform:translate3d(0,24px,0);
+    transition:opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
+    transition-delay:calc(var(--mi) * 90ms);
+  }
+  .mobile-menu.in .mm-grid li{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .mm-grid li{ transition:none; opacity:1; transform:none; }
   }
 </style>
 </head>
@@ -411,12 +495,22 @@
     <a href="thinking.html">Thinking</a>
     <a href="contact.html">Contact</a>
   </nav>
-  <button class="nav-menu" type="button" aria-label="Open menu">
-    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
-      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
-    </svg>
+  <button class="nav-menu" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mobileMenu">
+    <span></span><span></span><span></span><span></span>
   </button>
 </header>
+
+<!-- Mobile menu — see the .mobile-menu styles for the frame references -->
+<nav class="mobile-menu" id="mobileMenu" aria-label="Site menu">
+  <ul class="mm-grid">
+    <li style="--mi:0"><a href="work.html">Work</a></li>
+    <li style="--mi:1"><a href="services.html">Services</a></li>
+    <li style="--mi:2"><a href="about.html">About</a></li>
+    <li style="--mi:3"><a href="thinking.html">Thinking</a></li>
+    <li class="mm-tri" style="--mi:4" aria-hidden="true"><svg viewBox="0 0 215 214" preserveAspectRatio="none"><line x1="215" y1="0" x2="0" y2="214"/><line x1="0" y1="214" x2="215" y2="214"/></svg></li>
+    <li style="--mi:5"><a href="contact.html">Contact</a></li>
+  </ul>
+</nav>
 
 <main>
   <section class="page-head">
@@ -433,75 +527,43 @@
       <button type="button" data-filter="experience" aria-pressed="false">Experiences&nbsp;<span class="count" aria-hidden="true"></span></button>
     </div>
 
-    <!-- Content and imagery from frame 2896:11570. Each tile's artwork is the
-         composited export of that tile's own media box in Figma, so overlays
-         and logos that sit on top of the photography in the design come
-         through as drawn rather than needing to be rebuilt. Tags double as
-         the filter index via data-tags. -->
+    <!-- Content and imagery from the reworked frame 2896:11570 (Aug 2026).
+         Each tile's artwork is the composited export of that tile's own
+         media box in Figma. Every media box is the same 3:2, at three
+         spans. Tags double as the filter index via data-tags; words
+         outside the filter row (Digital, Content) index nothing, as
+         before. -->
     <div class="work-grid" id="workGrid">
-      <figure class="tile span-3 reveal" data-tags="brand strategy award">
+      <figure class="tile span-3 reveal" data-tags="campaign strategy">
         <div class="tile-media"><div class="tile-face"><img src="assets/work/ust.jpg" alt="UST — A human connection" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">UST</p>
           <p class="tile-title">A human connection</p>
-          <p class="tile-tags">Brand, Strategy, Award-winning</p>
+          <p class="tile-tags">Campaigns, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="brand strategy award">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/inception.jpg" alt="Inception — Unlocking invention through authenticity" loading="lazy" decoding="async"></div></div>
-        <figcaption>
-          <p class="tile-client">Inception</p>
-          <p class="tile-title">Unlocking invention through authenticity</p>
-          <p class="tile-tags">Brand, Strategy, Award-winning</p>
-        </figcaption>
-      </figure>
-      <figure class="tile reveal" data-tags="brand experience award">
-        <a class="tile-link" href="case-study.html" aria-label="botim — Making money move through play — read the case study"></a>
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/botim.jpg" alt="botim — Making money move through play" loading="lazy" decoding="async"></div></div>
-        <figcaption>
-          <p class="tile-client">botim</p>
-          <p class="tile-title">Making money move through play</p>
-          <p class="tile-tags">Brand, Event Experience, Award-winning</p>
-        </figcaption>
-      </figure>
-      <figure class="tile reveal" data-tags="experience award">
+      <figure class="tile reveal" data-tags="experience">
         <div class="tile-media"><div class="tile-face"><img src="assets/work/g42.jpg" alt="G42 — Creating the blueprint for intelligent storytelling" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">G42</p>
           <p class="tile-title">Creating the blueprint for intelligent storytelling</p>
-          <p class="tile-tags">Event Experience, Award-winning</p>
+          <p class="tile-tags">Experiences, Digital</p>
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/raiff.jpg" alt="Responsible AI Future Foundation — Building a brand that advocates for balance" loading="lazy" decoding="async"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/raiff.png" alt="RAIFF — AI is what we make it" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Responsible AI Future Foundation</p>
-          <p class="tile-title">Building a brand that advocates for balance</p>
+          <p class="tile-client">RAIFF</p>
+          <p class="tile-title">AI is what we make it</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/wates.jpg" alt="Wates — Building a brand with care, legacy and leadership" loading="lazy" decoding="async"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/everywhen.jpg" alt="Everywhen — A unifying insurance brand that makes business personal" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Wates</p>
-          <p class="tile-title">Building a brand with care, legacy and leadership</p>
+          <p class="tile-client">Everywhen</p>
+          <p class="tile-title">A unifying insurance brand that makes business personal</p>
           <p class="tile-tags">Brand, Strategy</p>
-        </figcaption>
-      </figure>
-      <figure class="tile reveal" data-tags="brand">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/level.jpg" alt="Level — Shaping a global brand that balances climate and community" loading="lazy" decoding="async"></div></div>
-        <figcaption>
-          <p class="tile-client">Level</p>
-          <p class="tile-title">Shaping a global brand that balances climate and community</p>
-          <p class="tile-tags">Brand</p>
-        </figcaption>
-      </figure>
-      <figure class="tile reveal" data-tags="brand campaign">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/genius-sports.jpg" alt="Genius Sports — A brand campaign for a new world of sport" loading="lazy" decoding="async"></div></div>
-        <figcaption>
-          <p class="tile-client">Genius Sports</p>
-          <p class="tile-title">A brand campaign for a new world of sport</p>
-          <p class="tile-tags">Brand, Campaign</p>
         </figcaption>
       </figure>
       <figure class="tile span-2 reveal" data-tags="brand strategy">
@@ -512,6 +574,31 @@
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
+      <figure class="tile span-2 reveal" data-tags="brand experience">
+        <a class="tile-link" href="case-study.html" aria-label="Botim — Making money move through play — read the case study"></a>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/botim.png" alt="Botim — Making money move through play" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">Botim</p>
+          <p class="tile-title">Making money move through play</p>
+          <p class="tile-tags">Brand, Experiences</p>
+        </figcaption>
+      </figure>
+      <figure class="tile reveal" data-tags="brand strategy">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/inception.jpg" alt="Inception — Unlocking invention through authenticity" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">Inception</p>
+          <p class="tile-title">Unlocking invention through authenticity</p>
+          <p class="tile-tags">Brand, Strategy</p>
+        </figcaption>
+      </figure>
+      <figure class="tile reveal" data-tags="content">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/wellsaid.png" alt="WellSaid — Shaping a leader in AI voice" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">WellSaid</p>
+          <p class="tile-title">Shaping a leader in AI voice</p>
+          <p class="tile-tags">Content</p>
+        </figcaption>
+      </figure>
       <figure class="tile reveal" data-tags="brand strategy">
         <div class="tile-media"><div class="tile-face"><img src="assets/work/teledyne-health.jpg" alt="Teledyne Healthcare — Bringing multiple brands under one roof" loading="lazy" decoding="async"></div></div>
         <figcaption>
@@ -520,60 +607,68 @@
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="brand strategy experience">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/ibm-wimbledon.jpg" alt="IBM x Wimbledon — Two iconic brands. Three decades." loading="lazy" decoding="async"></div></div>
+      <figure class="tile reveal" data-tags="brand">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/strategy-object.jpg" alt="Strategy Object — Rewriting the code" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">IBM x Wimbledon</p>
-          <p class="tile-title">Two iconic brands. Three decades.</p>
-          <p class="tile-tags">Brand, Activations, Strategy</p>
+          <p class="tile-client">Strategy Object</p>
+          <p class="tile-title">Rewriting the code</p>
+          <p class="tile-tags">Brand, Digital</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/toshiba.jpg" alt="Toshiba — Togetherness" loading="lazy" decoding="async"></div></div>
+      <figure class="tile span-2 reveal" data-tags="brand campaign">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/genius-sports.jpg" alt="Genius Sports — A brand campaign for a new world of sport" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Toshiba</p>
-          <p class="tile-title">Togetherness</p>
+          <p class="tile-client">Genius Sports</p>
+          <p class="tile-title">A brand campaign for a new world of sport</p>
+          <p class="tile-tags">Brand, Campaigns</p>
+        </figcaption>
+      </figure>
+      <figure class="tile span-2 reveal" data-tags="brand strategy">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/wates.jpg" alt="Wates — Building a brand with care, legacy and leadership" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">Wates</p>
+          <p class="tile-title">Building a brand with care, legacy and leadership</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="brand">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/price-forbes.jpg" alt="Price Forbes — A fresh take on heritage." loading="lazy" decoding="async"></div></div>
-        <figcaption>
-          <p class="tile-client">Price Forbes</p>
-          <p class="tile-title">A fresh take on heritage.</p>
-          <p class="tile-tags">Brand, Website</p>
-        </figcaption>
-      </figure>
-      <figure class="tile reveal" data-tags="content">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/wellsaid.jpg" alt="WellSaid — Shaping a leader in AI voice" loading="lazy" decoding="async"></div></div>
-        <figcaption>
-          <p class="tile-client">WellSaid</p>
-          <p class="tile-title">Shaping a leader in AI voice</p>
-          <p class="tile-tags">Content</p>
-        </figcaption>
-      </figure>
       <figure class="tile reveal" data-tags="brand strategy">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/teledyne.jpg" alt="Teledyne — How cancer-fighting technology inspired a dynamic brand" loading="lazy" decoding="async"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/toshiba.jpg" alt="Toshiba — How cancer-fighting technology inspired a dynamic brand" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Teledyne</p>
+          <p class="tile-client">Toshiba</p>
           <p class="tile-title">How cancer-fighting technology inspired a dynamic brand</p>
           <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
-      <figure class="tile reveal" data-tags="brand">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/ibm.jpg" alt="IBM — This is IBM" loading="lazy" decoding="async"></div></div>
+      <figure class="tile reveal" data-tags="brand strategy">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/2x.jpg" alt="2X — A trailblazing identity for marketing’s next power move" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">IBM</p>
-          <p class="tile-title">This is IBM</p>
-          <p class="tile-tags">Brand, Awareness</p>
+          <p class="tile-client">2X</p>
+          <p class="tile-title">A trailblazing identity for marketing’s next power move</p>
+          <p class="tile-tags">Brand, Strategy</p>
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="brand">
-        <div class="tile-media"><div class="tile-face"><img src="assets/work/durrell.jpg" alt="Durrell — The lonely Dodo" loading="lazy" decoding="async"></div></div>
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/price-forbes.jpg" alt="Price Forbes — Making history with a fresh take on heritage" loading="lazy" decoding="async"></div></div>
         <figcaption>
-          <p class="tile-client">Durrell</p>
-          <p class="tile-title">The lonely Dodo</p>
-          <p class="tile-tags">Brand, Awareness</p>
+          <p class="tile-client">Price Forbes</p>
+          <p class="tile-title">Making history with a fresh take on heritage</p>
+          <p class="tile-tags">Brand, Digital</p>
+        </figcaption>
+      </figure>
+      <figure class="tile reveal" data-tags="campaign">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/siemens.jpg" alt="Siemens — An interactive web-based experience" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">Siemens</p>
+          <p class="tile-title">An interactive web-based experience</p>
+          <p class="tile-tags">Campaigns, Digital</p>
+        </figcaption>
+      </figure>
+      <figure class="tile span-2 reveal" data-tags="brand">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/level.jpg" alt="Level — Shaping a global brand that balances climate and community" loading="lazy" decoding="async"></div></div>
+        <figcaption>
+          <p class="tile-client">Level</p>
+          <p class="tile-title">Shaping a global brand that balances climate and community</p>
+          <p class="tile-tags">Brand</p>
         </figcaption>
       </figure>
     </div>
@@ -756,6 +851,51 @@
 
   buttons.forEach(b => b.addEventListener("click", () => activate(b)));
   setCounts("all");
+})();
+</script>
+<script>
+/* Mobile menu — self-contained so it drops into every page's shell.
+   The button morphs (squares to minus) purely in CSS off body.menu-open;
+   this only owns state, ARIA, the entrance commit and the red tap-fill. */
+(() => {
+  "use strict";
+  const menuBtn = document.querySelector(".nav-menu");
+  const menuEl  = document.getElementById("mobileMenu");
+  if (!menuBtn || !menuEl) return;
+  const mmReduced = matchMedia("(prefers-reduced-motion: reduce)");
+  let menuOpen = false;
+  /* the cells start hidden and display flips from none, so the entrance
+     must be committed AFTER layout lands — double rAF plus a timer
+     fallback, the same pattern as the filter grids (rAF alone is paused
+     in background tabs and embedded panes and would leave the menu
+     permanently blank there) */
+  function commitIn(){
+    let done = false;
+    const go = () => { if (done) return; done = true; menuEl.classList.add("in"); };
+    requestAnimationFrame(() => requestAnimationFrame(go));
+    setTimeout(go, 120);
+  }
+  function setMenu(open){
+    menuOpen = open;
+    document.body.classList.toggle("menu-open", open);
+    menuBtn.setAttribute("aria-expanded", String(open));
+    /* the page must not scroll behind the overlay */
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    if (open) commitIn(); else menuEl.classList.remove("in");
+  }
+  menuBtn.addEventListener("click", () => setMenu(!menuOpen));
+  addEventListener("keydown", e => { if (e.key === "Escape" && menuOpen) setMenu(false); });
+  addEventListener("resize", () => { if (menuOpen && innerWidth > 767) setMenu(false); }, {passive:true});
+  /* tap: the cell fills F Red, then the page follows — instant under
+     reduced motion */
+  menuEl.querySelectorAll("a").forEach(a => {
+    a.addEventListener("click", e => {
+      if (mmReduced.matches) return;
+      e.preventDefault();
+      a.classList.add("sel");
+      setTimeout(() => { location.href = a.href; }, 350);
+    });
+  });
 })();
 </script>
 </body>

@@ -135,6 +135,7 @@
     transition:color .35s var(--ease-out-expo);
   }
   .nav-links a:hover{color:#fff}
+  .nav-links a[aria-current="page"]{ color:#fff; }
 
   /* ------------------------------------------------------------------ *
    * Page head — "Our work" + intro copy on the 4-col grid
@@ -216,7 +217,11 @@
      That 10 is Myles' call, so don't "correct" it back to the frame's 20.
      The last three are nested in a <figcaption> for the semantics, so the
      gaps are margins on the lines rather than one `gap` on the column. */
-  .tile{ display:flex; flex-direction:column; gap:20px; }   /* media to caption */
+  .tile{ display:flex; flex-direction:column; gap:20px; position:relative; }   /* media to caption */
+  /* A tile that has a page gets a stretched link over the whole card —
+     the one markup shape that keeps figure > figcaption valid. Only botim
+     carries one so far (case-study.html). */
+  .tile-link{ position:absolute; inset:0; z-index:1; }
   .tile figcaption{ display:flex; flex-direction:column; }
   .tile-client{ margin-bottom:10px; }                        /* grey line to title */
   .tile-title{ margin-bottom:20px; }                         /* title to tags */
@@ -451,6 +456,7 @@
         </figcaption>
       </figure>
       <figure class="tile reveal" data-tags="brand experience award">
+        <a class="tile-link" href="case-study.html" aria-label="botim — Making money move through play — read the case study"></a>
         <div class="tile-media"><div class="tile-face"><img src="assets/work/botim.jpg" alt="botim — Making money move through play" loading="lazy" decoding="async"></div></div>
         <figcaption>
           <p class="tile-client">botim</p>

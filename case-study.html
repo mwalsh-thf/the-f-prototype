@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>botim — Making money move through play — The Frameworks</title>
+<meta name="description" content="We helped botim tell people at GITEX Global they can now save, grow and spend their money, building a story through the power of play." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* ==================================================================== *
+   * The Frameworks — Case study (botim)
+   *
+   * Figma: "The F website 2026", frames 3113:7185 (Case Study Collapsed)
+   * and 3107:2283 (Case Study Expanded), page "Claude Full-site".
+   *
+   * Same rules as the rest of the site: one file, no build, no
+   * dependencies. Tokens, nav and footer are deliberately duplicated from
+   * work.html/article.html — change one, change all.
+   *
+   * THIS IS A TEMPLATE. Everything project-specific lives in the markup:
+   * the masthead, the intro + story copy, the details <dl>, and the media
+   * stack (any mix of .cs-full singles and .cs-row pairs). A second case
+   * study is this file with different content, exactly as article-2.html
+   * is to article.html.
+   *
+   * Two ideas carried over from article.html:
+   *
+   * 1. THE STICKY DETAILS. The right-hand column (Type of work / Industry /
+   *    Awards) pins at --cover-stick while the intro + story column scrolls,
+   *    and releases when the top block ends — the same range-and-sticky
+   *    mechanism as the article's media column, no JavaScript. With the
+   *    story collapsed the left column is shorter than the details, so the
+   *    pin has no travel; expand the story and the details follow you down
+   *    the read. That asymmetry is the design, not a bug.
+   *
+   * 2. THE STORY RHYTHM. The expanded story is set on the article's
+   *    --body-line system: paragraph break one line, module break two.
+   *
+   * And one of its own:
+   *
+   * 3. THE COLLAPSE. "Read the full story" unfolds the story in place —
+   *    a grid-template-rows 0fr -> 1fr transition, so no measuring, no
+   *    hard-coded heights, and it stays correct however long the copy gets.
+   *    The read-link collapses by the same mechanism as the story expands
+   *    (and vice versa), so the whole move is one continuous change of
+   *    height. visibility flips at the transition's ends to keep the
+   *    hidden copy out of the tab order and away from screen readers.
+   * ==================================================================== */
+  :root{
+    --black:#272727;
+    --mid-grey:#8F8F8F;
+    --f-red:#F45944;
+    --bg:#F8F8F8;
+    --ink-footer:#1F1F1F;
+    --ink-body:#373636;
+    --ink-tile:#29262A;
+    --ph:#E6E6E6;
+
+    --nav-h:clamp(90px,17vh,140px);
+    --logo-h:52.44px;
+    --page-max:2200px;
+    --pad-x:100px;
+    --sbw:0px;
+
+    --fs-h3:clamp(28px,2.78vw,40px);   /* 40 at 1440 — masthead, "Related projects" */
+    --fs-h5:20px;
+    --fs-body:18px;
+    --fs-details:15px;
+
+    /* One line of body copy — the story's whole rhythm hangs off it,
+       exactly as on the articles. */
+    --body-line:calc(var(--fs-body) * 1.3);
+
+    --ease-out-expo:cubic-bezier(.16,1,.3,1);
+
+    --reveal-dur:2.2s;
+    --reveal-shift:44px;
+    --reveal-stagger:.26s;
+
+    /* Where the details column pins, and how long the story takes to
+       unfold. The unfold is its own duration: it is a change of state the
+       user asked for, not an entrance — 2.2s would feel like the page
+       ignoring the click, .3s like a pop. */
+    --cover-stick:100px;
+    --story-dur:.9s;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{ scrollbar-gutter:stable; background:var(--bg); }
+  body{
+    max-width:var(--page-max); margin-inline:auto;
+    background:var(--bg);
+    color:var(--ink-body);
+    font-family:"Geist","Geist Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  img{ display:block; max-width:100%; }
+
+  /* ------------------------------------------------------------------ *
+   * Nav — shared component (see work.html for the full reasoning)
+   * ------------------------------------------------------------------ */
+  .nav{
+    position:fixed; top:0; left:50%; width:100%; max-width:var(--page-max);
+    height:var(--nav-h);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 var(--pad-x);
+    z-index:40;
+    mix-blend-mode:difference;
+    transform:translateX(-50%) translateY(0);
+    transition:transform .38s var(--ease-out-expo);
+  }
+  .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
+  .logo{width:var(--logo-h);height:var(--logo-h);display:block;margin-left:-13.11px;flex:none}
+  .logo-mark{width:100%;height:100%;display:block;overflow:visible}
+  .logo-mark polygon{
+    fill:#fff;
+    stroke:#fff;
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;
+  }
+  .nav-menu{
+    display:none;
+    background:none; border:0; padding:0; margin:0;
+    width:27px; height:27px; cursor:pointer; flex:none;
+  }
+  .nav-menu svg{ display:block; width:100%; height:100%; }
+  .nav-menu path{ fill:#fff; }
+  .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
+  .nav-links{display:flex; align-items:center; gap:30px}
+  .nav-links a{
+    font-size:15px; line-height:1.2; letter-spacing:.01em;
+    color:var(--mid-grey); text-decoration:none; white-space:nowrap;
+    transition:color .35s var(--ease-out-expo);
+  }
+  .nav-links a:hover{color:#fff}
+  .nav-links a[aria-current="page"]{ color:#fff; }
+
+  /* ------------------------------------------------------------------ *
+   * Masthead — client + project title, both 40px, weight tells them apart
+   * ------------------------------------------------------------------ */
+  .cs-head{
+    padding:calc(var(--nav-h) + 50px) var(--pad-x) 0;
+  }
+  .cs-head h1{
+    font-weight:300;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    color:var(--ink-body);
+    max-width:20em;
+  }
+  .cs-head .cs-client{ display:block; font-weight:400; }
+  @supports (text-box: trim-both cap alphabetic){
+    .cs-head h1{ text-box:trim-both cap alphabetic; }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * The top block — intro + story on the left, sticky details right.
+   * Same 12-column grid as the articles, 30px gutters, 100px inset.
+   * ------------------------------------------------------------------ */
+  .cs-top{
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    column-gap:30px;
+    align-items:start;                /* the aside must not stretch — its
+                                         cell does, its content doesn't */
+    padding:100px var(--pad-x);       /* 100 down from the masthead, 100
+                                         into the media stack, per frame */
+  }
+  .cs-copy{ grid-column:1 / span 5; min-width:0; }
+  .cs-aside{
+    grid-column:7 / span 6; min-width:0;
+    align-self:stretch;               /* the RANGE spans the block's full
+                                         height; the details pin inside it */
+  }
+  .cs-stick{ position:sticky; top:var(--cover-stick); }
+
+  .cs-copy p{
+    font-size:var(--fs-body); line-height:1.3; letter-spacing:-.02em;
+    color:var(--ink-body);
+  }
+  .cs-copy p + p{ margin-top:var(--body-line); }
+
+  /* ---- the collapsible story ----------------------------------------
+     Two grid wrappers, mirrored: .cs-story opens 0fr -> 1fr while
+     .cs-read closes 1fr -> 0fr, over the same duration on the same curve,
+     so the block reads as one continuous unfolding rather than two things
+     happening. fr-transition needs no measured heights — it stays right
+     however long the copy is, which is what makes this a template.
+     visibility flips at the ends: delayed on the way out (so the copy
+     doesn't vanish before the fold finishes), immediate on the way in. */
+  .cs-story, .cs-read{
+    display:grid;
+    grid-template-rows:0fr;
+    visibility:hidden;
+    transition:grid-template-rows var(--story-dur) var(--ease-out-expo),
+               visibility 0s var(--story-dur);
+  }
+  .cs-story.open, .cs-read.open{
+    grid-template-rows:1fr;
+    visibility:visible;
+    transition:grid-template-rows var(--story-dur) var(--ease-out-expo),
+               visibility 0s 0s;
+  }
+  .cs-story > div, .cs-read > div{ overflow:hidden; min-height:0; }
+  /* the copy also fades, slightly behind the fold, so it arrives as the
+     space for it opens rather than sitting fully inked in a sliver */
+  .cs-story .cs-story-body{
+    opacity:0;
+    transition:opacity calc(var(--story-dur) * .6) var(--ease-out-expo);
+  }
+  .cs-story.open .cs-story-body{
+    opacity:1;
+    transition:opacity var(--story-dur) var(--ease-out-expo) calc(var(--story-dur) * .35);
+  }
+
+  /* Story sections on the article rhythm: label then copy, one body line
+     of padding each side so section meeting section is a double break. */
+  .cs-story section{ padding:var(--body-line) 0; }
+  .cs-story section:first-child{ padding-top:30px; }
+  /* Section labels are body size in mid grey — the story's quiet running
+     heads, matching the details labels opposite rather than the articles'
+     Medium-weight subheads. That's the frame's own choice here. */
+  .cs-story h2{
+    font-weight:400;
+    font-size:var(--fs-body); line-height:1.3; letter-spacing:-.02em;
+    color:var(--mid-grey);
+    margin-bottom:30px;
+  }
+
+  /* ---- the toggles ---------------------------------------------------
+     Text buttons in mid grey; red on hover, as asked. The arrow rides
+     4px right on hover, the same gesture as the contact module's arrow. */
+  .cs-toggle{
+    display:inline-flex; align-items:center; gap:10px;
+    background:none; border:0; padding:0; cursor:pointer;
+    font:inherit;
+    font-size:var(--fs-body); line-height:1.3; letter-spacing:-.02em;
+    color:var(--mid-grey);
+    transition:color .35s var(--ease-out-expo);
+  }
+  .cs-toggle:hover{ color:var(--f-red); }
+  .cs-toggle:focus-visible{ outline:1px solid var(--f-red); outline-offset:4px }
+  .cs-toggle svg{ display:block; }
+  .cs-toggle .arr{ transition:transform .35s var(--ease-out-expo); }
+  .cs-toggle:hover .arr{ transform:translateX(4px); }
+  /* the frame holds 50px between the intro's last line and the link */
+  .cs-read > div > .cs-toggle{ margin-top:50px; }
+  .cs-story .cs-toggle{ margin-top:calc(50px - var(--body-line)); }
+
+  /* ---- the details ---------------------------------------------------
+     Type of work / Industry side by side, Awards across both — a <dl> on
+     the aside's own two columns. Labels 15 in mid grey, values body size.
+     The gaps are the frame's: 32px label ink to value ink, 50px between
+     rows, both read against cap-trimmed text. */
+  .cs-meta{
+    display:grid; grid-template-columns:1fr 1fr;
+    column-gap:30px; row-gap:50px;
+  }
+  .cs-meta > div:last-child{ grid-column:1 / -1; }
+  .cs-meta dt{
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    color:var(--mid-grey); margin-bottom:32px;
+  }
+  .cs-meta dd{
+    font-size:var(--fs-body); line-height:1.3; letter-spacing:-.02em;
+    color:var(--ink-body);
+  }
+  @supports (text-box: trim-both cap alphabetic){
+    .cs-meta dt, .cs-meta dd{ text-box:trim-both cap alphabetic; }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * The media stack — full-width singles and 605/605 pairs, 30px apart,
+   * inside the page inset (the frame keeps it on the content area, not
+   * full-bleed). Ratios come from each image's own width/height
+   * attributes; the stack itself knows nothing about them.
+   * ------------------------------------------------------------------ */
+  .cs-media{
+    display:flex; flex-direction:column; gap:30px;
+    padding:0 var(--pad-x);
+  }
+  .cs-media img{ width:100%; height:auto; border-radius:1px; }
+  .cs-row{
+    display:grid; grid-template-columns:1fr 1fr; gap:30px;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Related projects — work.html's tile, two up
+   * ------------------------------------------------------------------ */
+  .related{ padding:100px var(--pad-x); }
+  .related h2{
+    font-weight:300;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    color:var(--black);
+    margin-bottom:100px;
+  }
+  @supports (text-box: trim-both cap alphabetic){
+    .related h2{ text-box:trim-both cap alphabetic; }
+  }
+  .related-grid{
+    display:grid; grid-template-columns:1fr 1fr;
+    column-gap:30px; align-items:start;
+  }
+  /* the tile pattern from work.html, as an anchor: 20 / 10 / 20 caption
+     rhythm (the 10 is Myles' call — don't flatten it back to the frame's
+     20), scale-within-crop on hover, title to red like every tile */
+  .tile{
+    display:flex; flex-direction:column; gap:20px;
+    text-decoration:none; color:inherit; min-width:0;
+  }
+  .tile-cap{ display:flex; flex-direction:column; }
+  .tile-client, .tile-title, .tile-tags{ display:block; }
+  .tile-client{ margin-bottom:10px; }
+  .tile-title{ margin-bottom:20px; }
+  .tile-media{
+    width:100%; aspect-ratio:605/402;
+    background:var(--ph);
+    border-radius:1px;
+    overflow:hidden;
+    position:relative;
+  }
+  .tile-face{
+    position:absolute; inset:0;
+    background:var(--ph);
+    transition:transform .6s var(--ease-out-expo);
+  }
+  .tile-face img{
+    width:100%; height:100%;
+    object-fit:cover; object-position:center;
+    display:block;
+  }
+  .tile:hover .tile-face{ transform:scale(1.04); }
+  .tile-client{
+    font-size:var(--fs-details); line-height:1.5; letter-spacing:-.02em;
+    color:var(--mid-grey);
+  }
+  .tile-title{
+    font-weight:400;
+    font-size:20px; line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink-tile);
+    transition:color .4s var(--ease-out-expo);
+  }
+  .tile:hover .tile-title{ color:var(--f-red); }
+  .tile-tags{
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.07em;
+    color:var(--ink-footer);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Footer — shared component
+   * ------------------------------------------------------------------ */
+  .footer{
+    display:flex; gap:30px; align-items:flex-start;
+    padding:clamp(40px,7vh,100px) var(--pad-x) clamp(50px,8vh,110px);
+    font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px; line-height:17px; letter-spacing:.6px; color:var(--ink-footer);
+  }
+  .footer > div{flex:1 1 0; min-width:0}
+  .footer a{ color:var(--mid-grey); text-decoration:none; }
+  .footer a:hover{ color:var(--f-red); }
+  .footer .links a{ margin-right:14px; }
+
+  /* ------------------------------------------------------------------ *
+   * Motion — load-in for the masthead row, the shared reveal below it
+   * ------------------------------------------------------------------ */
+  @media (prefers-reduced-motion: no-preference){
+    .cs-head h1{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) backwards; }
+    .cs-copy{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) var(--reveal-stagger) backwards; }
+    .cs-aside{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) calc(var(--reveal-stagger) * 2) backwards; }
+  }
+  @keyframes reveal-in{
+    from{ opacity:0; transform:translate3d(0, var(--reveal-shift), 0); }
+  }
+  .js .reveal{
+    opacity:0;
+    transform:translate3d(0, var(--reveal-shift), 0);
+    transition:opacity var(--reveal-dur) var(--ease-out-expo),
+               transform var(--reveal-dur) var(--ease-out-expo);
+    transition-delay:var(--d, 0ms);
+  }
+  .js .reveal.in{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .js .reveal{ opacity:1; transform:none; transition:none }
+    .cs-story, .cs-read, .cs-story .cs-story-body{ transition:none; }
+  }
+
+  /* ================================================================== *
+   * Tablet — the article's own breakpoints
+   * ================================================================== */
+  @media (max-width:1100px){
+    .cs-copy{ grid-column:1 / span 6; }
+    .cs-aside{ grid-column:8 / span 5; }
+  }
+
+  /* ================================================================== *
+   * Stacked — one column; details follow the story, the pin lets go
+   * ================================================================== */
+  @media (max-width:899px){
+    .cs-top{ grid-template-columns:1fr; row-gap:56px; }
+    .cs-copy, .cs-aside{ grid-column:1 / -1; }
+    .cs-stick{ position:static; }
+  }
+
+  /* ================================================================== *
+   * Mobile — shared nav collapse
+   * ================================================================== */
+  @media (max-width:767px){
+    :root{
+      --nav-h:clamp(72px,11vh,92px);
+      --pad-x:clamp(16px,5.5vw,24px);
+      --logo-h:40px;
+      --fs-body:16px;
+      --fs-details:13px;
+    }
+    .logo{ margin-left:-10px; }
+    .nav-menu{ display:block; }
+    .nav-links{ display:none; }
+    .cs-head{ padding-top:calc(var(--nav-h) + 32px); }
+    .cs-top{ padding:56px var(--pad-x); row-gap:44px; }
+    .cs-meta{ row-gap:40px; }
+    .cs-meta dt{ margin-bottom:24px; }
+    .cs-media{ gap:16px; }
+    .cs-row{ gap:16px; }
+    .related{ padding:56px var(--pad-x); }
+    .related h2{ margin-bottom:40px; }
+    .related-grid{ grid-template-columns:1fr; row-gap:40px; }
+    .tile{ gap:10px; }
+    .footer{ flex-wrap:wrap; row-gap:24px; }
+    .footer > div{ flex:1 1 45%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="logo" href="index.html" aria-label="The Frameworks — home">
+    <svg class="logo-mark" viewBox="0 -100 800 800" aria-hidden="true">
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 -100) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(400 300) rotate(180 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(0 100 100)"></polygon>
+      <polygon points="0,0 200,0 0,200" transform="translate(200 500) rotate(180 100 100)"></polygon>
+    </svg>
+  </a>
+  <nav class="nav-links">
+    <!-- this case study lives in the Work section -->
+    <a href="work.html" aria-current="page">Work</a>
+    <a href="services.html">Services</a>
+    <a href="about.html">About</a>
+    <a href="thinking.html">Thinking</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <button class="nav-menu" type="button" aria-label="Open menu">
+    <svg viewBox="0 0 27 27" aria-hidden="true" focusable="false">
+      <path d="M9 27H0V18H9V27ZM27 27H18V18H27V27ZM9 9H0V0H9V9ZM27 9H18V0H27V9Z"/>
+    </svg>
+  </button>
+</header>
+
+<main>
+
+  <header class="cs-head">
+    <h1><span class="cs-client">botim</span>Making money move through play</h1>
+  </header>
+
+  <section class="cs-top">
+    <div class="cs-copy">
+      <p class="cs-intro">botim by Astra Tech is a well-established, trusted communication platform in the UAE, where more than 150 million users connect. We helped botim tell people at GITEX Global they can now save, grow and spend their money, building a story through the power of play.</p>
+
+      <div class="cs-story" id="csStory">
+        <div>
+          <div class="cs-story-body">
+            <section>
+              <h2>Challenge</h2>
+              <div>
+                <p>At a major global technology event like GITEX Global, exhibitors often default to technical demos and dense product screens. botim wanted to communicate its new financial proposition to an international audience – who may only know it as a calling app – in a way that was memorable, joyful and unmistakably botim.</p>
+                <p>botim asked us to create an activation that would cut through, spark curiosity and tell a clear story about its new AI finance capabilities. We had to show how botim empowers people to earn, grow and manage their money in a way that felt intuitive, exciting and instantly graspable by passers-by.</p>
+              </div>
+            </section>
+            <section>
+              <h2>Insight</h2>
+              <div>
+                <p>We led with a simple idea: in a sea of serious screens and corporate chat, play would stand out. Games invite participation, generate energy – and allow people to experience a product story without needing to be told.</p>
+                <p>We wanted to bridge the worlds botim inhabits. A consumer-facing brand known for personality and connection, it exists within the sophisticated technology ecosystem of G42. Our creative challenge was to strike the right balance: playful enough to reflect botim’s character, and polished enough to sit confidently within a corporate environment.</p>
+              </div>
+            </section>
+            <section>
+              <h2>Solution</h2>
+              <div>
+                <p>We designed Money Moves, a series of connected mini-games that let people feel how money flows within the platform. In a seamless three-minute experience, players earn, grow and spend money accompanied by Bo, an in-game assistant.</p>
+                <p>Storytelling and subtle transitions create a coherent narrative across the games, and a scoreboard summarises and ranks performance. A signature animated graphic – the Botim arm – interacts with the money and brings a human touch. Simple, friendly messaging keeps the experience smooth, injecting just the right amount of humour and brand flavour.</p>
+                <p>Money Moves helped reposition botim as a financial service provider in a way that was clear, compelling and culturally resonant. Drawing a continuous crowd at GITEX Global, it achieved what few other executions managed: it turned a financial product story into pure human engagement. It made business fun.</p>
+              </div>
+            </section>
+            <button class="cs-toggle" type="button" data-story="hide" aria-controls="csStory" aria-expanded="false">Hide story</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cs-read open" id="csRead">
+        <div>
+          <button class="cs-toggle" type="button" data-story="show" aria-controls="csStory" aria-expanded="false">
+            Read the full story
+            <svg class="arr" width="14" height="13" viewBox="0 0 14 13" aria-hidden="true" focusable="false">
+              <path d="M1 6.5h11.3M7.5 1.2l5.3 5.3-5.3 5.3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-aside">
+      <dl class="cs-meta cs-stick">
+        <div><dt>Type of work</dt><dd>Event experience</dd></div>
+        <div><dt>Industry</dt><dd>Finance</dd></div>
+        <div><dt>Awards</dt><dd>MUSE Creative Awards, Event Experience, Gold, 2026</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- The media stack. Each full-width image is one .cs-full; a pair is a
+       .cs-row with two. Ratios ride on the width/height attributes, so the
+       stack itself is generic — that's what makes this file a template. -->
+  <section class="cs-media" aria-label="Project imagery">
+    <div class="cs-full reveal">
+      <img src="assets/casestudy/hero.svg" alt="Bo, botim’s robot assistant — the character’s face drawn large" width="1245" height="901" loading="eager" decoding="async">
+    </div>
+    <div class="cs-full reveal">
+      <img src="assets/casestudy/faces.svg" alt="A grid of Bo’s expressions on botim blue" width="1240" height="718" loading="lazy" decoding="async">
+    </div>
+    <div class="cs-full reveal">
+      <img src="assets/casestudy/gitex-stand.jpg" alt="Visitors around the botim MONEY stand at GITEX Global" width="2480" height="1395" loading="lazy" decoding="async">
+    </div>
+    <div class="cs-full reveal">
+      <img src="assets/casestudy/posters.jpg" alt="Three Money Moves posters — Money speaks from the heart, Money says what words can’t, Money says I’ve got you" width="2480" height="1540" loading="lazy" decoding="async">
+    </div>
+    <div class="cs-row">
+      <div class="reveal">
+        <img src="assets/casestudy/hand.jpg" alt="The botim arm making a peace sign" width="1210" height="1210" loading="lazy" decoding="async">
+      </div>
+      <div class="reveal">
+        <img src="assets/casestudy/bo-dark.png" alt="Bo on a dark ground" width="1210" height="1210" loading="lazy" decoding="async">
+      </div>
+    </div>
+    <div class="cs-row">
+      <div class="reveal">
+        <img src="assets/casestudy/name-screen.jpg" alt="The game’s name-entry screen — “Nice to meet you, what’s your name?”" width="1210" height="1210" loading="lazy" decoding="async">
+      </div>
+      <div class="reveal">
+        <img src="assets/casestudy/money-moves.jpg" alt="Money Moves title graphic with Bo and flying banknotes" width="1210" height="1210" loading="lazy" decoding="async">
+      </div>
+    </div>
+    <div class="cs-full reveal">
+      <img src="assets/casestudy/gitex-play.jpg" alt="A visitor playing Money Moves on the stand’s screen" width="2480" height="1620" loading="lazy" decoding="async">
+    </div>
+  </section>
+
+  <section class="related">
+    <h2 class="reveal">Related projects</h2>
+    <!-- The frame draws the same Yokogawa tile twice — reproduced as drawn.
+         The artwork is the Work grid's own export, so the two stay in step. -->
+    <div class="related-grid">
+      <a class="tile reveal" href="work.html">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/yokogawa.jpg" alt="" loading="lazy" decoding="async"></div></div>
+        <span class="tile-cap">
+          <span class="tile-client">Yokogawa</p>
+          <span class="tile-title">Elevating sustainability – precisely</span>
+          <span class="tile-tags">Brand, Strategy</span>
+        </span>
+      </a>
+      <a class="tile reveal" href="work.html">
+        <div class="tile-media"><div class="tile-face"><img src="assets/work/yokogawa.jpg" alt="" loading="lazy" decoding="async"></div></div>
+        <span class="tile-cap">
+          <span class="tile-client">Yokogawa</p>
+          <span class="tile-title">Elevating sustainability – precisely</span>
+          <span class="tile-tags">Brand, Strategy</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+  <footer class="footer">
+    <div>
+      <p>© The Frameworks Ltd</p><p>&nbsp;</p>
+      <p>1989–2026</p>
+      <p class="links"><a href="#">FAQs</a><a href="#">Legal</a><a href="#">Cookies</a></p>
+    </div>
+    <div><p>We own it</p><p>&nbsp;</p><p>Proudly employee-owned<br>since 2024</p></div>
+    <div><p>Office</p><p>&nbsp;</p><p>7th Floor, Fora Building<br>21-33 Great Eastern Street<br>London EC2A 3EJ</p></div>
+    <div><p>Contact</p><p>&nbsp;</p><p><a href="mailto:hello@theframeworks.com">hello@theframeworks.com</a><br><a href="#">LinkedIn</a></p></div>
+  </footer>
+
+<script>
+(() => {
+  "use strict";
+
+  document.documentElement.classList.add("js");
+
+  /* Fixed, semi-sticky nav — shared behaviour, see work.html. */
+  const navEl = document.querySelector(".nav");
+  const NAV_HIDE_DELTA = 6;
+  let lastNavY = 0;
+  function syncNav(){
+    const y = window.scrollY || 0;
+    if (innerWidth <= 767){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
+    const dy = y - lastNavY;
+    if (Math.abs(dy) < NAV_HIDE_DELTA) return;
+    navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
+    lastNavY = y;
+  }
+  addEventListener("scroll", syncNav, {passive:true});
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+
+  /* Scrollbar width — shared shell token. Nothing here breaks out
+     full-bleed today, but a later addition would need it. */
+  function measureScrollbar(){
+    const w = window.innerWidth - document.documentElement.clientWidth;
+    document.documentElement.style.setProperty("--sbw", Math.max(0, w) + "px");
+  }
+  measureScrollbar();
+  addEventListener("resize", measureScrollbar, {passive:true});
+
+  /* ---- the story fold ----
+     All the choreography is CSS (grid-template-rows 0fr <-> 1fr); the
+     script only swaps the two .open classes and keeps ARIA true. On hide,
+     the viewport is usually deep in the story, so the page glides back up
+     to the top block while the story folds — without it the collapse
+     yanks the media stack up under the cursor. */
+  const story   = document.getElementById("csStory");
+  const readRow = document.getElementById("csRead");
+  const toggles = [...document.querySelectorAll(".cs-toggle")];
+  const topEl   = document.querySelector(".cs-top");
+  function setStory(open){
+    story.classList.toggle("open", open);
+    readRow.classList.toggle("open", !open);
+    toggles.forEach(b => b.setAttribute("aria-expanded", String(open)));
+    if (!open){
+      const y = topEl.getBoundingClientRect().top + scrollY - 100;
+      scrollTo({ top: Math.max(0, y), behavior: reduced.matches ? "auto" : "smooth" });
+      /* focus follows the fold so keyboard users aren't left inside a
+         hidden region once visibility flips at the transition's end */
+      readRow.querySelector(".cs-toggle").focus({ preventScroll: true });
+    }
+  }
+  toggles.forEach(b => b.addEventListener("click", () => setStory(b.dataset.story === "show")));
+
+  /* ---- reveal ----
+     The site's one entrance, staggered per visual row — see work.html. */
+  const REVEAL_STAGGER = 260;
+  const ROW_TOLERANCE  = 40;
+  const revealObserver = new IntersectionObserver((entries, obs) => {
+    const rows = new Map();
+    for (const entry of entries){
+      if (!entry.isIntersecting) continue;
+      const box = entry.boundingClientRect;
+      const key = Math.round(box.top / ROW_TOLERANCE);
+      if (!rows.has(key)) rows.set(key, []);
+      rows.get(key).push({ el: entry.target, x: box.left });
+      obs.unobserve(entry.target);
+    }
+    for (const items of rows.values()){
+      items.sort((a, b) => a.x - b.x);
+      items.forEach(({ el }, i) => {
+        el.style.setProperty("--d", (i * REVEAL_STAGGER) + "ms");
+        el.classList.add("in");
+      });
+    }
+  }, { rootMargin: "0px 0px -12% 0px", threshold: 0.1 });
+  document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+})();
+</script>
+</body>
+</html>

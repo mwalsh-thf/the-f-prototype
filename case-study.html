@@ -169,12 +169,37 @@
     padding:100px var(--pad-x);       /* 100 down from the masthead, 100
                                          into the media stack, per frame */
   }
-  .cs-copy{ grid-column:1 / span 5; min-width:0; }
+  /* Row 1 is the prose and the details; row 2 is the toggles.
+     ⚠️ The toggles are deliberately NOT inside .cs-copy. The details pin
+     inside .cs-aside, and a sticky element can travel to the bottom of its
+     containing block — so whatever .cs-copy's box ends at is where the
+     details stop. With the buttons in that column the box ended 73px below
+     the last line of text (the "Hide story" row), and the details drifted
+     past the prose they belong to. Putting the toggles in their own row
+     makes row 1's height the prose exactly, which caps the travel at the
+     bottom of the text. Structural, so it needs no measuring and no resize
+     handler — and it stays true however the copy or the type changes. */
+  .cs-copy{ grid-column:1 / span 5; grid-row:1; min-width:0; }
   .cs-aside{
-    grid-column:7 / span 6; min-width:0;
-    align-self:stretch;               /* the RANGE spans the block's full
-                                         height; the details pin inside it */
+    grid-column:7 / span 6; grid-row:1; min-width:0;
+    align-self:stretch;               /* the RANGE is row 1's full height —
+                                         i.e. the prose; the details pin
+                                         inside it and stop with it */
+    /* ⚠️ `contain:size` is load-bearing, and it is the second half of the
+       cap. Stretching alone is not enough: a grid item still *contributes*
+       its content height to its row, and with the story collapsed the
+       details (161px) are taller than the intro (117px) — so they inflated
+       row 1 by 44px and pushed the toggle in row 2 down with it, opening
+       the 50px gap under the intro to 94. `contain:size` makes the element
+       size as if it had no contents, so it takes the row's height (the
+       prose) without ever setting it. The details then overflow their box
+       when the prose is shorter than they are, which is exactly what the
+       frame draws — and nothing sits beside them in that column to collide
+       with. Removed in the stacked layout below, where the aside has to
+       take its natural height in normal flow. */
+    contain:size;
   }
+  .cs-actions{ grid-column:1 / span 5; grid-row:2; min-width:0; }
   .cs-stick{ position:sticky; top:var(--cover-stick); }
 
   .cs-copy p{
@@ -191,20 +216,20 @@
      however long the copy is, which is what makes this a template.
      visibility flips at the ends: delayed on the way out (so the copy
      doesn't vanish before the fold finishes), immediate on the way in. */
-  .cs-story, .cs-read{
+  .cs-story, .cs-read, .cs-hide{
     display:grid;
     grid-template-rows:0fr;
     visibility:hidden;
     transition:grid-template-rows var(--story-dur) var(--ease-out-expo),
                visibility 0s var(--story-dur);
   }
-  .cs-story.open, .cs-read.open{
+  .cs-story.open, .cs-read.open, .cs-hide.open{
     grid-template-rows:1fr;
     visibility:visible;
     transition:grid-template-rows var(--story-dur) var(--ease-out-expo),
                visibility 0s 0s;
   }
-  .cs-story > div, .cs-read > div{ overflow:hidden; min-height:0; }
+  .cs-story > div, .cs-read > div, .cs-hide > div{ overflow:hidden; min-height:0; }
   /* the copy also fades, slightly behind the fold, so it arrives as the
      space for it opens rather than sitting fully inked in a sliver */
   .cs-story .cs-story-body{
@@ -220,6 +245,9 @@
      of padding each side so section meeting section is a double break. */
   .cs-story section{ padding:var(--body-line) 0; }
   .cs-story section:first-child{ padding-top:30px; }
+  /* the column has to end ON the last line of text — see .cs-copy above.
+     The 50px down to the toggle is carried by .cs-hide instead. */
+  .cs-story section:last-child{ padding-bottom:0; }
   /* Section labels are body size in mid grey — the story's quiet running
      heads, matching the details labels opposite rather than the articles'
      Medium-weight subheads. That's the frame's own choice here. */
@@ -243,12 +271,20 @@
   }
   .cs-toggle:hover{ color:var(--f-red); }
   .cs-toggle:focus-visible{ outline:1px solid var(--f-red); outline-offset:4px }
-  .cs-toggle svg{ display:block; }
-  .cs-toggle .arr{ transition:transform .35s var(--ease-out-expo); }
-  .cs-toggle:hover .arr{ transform:translateX(4px); }
-  /* the frame holds 50px between the intro's last line and the link */
-  .cs-read > div > .cs-toggle{ margin-top:50px; }
-  .cs-story .cs-toggle{ margin-top:calc(50px - var(--body-line)); }
+  /* The frame's mark: a 13x13 plus built from two 1px bars, 10px after the
+     text (the .cs-toggle gap). The close state drops the vertical bar, so
+     the same mark reads as a minus — which is the whole affordance. Drawn
+     with pseudo-elements rather than an SVG so it inherits currentColor and
+     goes red with the label on hover. Mobile draws it 11px at 0.8px; 11px
+     with the same 1px bar is the honest rendering of that at 1x. */
+  .cs-pm{ position:relative; width:13px; height:13px; flex:none; }
+  .cs-pm::before, .cs-pm::after{ content:""; position:absolute; background:currentColor; }
+  .cs-pm::before{ left:0; right:0; top:50%; height:1px; transform:translateY(-50%); }
+  .cs-pm::after{ top:0; bottom:0; left:50%; width:1px; transform:translateX(-50%); }
+  .cs-toggle[data-story="hide"] .cs-pm::after{ display:none; }   /* minus */
+  /* 50px from the last line of text down to the toggle, both states. The
+     prose no longer carries trailing padding, so this is the whole gap. */
+  .cs-read > div > .cs-toggle, .cs-hide > div > .cs-toggle{ margin-top:50px; }
 
   /* ---- the details ---------------------------------------------------
      Type of work / Industry side by side, Awards across both — a <dl> on
@@ -385,7 +421,7 @@
   .js .reveal.in{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
     .js .reveal{ opacity:1; transform:none; transition:none }
-    .cs-story, .cs-read, .cs-story .cs-story-body{ transition:none; }
+    .cs-story, .cs-read, .cs-hide, .cs-story .cs-story-body{ transition:none; }
   }
 
   /* ================================================================== *
@@ -400,8 +436,20 @@
    * Stacked — one column; details follow the story, the pin lets go
    * ================================================================== */
   @media (max-width:899px){
-    .cs-top{ grid-template-columns:1fr; row-gap:56px; }
-    .cs-copy, .cs-aside{ grid-column:1 / -1; }
+    /* One column. The three blocks need explicit rows here: on desktop the
+       prose and the details share row 1, and left as they were they would
+       land in the same single-column cell and overlap. The order is the
+       mobile frame's — prose, toggle, then the details. Row gaps are 0
+       because the toggle carries its own 50px; the details take the gap as
+       a margin instead. */
+    .cs-top{ grid-template-columns:1fr; row-gap:0; }
+    .cs-copy   { grid-column:1 / -1; grid-row:1; }
+    .cs-actions{ grid-column:1 / -1; grid-row:2; }
+    .cs-aside  {
+      grid-column:1 / -1; grid-row:3;
+      contain:none;                 /* natural height again in the stack */
+      margin-top:56px;
+    }
     .cs-stick{ position:static; }
   }
 
@@ -420,9 +468,11 @@
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
     .cs-head{ padding-top:calc(var(--nav-h) + 32px); }
-    .cs-top{ padding:56px var(--pad-x); row-gap:44px; }
+    .cs-top{ padding:56px var(--pad-x); }
+    .cs-aside{ margin-top:44px; }
     .cs-meta{ row-gap:40px; }
     .cs-meta dt{ margin-bottom:24px; }
+    .cs-pm{ width:11px; height:11px; }   /* the frame's mobile mark */
     .cs-media{ gap:16px; }
     .cs-row{ gap:16px; }
     .related{ padding:56px var(--pad-x); }
@@ -501,19 +551,7 @@
                 <p>Money Moves helped reposition botim as a financial service provider in a way that was clear, compelling and culturally resonant. Drawing a continuous crowd at GITEX Global, it achieved what few other executions managed: it turned a financial product story into pure human engagement. It made business fun.</p>
               </div>
             </section>
-            <button class="cs-toggle" type="button" data-story="hide" aria-controls="csStory" aria-expanded="false">Hide story</button>
           </div>
-        </div>
-      </div>
-
-      <div class="cs-read open" id="csRead">
-        <div>
-          <button class="cs-toggle" type="button" data-story="show" aria-controls="csStory" aria-expanded="false">
-            Read the full story
-            <svg class="arr" width="14" height="13" viewBox="0 0 14 13" aria-hidden="true" focusable="false">
-              <path d="M1 6.5h11.3M7.5 1.2l5.3 5.3-5.3 5.3" fill="none" stroke="currentColor" stroke-width="1.5"/>
-            </svg>
-          </button>
         </div>
       </div>
     </div>
@@ -525,17 +563,40 @@
         <div><dt>Awards</dt><dd>MUSE Creative Awards, Event Experience, Gold, 2026</dd></div>
       </dl>
     </div>
+
+    <!-- Row 2. These sit outside .cs-copy on purpose — see the .cs-copy
+         rule: the details' sticky travel stops at the bottom of row 1, so
+         anything in that column below the prose would let them drift past
+         the text they belong to. -->
+    <div class="cs-actions">
+      <div class="cs-read open" id="csRead">
+        <div>
+          <button class="cs-toggle" type="button" data-story="show" aria-controls="csStory" aria-expanded="false">
+            Read the full story
+            <span class="cs-pm" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+      <div class="cs-hide" id="csHide">
+        <div>
+          <button class="cs-toggle" type="button" data-story="hide" aria-controls="csStory" aria-expanded="false">
+            Hide story
+            <span class="cs-pm" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- The media stack. Each full-width image is one .cs-full; a pair is a
        .cs-row with two. Ratios ride on the width/height attributes, so the
        stack itself is generic — that's what makes this file a template. -->
   <section class="cs-media" aria-label="Project imagery">
+    <!-- The large Bo portrait that opened the frame's stack is out for now
+         at Myles' request (28 Aug 2026); assets/casestudy/hero.svg is still
+         in the repo, unused, so it can go back in as one .cs-full block. -->
     <div class="cs-full reveal">
-      <img src="assets/casestudy/hero.svg" alt="Bo, botim’s robot assistant — the character’s face drawn large" width="1245" height="901" loading="eager" decoding="async">
-    </div>
-    <div class="cs-full reveal">
-      <img src="assets/casestudy/faces.svg" alt="A grid of Bo’s expressions on botim blue" width="1240" height="718" loading="lazy" decoding="async">
+      <img src="assets/casestudy/faces.svg" alt="A grid of Bo’s expressions on botim blue" width="1240" height="718" loading="eager" decoding="async">
     </div>
     <div class="cs-full reveal">
       <img src="assets/casestudy/gitex-stand.jpg" alt="Visitors around the botim MONEY stand at GITEX Global" width="2480" height="1395" loading="lazy" decoding="async">
@@ -639,18 +700,21 @@
      yanks the media stack up under the cursor. */
   const story   = document.getElementById("csStory");
   const readRow = document.getElementById("csRead");
+  const hideRow = document.getElementById("csHide");
   const toggles = [...document.querySelectorAll(".cs-toggle")];
   const topEl   = document.querySelector(".cs-top");
   function setStory(open){
     story.classList.toggle("open", open);
+    hideRow.classList.toggle("open", open);
     readRow.classList.toggle("open", !open);
     toggles.forEach(b => b.setAttribute("aria-expanded", String(open)));
+    /* Focus follows the fold, both ways: the button that was just pressed
+       becomes visibility:hidden at the end of the transition, so leaving
+       focus on it would drop the keyboard user back to the document. */
+    (open ? hideRow : readRow).querySelector(".cs-toggle").focus({ preventScroll: true });
     if (!open){
       const y = topEl.getBoundingClientRect().top + scrollY - 100;
       scrollTo({ top: Math.max(0, y), behavior: reduced.matches ? "auto" : "smooth" });
-      /* focus follows the fold so keyboard users aren't left inside a
-         hidden region once visibility flips at the transition's end */
-      readRow.querySelector(".cs-toggle").focus({ preventScroll: true });
     }
   }
   toggles.forEach(b => b.addEventListener("click", () => setStory(b.dataset.story === "show")));

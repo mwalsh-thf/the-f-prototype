@@ -119,7 +119,7 @@
     transition:transform .38s var(--ease-out-expo);
   }
   .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
-  .logo{width:var(--logo-h);height:var(--logo-h);display:block;margin-left:-13.11px;flex:none}
+  .logo{width:var(--logo-h);height:var(--logo-h);display:block;margin-left:-12.61px;flex:none}  /* 13.11 (the mark's own left bearing) less the .5px the non-scaling seam stroke bleeds outward — without it the F sat half a pixel left of the page margin, which reads as "1px out" on a 2x display */
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
     fill:#fff;
@@ -362,6 +362,32 @@
     font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
     color:var(--ink-footer);
   }
+  /* ---- the awards, grouped — the mobile frame's own design ----
+     The five-column table doesn't survive a phone. The frame (3102:1644)
+     regroups it BY PROJECT: the project name as a 20px header, then one
+     16px line per award — "Body, Category, Level" — with the year on the
+     right. Rendered by the script from the same AWARDS array the table
+     uses, so the two can never drift; hidden on desktop, and the table
+     hidden on mobile. Sorting stays a desktop affordance — the grouped
+     list ships in the table's own default order (year, newest first). */
+  .awards-mobile{ display:none; }
+  .ag{ border-top:1px solid var(--rule); padding:20px 0 25px; }
+  .ag h3{
+    font-weight:400;
+    font-size:20px; line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink-footer);
+    margin-bottom:20px;
+  }
+  .ar{
+    display:flex; align-items:baseline; justify-content:space-between; gap:25px;
+    padding:10px 0;
+  }
+  .ar + .ar{ border-top:1px solid var(--rule); }
+  .ar span{
+    font-size:16px; line-height:1.3; letter-spacing:-.02em;
+    color:var(--ink-body);
+  }
+  .ar .yr{ flex:none; color:var(--mid-grey); }
 
   /* ------------------------------------------------------------------ *
    * Motion — masthead load-in, shared reveal, cascade choreography
@@ -457,7 +483,7 @@
       --fs-h3:32px;             /* 0.8 x 40 */
       --fs-h4:21.6px;           /* 0.8 x 27 */
     }
-    .logo{ margin-left:-10px; }
+    .logo{ margin-left:-9.5px; }   /* 10 less the .5px stroke bleed */
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
@@ -465,21 +491,30 @@
     .page-head{ display:block; padding-top:calc(var(--nav-h) + 50px);
       padding-bottom:calc(50px + (var(--nav-h) - var(--logo-h)) / 2); }
     .page-head .intro{ margin-top:50px; max-width:none; }
-    .services{ grid-template-columns:1fr; row-gap:50px; padding-bottom:75px; }
-    /* the mobile frame sets the card description at 16, not the 18 the
-       named Body style carries — its column is the narrowest on the site */
+    /* The mobile frame (3102:1644) runs the cards TWO-UP, not stacked:
+       67px icons sitting 20 over the title, 20 to the description, columns
+       25 apart, rows 75. The desktop's fixed 140px icon zone and the
+       two-line h2 reservation are both released — the frame lets each
+       description follow its own title here (columns this narrow wrap too
+       differently for a shared line to survive anyway). */
+    .services{ grid-template-columns:repeat(2,1fr); column-gap:25px; row-gap:75px; padding-bottom:75px; }
+    .service{ min-height:0; padding-right:0; }
+    .service h2{ font-size:20px; min-height:0; margin-bottom:20px; }
+    /* the frame sets the card description at 16, not the named Body 18 —
+       these are the narrowest columns on the site */
     .service p{ font-size:16px; }
-    .service{ padding-right:0; }
-    .s-icon{ margin-bottom:25px; }
-    .s-icon img{ width:80px; height:80px; }
+    .s-icon{ height:auto; margin-bottom:20px; }
+    .s-icon img{ width:67px; height:67px; }
     .clients{ padding-top:75px; }
-    .logo-rows{ margin-top:50px; gap:50px; }
-    .logo-set .cell{ width:120px; height:52px; margin-right:20px; }
-    .awards{ padding-top:64px; }
-    .awards .statement{ margin-bottom:36px; }
-    .awards-head, .award-row{ grid-template-columns:1.8fr .7fr .5fr; column-gap:16px; }
-    .awards-head .c-cat, .award-row .c-cat,
-    .awards-head .c-org, .award-row .c-org{ display:none; }
+    /* ⚠️ The marks do NOT shrink on mobile. The frame runs the same
+       182x78 cells at 393px wide — the band just shows fewer of them —
+       and the rows sit 50 apart. The earlier 120x52 override made the
+       logos tiny, which is what made the band's margins read as huge. */
+    .logo-rows{ margin-top:75px; gap:50px; }
+    .awards{ padding-top:75px; }
+    .awards .statement{ margin-bottom:50px; }
+    .awards-head, #awardsBody{ display:none; }
+    .awards-mobile{ display:block; }
 
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
@@ -701,6 +736,7 @@
       <button type="button" data-key="year" aria-sort="descending">Year <span class="arrow">↓</span></button>
     </div>
     <div id="awardsBody"><!-- rows rendered by script --></div>
+    <div class="awards-mobile" id="awardsMobile"><!-- grouped by project; rendered by script --></div>
   </section>
 
   <footer class="footer">
@@ -917,6 +953,38 @@
   ];
   const KEYS = { project:0, org:1, cat:2, level:3, year:4 };
   const tbody = document.getElementById("awardsBody");
+  /* The mobile grouped view — same data, projected by project. Groups keep
+     the order projects first appear in the year-desc list. Built once:
+     it doesn't re-sort (sorting is the desktop table's affordance). */
+  (function buildMobileAwards(){
+    const host = document.getElementById("awardsMobile");
+    if (!host) return;
+    const byYear = [...AWARDS].sort((a, b) => b[4] - a[4]);
+    const groups = new Map();
+    for (const row of byYear){
+      if (!groups.has(row[0])) groups.set(row[0], []);
+      groups.get(row[0]).push(row);
+    }
+    for (const [project, rows] of groups){
+      const g = document.createElement("div");
+      g.className = "ag";
+      const h = document.createElement("h3");
+      h.textContent = project;
+      g.appendChild(h);
+      for (const r of rows){
+        const line = document.createElement("div");
+        line.className = "ar";
+        const what = document.createElement("span");
+        what.textContent = r[1] + ", " + r[2] + ", " + r[3];
+        const yr = document.createElement("span");
+        yr.className = "yr";
+        yr.textContent = r[4];
+        line.append(what, yr);
+        g.appendChild(line);
+      }
+      host.appendChild(g);
+    }
+  })();
   const headBtns = [...document.querySelectorAll(".awards-head button")];
   let sortKey = "year", sortDir = -1;   // the frame ships sorted Year ↓
   let sorting = false;

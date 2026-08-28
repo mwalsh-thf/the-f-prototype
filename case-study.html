@@ -135,7 +135,7 @@
     transition:transform .38s var(--ease-out-expo);
   }
   .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
-  .logo{width:var(--logo-h);height:var(--logo-h);display:block;margin-left:-13.11px;flex:none}
+  .logo{width:var(--logo-h);height:var(--logo-h);display:block;margin-left:-12.61px;flex:none}  /* 13.11 (the mark's own left bearing) less the .5px the non-scaling seam stroke bleeds outward — without it the F sat half a pixel left of the page margin, which reads as "1px out" on a 2x display */
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
     fill:#fff;
@@ -329,11 +329,24 @@
      with pseudo-elements rather than an SVG so it inherits currentColor and
      goes red with the label on hover. Mobile draws it 11px at 0.8px; 11px
      with the same 1px bar is the honest rendering of that at 1x. */
-  .cs-pm{ position:relative; width:13px; height:13px; flex:none; }
+  .cs-pm{
+    position:relative; width:13px; height:13px; flex:none;
+    transition:transform .45s var(--ease-out-expo);
+  }
   .cs-pm::before, .cs-pm::after{ content:""; position:absolute; background:currentColor; }
   .cs-pm::before{ left:0; right:0; top:50%; height:1px; transform:translateY(-50%); }
-  .cs-pm::after{ top:0; bottom:0; left:50%; width:1px; transform:translateX(-50%); }
-  .cs-toggle[data-story="hide"] .cs-pm::after{ display:none; }   /* minus */
+  .cs-pm::after{
+    top:0; bottom:0; left:50%; width:1px; transform:translateX(-50%) scaleY(1);
+    transition:transform .45s var(--ease-out-expo);
+  }
+  /* The mark answers the pointer: a quarter-turn on hover (a plus reads the
+     same at 90deg, so it spins without changing meaning), and on press the
+     vertical bar collapses — the plus becomes a minus in the same morph
+     language as the nav squares — while the read row folds away. Both are
+     transforms, so nothing lays out or re-blends. */
+  .cs-toggle:hover .cs-pm{ transform:rotate(90deg); }
+  .cs-read:not(.open) .cs-toggle .cs-pm::after{ transform:translateX(-50%) scaleY(0); }
+  .cs-toggle[data-story="hide"] .cs-pm::after{ display:none; }   /* always a minus */
   /* 50px from the last line of text down to the toggle, both states. The
      prose no longer carries trailing padding, so this is the whole gap. */
   .cs-read > div > .cs-toggle, .cs-hide > div > .cs-toggle{ margin-top:50px; }
@@ -526,7 +539,7 @@
       --logo-h:40px;
       --fs-h3:32px;             /* 0.8 x 40 */
     }
-    .logo{ margin-left:-10px; }
+    .logo{ margin-left:-9.5px; }   /* 10 less the .5px stroke bleed */
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
     .cs-head{ padding-top:calc(var(--nav-h) + 50px); }

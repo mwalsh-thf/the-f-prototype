@@ -124,7 +124,7 @@
     transition:transform .38s var(--ease-out-expo);
   }
   .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
-  .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
+  .logo{width:52.44px;height:52.44px;display:block;margin-left:-12.61px;flex:none}  /* 13.11 (the mark's own left bearing) less the .5px the non-scaling seam stroke bleeds outward — without it the F sat half a pixel left of the page margin, which reads as "1px out" on a 2x display */
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
     fill:#fff;
@@ -420,7 +420,7 @@
       --pad-x:25px;              /* the refined mobile inset (mobile frames) */
       --fs-h2:48px;             /* 0.8 x 60 */
     }
-    .logo{ width:40px; height:40px; margin-left:-10px; }
+    .logo{ width:40px; height:40px; margin-left:-9.5px; }   /* 10 less the .5px stroke bleed */
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 

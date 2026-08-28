@@ -209,7 +209,7 @@
      states then grow out around it. Sized up twice from the original 40×40:
      40 → 46 → 55.2 → 52.44. flex:none because the nav is a flex row, and without it
      the mark is a shrinkable item that gets squashed on narrow viewports. */
-  .logo{width:52.44px;height:52.44px;display:block;margin-left:-13.11px;flex:none}
+  .logo{width:52.44px;height:52.44px;display:block;margin-left:-12.61px;flex:none}  /* 13.11 (the mark's own left bearing) less the .5px the non-scaling seam stroke bleeds outward — without it the F sat half a pixel left of the page margin, which reads as "1px out" on a 2x display */
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
     fill:var(--ink-footer);
@@ -236,8 +236,12 @@
      morph feel steppy. transform and opacity are composited, so the same
      move costs nothing. transform-origin is the left edge, so the square
      grows across to cover its neighbour rather than from its own centre. */
+  /* ⚠️ index's nav has NO difference blend — its ink is painted, not
+     subtracted — so the squares take the page ink, not #fff (which is what
+     left them white-on-white here). While the menu overlay is open the bar
+     sits over the dark panel, so the mark and the logo flip to white. */
   .nav-menu span{
-    position:absolute; width:10px; height:10px; background:#fff;
+    position:absolute; width:10px; height:10px; background:var(--ink-footer);
     transform-origin:left center;
     transition:transform .45s var(--ease-out-expo), opacity .3s var(--ease-out-expo);
   }
@@ -245,6 +249,8 @@
   .nav-menu span:nth-child(2){ right:0; top:0; }
   .nav-menu span:nth-child(3){ left:0; bottom:0; }
   .nav-menu span:nth-child(4){ right:0; bottom:0; }
+  body.menu-open .nav-menu span{ background:#fff; }
+  body.menu-open .logo-mark polygon{ fill:#fff; stroke:#fff; }
   body.menu-open .nav-menu span:nth-child(1){ transform:scaleX(3); }
   body.menu-open .nav-menu span:nth-child(3),
   body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
@@ -700,7 +706,7 @@
        the F fills the box's height and half its width, so a 40px box renders
        the mark at exactly 20x40. The negative margin (a quarter of the box)
        keeps its left edge on the page margin. */
-    .logo{ width:40px; height:40px; margin-left:-10px; }
+    .logo{ width:40px; height:40px; margin-left:-9.5px; }   /* 10 less the .5px stroke bleed */
     /* mobile is fully sticky — the logo is the only nav there, so hiding it
        would leave the content pages with no way back */
     .nav.is-hidden{ transform:none; }

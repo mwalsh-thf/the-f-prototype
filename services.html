@@ -506,11 +506,12 @@
     .s-icon{ height:auto; margin-bottom:20px; }
     .s-icon img{ width:67px; height:67px; }
     .clients{ padding-top:75px; }
-    /* ⚠️ The marks do NOT shrink on mobile. The frame runs the same
-       182x78 cells at 393px wide — the band just shows fewer of them —
-       and the rows sit 50 apart. The earlier 120x52 override made the
-       logos tiny, which is what made the band's margins read as huge. */
-    .logo-rows{ margin-top:75px; gap:50px; }
+    /* The frame keeps the full 182x78 cells on mobile, but Myles asked for
+       more marks in view (28 Aug 2026): ~0.75 scale — 136x58, 22 apart —
+       shows roughly three per phone width instead of two, and the rows
+       take 75 between them. A deliberate departure from frame 3102:1644. */
+    .logo-rows{ margin-top:75px; gap:75px; }
+    .logo-set .cell{ width:136px; height:58px; margin-right:22px; }
     .awards{ padding-top:75px; }
     .awards .statement{ margin-bottom:50px; }
     .awards-head, #awardsBody{ display:none; }

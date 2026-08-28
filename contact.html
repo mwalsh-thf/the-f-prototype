@@ -179,7 +179,14 @@
   }
   .contact-lead{
     font-weight:300;
-    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    /* ⚠️ Optical compensation, not the frame: Figma draws both columns at
+       40 Light, but the lead is fully inked (F Red + Off Black on the dark
+       ground) while the form is mid-grey ghosts, and solid type reads a
+       size bigger than ghost type at equal metrics. 0.9x brings the two
+       into optical balance; derived from --fs-h3 so it tracks the mobile
+       step automatically. Measured equal before the trim — this is about
+       how it reads, not what it measures (Myles, 28 Aug). */
+    font-size:calc(var(--fs-h3) * .9); line-height:1.15; letter-spacing:-.02em;
     max-width:500px;
   }
   .contact-lead .red{ color:var(--f-red); }
@@ -228,10 +235,19 @@
   }
   .submit:hover{ color:var(--ink); }
   .submit:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
+  /* The privacy line arrives WITH the submit — same rise, one beat behind
+     it — rather than sitting there before the form is ready. The frame
+     draws the finished state; an idle form showing "By submitting this
+     form…" under no submit button read as a loose end (Myles, 28 Aug). */
   .form-foot .privacy{
     font-weight:400;
     font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
     color:var(--mid-grey);
+    opacity:0; transform:translateY(14px); pointer-events:none;
+    transition:opacity .5s var(--ease-out-expo) .08s, transform .5s var(--ease-out-expo) .08s;
+  }
+  .contact-form.ready .privacy{
+    opacity:1; transform:none; pointer-events:auto;
   }
   .form-foot .privacy a{ color:inherit; }
 

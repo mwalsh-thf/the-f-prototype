@@ -472,6 +472,10 @@
     .cs-head h1{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) backwards; }
     .cs-copy{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) var(--reveal-stagger) backwards; }
     .cs-aside{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) calc(var(--reveal-stagger) * 2) backwards; }
+    /* the toggles row sits below the intro — third beat of the same
+       cascade. It was left out when the toggles moved to their own grid
+       row and just popped in while everything around it glided. */
+    .cs-actions{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) calc(var(--reveal-stagger) * 3) backwards; }
   }
   @keyframes reveal-in{
     from{ opacity:0; transform:translate3d(0, var(--reveal-shift), 0); }

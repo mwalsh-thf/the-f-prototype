@@ -481,7 +481,10 @@
          titles). */
       --nav-h:90px;              /* the refined mobile bar (mobile frames) */
       --pad-x:25px;              /* the refined mobile inset (mobile frames) */
-      --fs-h1:68.8px;           /* 0.8 x 86 */
+      /* ⚠️ NOT the 0.8 rule. 86 x 0.8 = 68.8 filled the phone screen;
+         Myles moved the masthead down to the next style (28 Aug 2026) —
+         the same size as Services' page title, i.e. the mobile --fs-h3. */
+      --fs-h1:32px;
       --fs-h2:48px;             /* 0.8 x 60 */
       --fs-h3:32px;             /* 0.8 x 40 */
     }
@@ -677,7 +680,7 @@
   </section>
 
   <section class="challenge reveal">
-    <p>Fancy a challenge?<br>
+    <p>Got a challenge?<br>
       <a href="contact.html">Let’s talk<svg class="arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
     </p>
   </section>

@@ -85,6 +85,16 @@
        ignoring the click, .3s like a pop. */
     --cover-stick:100px;
     --story-dur:.9s;
+    /* ⚠️ The fold does NOT use --ease-out-expo, and this is measured, not
+       taste. Expo is a hard front-loaded curve: over the story's 1337px it
+       moves 149px in the first frame — six times the linear rate — and then
+       covers nothing at all for the last 267ms. On a 44px entrance that
+       front-loading reads as a confident settle; on a 1300px height change
+       it reads as a lurch followed by a crawl, which is exactly the
+       choppiness this had. This curve peaks at 68px/frame (2.7x linear)
+       with a 50ms tail, so the fold moves at a near-even rate throughout.
+       Entrances everywhere else keep expo — see the README. */
+    --ease-fold:cubic-bezier(.4,0,.2,1);
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
@@ -103,7 +113,19 @@
    * Nav — shared component (see work.html for the full reasoning)
    * ------------------------------------------------------------------ */
   .nav{
-    position:fixed; top:0; left:50%; width:100%; max-width:var(--page-max);
+    position:fixed; top:0;
+    /* left also shifts by half the gutter: 50% is half the ICB, which
+       includes the scrollbar, so centring against it pushes the bar right
+       by --sbw/2 once the width above is corrected. */
+    left:calc(50% - var(--sbw, 0px) / 2);
+    /* ⚠️ NOT width:100%. A fixed element's containing block is the initial
+       containing block, which INCLUDES the scrollbar gutter — so 100% is
+       the visible viewport plus the scrollbar, and the bar overhung the
+       right edge by exactly the scrollbar width, raising a horizontal
+       scrollbar of its own. Invisible on macOS overlay scrollbars (which is
+       why it survived), plainly wrong anywhere with a classic scrollbar.
+       Same correction the full-bleed breakouts make, for the same reason. */
+    width:calc(100% - var(--sbw, 0px)); max-width:var(--page-max);
     height:var(--nav-h);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--pad-x);
@@ -133,15 +155,22 @@
      row into the frame's 30x10 minus — the left square sliding across to
      cover the right one. Ink is #fff: like everything in the bar it is a
      source for the difference blend, not the colour you see. */
+  /* ⚠️ The stretch is a scaleX, not a width. Width is a layout property, and
+     the bar carries mix-blend-mode:difference — animating it re-laid out and
+     re-blended the whole bar every frame, which is exactly what made the
+     morph feel steppy. transform and opacity are composited, so the same
+     move costs nothing. transform-origin is the left edge, so the square
+     grows across to cover its neighbour rather than from its own centre. */
   .nav-menu span{
     position:absolute; width:10px; height:10px; background:#fff;
-    transition:width .45s var(--ease-out-expo), opacity .45s var(--ease-out-expo);
+    transform-origin:left center;
+    transition:transform .45s var(--ease-out-expo), opacity .3s var(--ease-out-expo);
   }
   .nav-menu span:nth-child(1){ left:0; top:0; }
   .nav-menu span:nth-child(2){ right:0; top:0; }
   .nav-menu span:nth-child(3){ left:0; bottom:0; }
   .nav-menu span:nth-child(4){ right:0; bottom:0; }
-  body.menu-open .nav-menu span:nth-child(1){ width:30px; }
+  body.menu-open .nav-menu span:nth-child(1){ transform:scaleX(3); }
   body.menu-open .nav-menu span:nth-child(3),
   body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
@@ -235,25 +264,27 @@
     display:grid;
     grid-template-rows:0fr;
     visibility:hidden;
-    transition:grid-template-rows var(--story-dur) var(--ease-out-expo),
+    transition:grid-template-rows var(--story-dur) var(--ease-fold),
                visibility 0s var(--story-dur);
   }
   .cs-story.open, .cs-read.open, .cs-hide.open{
     grid-template-rows:1fr;
     visibility:visible;
-    transition:grid-template-rows var(--story-dur) var(--ease-out-expo),
+    transition:grid-template-rows var(--story-dur) var(--ease-fold),
                visibility 0s 0s;
   }
   .cs-story > div, .cs-read > div, .cs-hide > div{ overflow:hidden; min-height:0; }
-  /* the copy also fades, slightly behind the fold, so it arrives as the
-     space for it opens rather than sitting fully inked in a sliver */
+  /* The copy fades with the fold rather than behind it. It used to wait
+     35% of the duration before starting, which — on top of the old
+     front-loaded curve — meant the box was already open before the text
+     began to arrive, and the two read as separate events. */
   .cs-story .cs-story-body{
     opacity:0;
-    transition:opacity calc(var(--story-dur) * .6) var(--ease-out-expo);
+    transition:opacity calc(var(--story-dur) * .45) var(--ease-fold);
   }
   .cs-story.open .cs-story-body{
     opacity:1;
-    transition:opacity var(--story-dur) var(--ease-out-expo) calc(var(--story-dur) * .35);
+    transition:opacity calc(var(--story-dur) * .7) var(--ease-fold);
   }
 
   /* Story sections on the article rhythm: label then copy, one body line
@@ -479,26 +510,36 @@
    * ================================================================== */
   @media (max-width:767px){
     :root{
+      /* --- mobile type: the frames' own scale ---
+         Display type is 0.8x its desktop size, measured off the Mobile
+         frames three times over: Work's headline 60 -> 48, Services' 40 ->
+         32, the case study masthead 40 -> 32. The clamps' own minima
+         (34/28/21) were never that ratio — they floored far too small and
+         are what made mobile read wrong.
+         The named text styles do NOT shrink: Body stays 18 (the case study
+         mobile frame sets its prose at 18) and Details stays 15 (Work's
+         mobile intro). They had been dropped to 16 and 13, which is the
+         other half of the same problem. H5 stays 20 (Services' mobile card
+         titles). */
       --nav-h:90px;              /* the refined mobile bar (mobile frames) */
       --pad-x:25px;              /* the refined mobile inset (mobile frames) */
       --logo-h:40px;
-      --fs-body:16px;
-      --fs-details:13px;
+      --fs-h3:32px;             /* 0.8 x 40 */
     }
     .logo{ margin-left:-10px; }
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
-    .cs-head{ padding-top:calc(var(--nav-h) + 32px); }
-    .cs-top{ padding:56px var(--pad-x); }
-    .cs-aside{ margin-top:44px; }
-    .cs-meta{ row-gap:40px; }
-    .cs-meta dt{ margin-bottom:24px; }
+    .cs-head{ padding-top:calc(var(--nav-h) + 50px); }
+    .cs-top{ padding:75px var(--pad-x); }
+    .cs-aside{ margin-top:50px; }
+    .cs-meta{ row-gap:50px; }
+    .cs-meta dt{ margin-bottom:25px; }
     .cs-pm{ width:11px; height:11px; }   /* the frame's mobile mark */
-    .cs-media{ gap:16px; }
-    .cs-row{ gap:16px; }
-    .related{ padding:56px var(--pad-x); }
-    .related h2{ margin-bottom:40px; }
-    .related-grid{ grid-template-columns:1fr; row-gap:40px; }
+    .cs-media{ gap:25px; }
+    .cs-row{ gap:25px; }
+    .related{ padding:75px var(--pad-x); }
+    .related h2{ margin-bottom:50px; }
+    .related-grid{ grid-template-columns:1fr; row-gap:50px; }
     .tile{ gap:10px; }
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
@@ -546,10 +587,14 @@
   .mm-tri line{ stroke:#fff; stroke-width:1; vector-effect:non-scaling-stroke; }
   /* the cells rise in, top row first — committed by the class the script
      adds a frame after display flips (with the usual timer fallback) */
+  /* A menu has to answer the tap, so this is quicker than the site's 2.2s
+     scroll entrance: .55s with a 60ms stagger puts the last cell down at
+     ~0.85s instead of 1.35s. Both properties are composited, so the move
+     itself costs nothing. */
   .mm-grid li{
     opacity:0; transform:translate3d(0,24px,0);
-    transition:opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
-    transition-delay:calc(var(--mi) * 90ms);
+    transition:opacity .55s var(--ease-out-expo), transform .55s var(--ease-out-expo);
+    transition-delay:calc(var(--mi) * 60ms);
   }
   .mobile-menu.in .mm-grid li{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
@@ -752,18 +797,39 @@
   document.documentElement.classList.add("js");
 
   /* Fixed, semi-sticky nav — shared behaviour, see work.html. */
+  /* ---- the semi-sticky nav ----
+     Three things keep this smooth, and all three were wrong before:
+     1. The scroll handler is rAF-throttled. Scroll events can fire more
+        often than the screen refreshes, so the class was being toggled
+        several times per painted frame.
+     2. The bar's height is measured once (and on resize) rather than read
+        as `navEl.offsetHeight` inside the handler — that read forced a
+        synchronous layout on every scroll event.
+     3. The direction threshold is 10px with the reference point moving
+        only when the bar actually changes state. At the old flat 6px a
+        trackpad's jitter could cross the threshold both ways in quick
+        succession and the bar visibly flickered. */
   const navEl = document.querySelector(".nav");
-  const NAV_HIDE_DELTA = 6;
-  let lastNavY = 0;
+  const NAV_HIDE_DELTA = 10;
+  let lastNavY = 0, navH = 0, navTicking = false;
+  function measureNav(){ navH = navEl.offsetHeight; }
+  measureNav();
+  addEventListener("resize", measureNav, {passive:true});
   function syncNav(){
+    navTicking = false;
     const y = window.scrollY || 0;
     if (innerWidth <= 767){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
     const dy = y - lastNavY;
     if (Math.abs(dy) < NAV_HIDE_DELTA) return;
-    navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
+    const hide = dy > 0 && y > navH;
+    if (hide !== navEl.classList.contains("is-hidden")) navEl.classList.toggle("is-hidden", hide);
     lastNavY = y;
   }
-  addEventListener("scroll", syncNav, {passive:true});
+  addEventListener("scroll", () => {
+    if (navTicking) return;
+    navTicking = true;
+    requestAnimationFrame(syncNav);
+  }, {passive:true});
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 
   /* Scrollbar width — shared shell token. Nothing here breaks out
@@ -786,6 +852,48 @@
   const hideRow = document.getElementById("csHide");
   const toggles = [...document.querySelectorAll(".cs-toggle")];
   const topEl   = document.querySelector(".cs-top");
+  /* ---- the collapse scroll ----
+     ⚠️ This used to be scrollTo({behavior:"smooth"}), which is the single
+     biggest reason collapsing felt choppy: the browser's smooth scroll runs
+     on its own curve for its own duration, and it was racing the fold's
+     900ms. Two size-and-position animations disagreeing about where the
+     page should be, frame by frame.
+     The scroll is now driven here on exactly the fold's duration and
+     exactly its curve, so the two are one motion. rAF with the usual timer
+     fallback and a hard final assignment — rAF is paused in background tabs
+     and embedded panes, and a half-finished scroll would strand the reader
+     mid-document. */
+  const FOLD_MS = 900;                                  // mirrors --story-dur
+  const foldEase = t => {                               // mirrors --ease-fold
+    const p1x=.4,p1y=0,p2x=.2,p2y=1;
+    const cx=3*p1x, bx=3*(p2x-p1x)-cx, ax=1-cx-bx;
+    const cy=3*p1y, by=3*(p2y-p1y)-cy, ay=1-cy-by;
+    let u=t;
+    for (let i=0;i<8;i++){
+      const x=((ax*u+bx)*u+cx)*u - t;
+      const d=(3*ax*u+2*bx)*u+cx;
+      if (Math.abs(x)<1e-5) break;
+      u -= x/(d||1e-6);
+    }
+    return ((ay*u+by)*u+cy)*u;
+  };
+  function glideScrollTo(targetY){
+    const startY = scrollY, delta = targetY - startY;
+    if (Math.abs(delta) < 1) return;
+    if (reduced.matches){ scrollTo(0, targetY); return; }
+    const t0 = performance.now();
+    let done = false;
+    const finish = () => { if (done) return; done = true; scrollTo(0, targetY); };
+    const step = now => {
+      if (done) return;
+      const t = Math.min(1, (now - t0) / FOLD_MS);
+      scrollTo(0, startY + delta * foldEase(t));
+      if (t < 1) requestAnimationFrame(step); else done = true;
+    };
+    requestAnimationFrame(step);
+    setTimeout(finish, FOLD_MS + 80);
+  }
+
   function setStory(open){
     story.classList.toggle("open", open);
     hideRow.classList.toggle("open", open);
@@ -797,7 +905,7 @@
     (open ? hideRow : readRow).querySelector(".cs-toggle").focus({ preventScroll: true });
     if (!open){
       const y = topEl.getBoundingClientRect().top + scrollY - 100;
-      scrollTo({ top: Math.max(0, y), behavior: reduced.matches ? "auto" : "smooth" });
+      glideScrollTo(Math.max(0, y));
     }
   }
   toggles.forEach(b => b.addEventListener("click", () => setStory(b.dataset.story === "show")));

@@ -126,15 +126,22 @@
      row into the frame's 30x10 minus — the left square sliding across to
      cover the right one. Ink is #fff: like everything in the bar it is a
      source for the difference blend, not the colour you see. */
+  /* ⚠️ The stretch is a scaleX, not a width. Width is a layout property, and
+     the bar carries mix-blend-mode:difference — animating it re-laid out and
+     re-blended the whole bar every frame, which is exactly what made the
+     morph feel steppy. transform and opacity are composited, so the same
+     move costs nothing. transform-origin is the left edge, so the square
+     grows across to cover its neighbour rather than from its own centre. */
   .nav-menu span{
     position:absolute; width:10px; height:10px; background:#fff;
-    transition:width .45s var(--ease-out-expo), opacity .45s var(--ease-out-expo);
+    transform-origin:left center;
+    transition:transform .45s var(--ease-out-expo), opacity .3s var(--ease-out-expo);
   }
   .nav-menu span:nth-child(1){ left:0; top:0; }
   .nav-menu span:nth-child(2){ right:0; top:0; }
   .nav-menu span:nth-child(3){ left:0; bottom:0; }
   .nav-menu span:nth-child(4){ right:0; bottom:0; }
-  body.menu-open .nav-menu span:nth-child(1){ width:30px; }
+  body.menu-open .nav-menu span:nth-child(1){ transform:scaleX(3); }
   body.menu-open .nav-menu span:nth-child(3),
   body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
@@ -460,21 +467,32 @@
    * ==================================================================== */
   @media (max-width:767px){
     :root{
+      /* --- mobile type: the frames' own scale ---
+         Display type is 0.8x its desktop size, measured off the Mobile
+         frames three times over: Work's headline 60 -> 48, Services' 40 ->
+         32, the case study masthead 40 -> 32. The clamps' own minima
+         (34/28/21) were never that ratio — they floored far too small and
+         are what made mobile read wrong.
+         The named text styles do NOT shrink: Body stays 18 (the case study
+         mobile frame sets its prose at 18) and Details stays 15 (Work's
+         mobile intro). They had been dropped to 16 and 13, which is the
+         other half of the same problem. H5 stays 20 (Services' mobile card
+         titles). */
       --nav-h:90px;              /* the refined mobile bar (mobile frames) */
       --pad-x:25px;              /* the refined mobile inset (mobile frames) */
       --logo-h:40px;
-      --fs-h5:18px;
-      --fs-body:16px;
-      --fs-details:13px;
+      --fs-title:40px;          /* 0.8 x 50 */
+      --fs-h3:32px;             /* 0.8 x 40 */
+      --fs-h4:21.6px;           /* 0.8 x 27 */
     }
     .nav{ padding:25px var(--pad-x); }   /* 40px logo in a 90px bar */
     .logo{ margin-left:-10px; }
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
-    .a-head{ padding:24px 0 24px; }
-    .a-meta{ margin-top:36px; column-gap:20px; row-gap:28px; }
-    .related{ padding:56px var(--pad-x); }
-    .related h2{ margin-bottom:40px; }
+    .a-head{ padding:50px 0 var(--body-line); }
+    .a-meta{ margin-top:50px; column-gap:25px; row-gap:25px; }
+    .related{ padding:75px var(--pad-x); }
+    .related h2{ margin-bottom:50px; }
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
   }
@@ -521,10 +539,14 @@
   .mm-tri line{ stroke:#fff; stroke-width:1; vector-effect:non-scaling-stroke; }
   /* the cells rise in, top row first — committed by the class the script
      adds a frame after display flips (with the usual timer fallback) */
+  /* A menu has to answer the tap, so this is quicker than the site's 2.2s
+     scroll entrance: .55s with a 60ms stagger puts the last cell down at
+     ~0.85s instead of 1.35s. Both properties are composited, so the move
+     itself costs nothing. */
   .mm-grid li{
     opacity:0; transform:translate3d(0,24px,0);
-    transition:opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
-    transition-delay:calc(var(--mi) * 90ms);
+    transition:opacity .55s var(--ease-out-expo), transform .55s var(--ease-out-expo);
+    transition-delay:calc(var(--mi) * 60ms);
   }
   .mobile-menu.in .mm-grid li{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){

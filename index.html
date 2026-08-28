@@ -138,7 +138,8 @@
      the script — because it computes --s (the hero's scale) from innerWidth
      directly, which knows nothing about this box's max-width. */
   .scene{
-    position:fixed; top:0; bottom:0; left:50%; width:100%; max-width:var(--page-max);
+    /* fixed, so the same --sbw correction as .nav above */
+    position:fixed; top:0; bottom:0; left:calc(50% - var(--sbw, 0px) / 2); width:calc(100% - var(--sbw, 0px)); max-width:var(--page-max);
     transform:translateX(-50%);
     will-change:transform,opacity;
   }
@@ -185,7 +186,11 @@
      whole value rather than adding to it, so if is-hidden only said
      translateY(-100%) the bar would un-centre itself the moment it hid. */
   .nav{
-    position:fixed; left:50%; top:0; width:100%; max-width:var(--page-max);
+    /* ⚠️ width subtracts --sbw: a fixed element's containing block is the
+       initial containing block, which includes the scrollbar gutter, so a
+       plain 100% overhangs the visible viewport by the scrollbar width.
+       See the README's full-bleed note — same correction, same reason. */
+    position:fixed; left:calc(50% - var(--sbw, 0px) / 2); top:0; width:calc(100% - var(--sbw, 0px)); max-width:var(--page-max);
     height:var(--nav-h);
     box-sizing:border-box;
     display:flex; align-items:center; justify-content:space-between;
@@ -225,15 +230,22 @@
      row into the frame's 30x10 minus — the left square sliding across to
      cover the right one. Ink is #fff: like everything in the bar it is a
      source for the difference blend, not the colour you see. */
+  /* ⚠️ The stretch is a scaleX, not a width. Width is a layout property, and
+     the bar carries mix-blend-mode:difference — animating it re-laid out and
+     re-blended the whole bar every frame, which is exactly what made the
+     morph feel steppy. transform and opacity are composited, so the same
+     move costs nothing. transform-origin is the left edge, so the square
+     grows across to cover its neighbour rather than from its own centre. */
   .nav-menu span{
     position:absolute; width:10px; height:10px; background:#fff;
-    transition:width .45s var(--ease-out-expo), opacity .45s var(--ease-out-expo);
+    transform-origin:left center;
+    transition:transform .45s var(--ease-out-expo), opacity .3s var(--ease-out-expo);
   }
   .nav-menu span:nth-child(1){ left:0; top:0; }
   .nav-menu span:nth-child(2){ right:0; top:0; }
   .nav-menu span:nth-child(3){ left:0; bottom:0; }
   .nav-menu span:nth-child(4){ right:0; bottom:0; }
-  body.menu-open .nav-menu span:nth-child(1){ width:30px; }
+  body.menu-open .nav-menu span:nth-child(1){ transform:scaleX(3); }
   body.menu-open .nav-menu span:nth-child(3),
   body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
@@ -795,10 +807,14 @@
   .mm-tri line{ stroke:#fff; stroke-width:1; vector-effect:non-scaling-stroke; }
   /* the cells rise in, top row first — committed by the class the script
      adds a frame after display flips (with the usual timer fallback) */
+  /* A menu has to answer the tap, so this is quicker than the site's 2.2s
+     scroll entrance: .55s with a 60ms stagger puts the last cell down at
+     ~0.85s instead of 1.35s. Both properties are composited, so the move
+     itself costs nothing. */
   .mm-grid li{
     opacity:0; transform:translate3d(0,24px,0);
-    transition:opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
-    transition-delay:calc(var(--mi) * 90ms);
+    transition:opacity .55s var(--ease-out-expo), transform .55s var(--ease-out-expo);
+    transition-delay:calc(var(--mi) * 60ms);
   }
   .mobile-menu.in .mm-grid li{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){

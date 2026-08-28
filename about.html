@@ -94,7 +94,19 @@
      declaration as the centring translateX — a later rule's `transform`
      replaces the whole value rather than adding to it. */
   .nav{
-    position:fixed; top:0; left:50%; width:100%; max-width:var(--page-max);
+    position:fixed; top:0;
+    /* left also shifts by half the gutter: 50% is half the ICB, which
+       includes the scrollbar, so centring against it pushes the bar right
+       by --sbw/2 once the width above is corrected. */
+    left:calc(50% - var(--sbw, 0px) / 2);
+    /* ⚠️ NOT width:100%. A fixed element's containing block is the initial
+       containing block, which INCLUDES the scrollbar gutter — so 100% is
+       the visible viewport plus the scrollbar, and the bar overhung the
+       right edge by exactly the scrollbar width, raising a horizontal
+       scrollbar of its own. Invisible on macOS overlay scrollbars (which is
+       why it survived), plainly wrong anywhere with a classic scrollbar.
+       Same correction the full-bleed breakouts make, for the same reason. */
+    width:calc(100% - var(--sbw, 0px)); max-width:var(--page-max);
     height:var(--nav-h);
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--pad-x);
@@ -140,15 +152,22 @@
      row into the frame's 30x10 minus — the left square sliding across to
      cover the right one. Ink is #fff: like everything in the bar it is a
      source for the difference blend, not the colour you see. */
+  /* ⚠️ The stretch is a scaleX, not a width. Width is a layout property, and
+     the bar carries mix-blend-mode:difference — animating it re-laid out and
+     re-blended the whole bar every frame, which is exactly what made the
+     morph feel steppy. transform and opacity are composited, so the same
+     move costs nothing. transform-origin is the left edge, so the square
+     grows across to cover its neighbour rather than from its own centre. */
   .nav-menu span{
     position:absolute; width:10px; height:10px; background:#fff;
-    transition:width .45s var(--ease-out-expo), opacity .45s var(--ease-out-expo);
+    transform-origin:left center;
+    transition:transform .45s var(--ease-out-expo), opacity .3s var(--ease-out-expo);
   }
   .nav-menu span:nth-child(1){ left:0; top:0; }
   .nav-menu span:nth-child(2){ right:0; top:0; }
   .nav-menu span:nth-child(3){ left:0; bottom:0; }
   .nav-menu span:nth-child(4){ right:0; bottom:0; }
-  body.menu-open .nav-menu span:nth-child(1){ width:30px; }
+  body.menu-open .nav-menu span:nth-child(1){ transform:scaleX(3); }
   body.menu-open .nav-menu span:nth-child(3),
   body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
@@ -429,7 +448,15 @@
     .masthead-intro p{ max-width:560px; }
     .owned, .hq{ display:block; }
     .owned-body{ margin-top:36px; }
-    .hq-address{ margin-top:36px; }
+    .hq-address{ margin-top:50px; }
+    /* ⚠️ The HQ block steps down on mobile, and the constraint is the email
+       address: it is an unbreakable string, so its width scales straight
+       with the type size. At the 0.8-rule 32px it measures 370px against a
+       325px column and overhangs the page — and worse on a 320px phone.
+       24px keeps the longest atomic string inside the column at every phone
+       width while staying clearly display type. The address lines above it
+       break normally and follow it down for consistency. */
+    .hq-address{ font-size:24px; }
     .strip-slide{ height:300px; }
     .strip-slide.w-lg{ width:400px; } .strip-slide.w-sq{ width:300px; }
     .strip-slide.w-md{ width:240px; } .strip-slide.w-nr{ width:225px; }
@@ -441,26 +468,37 @@
    * ================================================================== */
   @media (max-width:767px){
     :root{
+      /* --- mobile type: the frames' own scale ---
+         Display type is 0.8x its desktop size, measured off the Mobile
+         frames three times over: Work's headline 60 -> 48, Services' 40 ->
+         32, the case study masthead 40 -> 32. The clamps' own minima
+         (34/28/21) were never that ratio — they floored far too small and
+         are what made mobile read wrong.
+         The named text styles do NOT shrink: Body stays 18 (the case study
+         mobile frame sets its prose at 18) and Details stays 15 (Work's
+         mobile intro). They had been dropped to 16 and 13, which is the
+         other half of the same problem. H5 stays 20 (Services' mobile card
+         titles). */
       --nav-h:90px;              /* the refined mobile bar (mobile frames) */
       --pad-x:25px;              /* the refined mobile inset (mobile frames) */
-      --fs-h5:18px;
-      --fs-body:16px;
-      --fs-details:13px;
+      --fs-h1:68.8px;           /* 0.8 x 86 */
+      --fs-h2:48px;             /* 0.8 x 60 */
+      --fs-h3:32px;             /* 0.8 x 40 */
     }
     .logo{ width:40px; height:40px; margin-left:-10px; }
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .masthead{ padding-top:calc(var(--nav-h) + 32px); }
-    .masthead-intro{ padding:32px var(--pad-x) 40px; }
-    .team{ grid-template-columns:1fr; row-gap:40px; padding-block:24px 56px; }
-    .owned{ padding-top:56px; }
-    .owned-body{ gap:32px; }
+    .masthead{ padding-top:calc(var(--nav-h) + 50px); }
+    .masthead-intro{ padding:50px var(--pad-x); }
+    .team{ grid-template-columns:1fr; row-gap:50px; padding-block:25px 75px; }
+    .owned{ padding-top:75px; }
+    .owned-body{ gap:25px; }
     .strip-slide{ height:220px; }
     .strip-slide.w-lg{ width:293px; } .strip-slide.w-sq{ width:220px; }
     .strip-slide.w-md{ width:176px; } .strip-slide.w-nr{ width:165px; }
     .strip-slide.w-xs{ width:123px; } .strip-slide.w-wd{ width:275px; }
-    .hq{ padding-top:56px; }
+    .hq{ padding-top:75px; }
     .challenge{ padding:56px var(--pad-x); }
 
     .footer{ flex-wrap:wrap; row-gap:24px; }
@@ -509,10 +547,14 @@
   .mm-tri line{ stroke:#fff; stroke-width:1; vector-effect:non-scaling-stroke; }
   /* the cells rise in, top row first — committed by the class the script
      adds a frame after display flips (with the usual timer fallback) */
+  /* A menu has to answer the tap, so this is quicker than the site's 2.2s
+     scroll entrance: .55s with a 60ms stagger puts the last cell down at
+     ~0.85s instead of 1.35s. Both properties are composited, so the move
+     itself costs nothing. */
   .mm-grid li{
     opacity:0; transform:translate3d(0,24px,0);
-    transition:opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
-    transition-delay:calc(var(--mi) * 90ms);
+    transition:opacity .55s var(--ease-out-expo), transform .55s var(--ease-out-expo);
+    transition-delay:calc(var(--mi) * 60ms);
   }
   .mobile-menu.in .mm-grid li{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
@@ -673,18 +715,52 @@
   /* Fixed, semi-sticky nav — same behaviour as index.html: hides on the way
      down, returns the moment you scroll up, and stays put on mobile since
      the nav is the only way back to the rest of the site there. */
+  /* ---- the semi-sticky nav ----
+     Three things keep this smooth, and all three were wrong before:
+     1. The scroll handler is rAF-throttled. Scroll events can fire more
+        often than the screen refreshes, so the class was being toggled
+        several times per painted frame.
+     2. The bar's height is measured once (and on resize) rather than read
+        as `navEl.offsetHeight` inside the handler — that read forced a
+        synchronous layout on every scroll event.
+     3. The direction threshold is 10px with the reference point moving
+        only when the bar actually changes state. At the old flat 6px a
+        trackpad's jitter could cross the threshold both ways in quick
+        succession and the bar visibly flickered. */
+
+  /* Scrollbar width. The fixed nav subtracts it — a fixed element's
+     containing block includes the gutter, so an uncorrected 100% overhangs
+     the visible viewport. Re-measured on resize since the gutter moves with
+     zoom, and the token falls back to 0px so a page without JS degrades to
+     the old behaviour rather than breaking. */
+  function measureScrollbar(){
+    const w = window.innerWidth - document.documentElement.clientWidth;
+    document.documentElement.style.setProperty("--sbw", Math.max(0, w) + "px");
+  }
+  measureScrollbar();
+  addEventListener("resize", measureScrollbar, {passive:true});
+
   const navEl = document.querySelector(".nav");
-  const NAV_HIDE_DELTA = 6;
-  let lastNavY = 0;
+  const NAV_HIDE_DELTA = 10;
+  let lastNavY = 0, navH = 0, navTicking = false;
+  function measureNav(){ navH = navEl.offsetHeight; }
+  measureNav();
+  addEventListener("resize", measureNav, {passive:true});
   function syncNav(){
+    navTicking = false;
     const y = window.scrollY || 0;
     if (innerWidth <= 767){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
     const dy = y - lastNavY;
     if (Math.abs(dy) < NAV_HIDE_DELTA) return;
-    navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
+    const hide = dy > 0 && y > navH;
+    if (hide !== navEl.classList.contains("is-hidden")) navEl.classList.toggle("is-hidden", hide);
     lastNavY = y;
   }
-  addEventListener("scroll", syncNav, {passive:true});
+  addEventListener("scroll", () => {
+    if (navTicking) return;
+    navTicking = true;
+    requestAnimationFrame(syncNav);
+  }, {passive:true});
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 
   /* ---- reveal, left → right, staggered per arriving batch ---- */

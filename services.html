@@ -265,13 +265,15 @@
   .service h2{
     font-weight:300;
     font-size:var(--fs-h4); line-height:1.15; letter-spacing:-.02em;
-    /* Reserve two lines whatever the title runs to, so every description in
-       the grid starts on the same line. 2.3em = 2 x the 1.15 line-height, in
-       em so it tracks --fs-h4 rather than going stale at one breakpoint.
-       A three-line title would push its own description down and break the
-       row; none of the ten runs to three at any width, but that is the
-       constraint to re-check if the copy grows. */
-    min-height:2.3em;
+    /* ⚠️ The title does NOT reserve a fixed height any more (2 Sep 2026).
+       It used to carry min-height:2.3em — two lines of leading — so that
+       every description in a row began on the same line whatever its title
+       ran to. Myles reversed that: the description should simply follow its
+       own title on the same 30px gap and the cards should flow, even if
+       that means the body copy in a row starts at different heights. This
+       is now what the Figma frame does too (it lets each description follow
+       its own title), so the earlier deliberate departure from the frame is
+       gone. The 30px below is the only gap between a title and its body. */
     margin-bottom:30px;
   }
   .service p{
@@ -897,6 +899,41 @@
     };
     const group = svg => { const g = document.createElementNS(NS,'g'); svg.appendChild(g); return g; };
     const lerpPt = (a,b,t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t];
+
+    /* ---- ring helpers, for the three Flubber icons ----
+       Every shape here is a plain M/L/Z polygon in absolute coordinates, so
+       pulling the points out is a number scrape — no parser needed. */
+    const parseRing = d => (d.match(/-?\d*\.?\d+/g) || []).map(Number)
+      .reduce((acc,v,i) => { i % 2 ? acc[acc.length-1].push(v) : acc.push([v]); return acc; }, []);
+    const centroid = r => { let x=0,y=0; r.forEach(pt=>{x+=pt[0];y+=pt[1];}); return [x/r.length, y/r.length]; };
+    const gap = (a,b) => Math.hypot(a[0]-b[0], a[1]-b[1]);
+    /* a near-zero ring, so an unpaired shape shrinks into / grows out of a
+       point rather than popping */
+    const speck = pt => [[pt[0]-.5,pt[1]-.5],[pt[0]+.5,pt[1]-.5],[pt[0]+.5,pt[1]+.5],[pt[0]-.5,pt[1]+.5]];
+    /* interpolateAll demands two lists of EQUAL length, but icon 7 goes
+       5 rings -> 4 and icon 10 goes 4 -> 5: the design genuinely merges and
+       splits shapes. Pair each ring with its nearest opposite number by
+       centroid, then give whatever is left over a speck at the centroid of
+       the ring it is nearest to, so it collapses into that shape instead of
+       vanishing on the spot. */
+    function padRings(fromR, toR){
+      if (fromR.length === toR.length) return [fromR, toR];
+      const growing = toR.length > fromR.length;
+      const big   = growing ? toR : fromR;
+      const small = growing ? fromR : toR;
+      const bigC = big.map(centroid), smallC = small.map(centroid);
+      const taken = new Set();
+      const partners = big.map((r,i) => {
+        let best = -1, bestD = Infinity;
+        smallC.forEach((c,j) => { if (taken.has(j)) return;
+          const d = gap(bigC[i], c); if (d < bestD){ bestD = d; best = j; } });
+        if (best >= 0){ taken.add(best); return small[best]; }
+        let near = 0, nearD = Infinity;
+        smallC.forEach((c,j) => { const d = gap(bigC[i], c); if (d < nearD){ nearD = d; near = j; } });
+        return speck(smallC[near]);
+      });
+      return growing ? [partners, big] : [big, partners];
+    }
     const polyD = pts => `M${pts[0][0].toFixed(3)},${pts[0][1].toFixed(3)} ` +
       pts.slice(1).map(p=>`L${p[0].toFixed(3)},${p[1].toFixed(3)}`).join(' ') + ' Z';
 
@@ -958,14 +995,24 @@
       },
       morph(svg, cfg){             // icons 4, 7, 10
         const p = path(cfg.state1); svg.appendChild(p);
-        /* Guarded: if the vendored library is missing for any reason the
-           icon still works, it just cuts rather than morphs. */
-        const fn = (window.flubber && window.flubber.interpolate)
-          ? window.flubber.interpolate(cfg.state1, cfg.state2, { maxSegmentLength: 2 })
-          : null;
+        const F = window.flubber;
+        let fns = null;
+        if (F && F.interpolateAll){
+          /* ⚠️ NOT flubber.interpolate(). These icons are multi-RING paths
+             (four or five separate squares), and `interpolate` only ever
+             returns ONE ring: feed it a 5-ring shape and every frame
+             between the endpoints renders a single square. That is exactly
+             what made these three icons appear to vanish mid-rollover and
+             snap back at the end — measured, 5 rings in, 1 ring out.
+             `interpolateAll` keeps them all, one interpolator per ring. */
+          const from = F.splitPathString(cfg.state1).map(parseRing);
+          const to   = F.splitPathString(cfg.state2).map(parseRing);
+          const [a, b] = padRings(from, to);
+          fns = F.interpolateAll(a, b, { maxSegmentLength: 2 });
+        }
         return v => p.setAttribute('d',
           v <= 0 ? cfg.state1 : v >= 1 ? cfg.state2 :
-          fn ? fn(v) : (v >= 0.5 ? cfg.state2 : cfg.state1));
+          fns ? fns.map(f => f(v)).join(' ') : (v >= 0.5 ? cfg.state2 : cfg.state1));
       }
     };
 
@@ -1028,6 +1075,11 @@
       const render = BUILD[spec[0]](svg, spec[1]);
       if (img) img.replaceWith(svg); else wrap.appendChild(svg);
       wire(wrap, render);
+      /* Exposed so the morph can be stepped frame by frame from the console
+         — the preview pane freezes rAF, so this is the only way to inspect
+         intermediate states. Costs nothing and makes this class of bug
+         (snapping, seams, pieces vanishing mid-morph) testable. */
+      (window.__tfIcons || (window.__tfIcons = {}))[n] = render;
     });
   })();
 

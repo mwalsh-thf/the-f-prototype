@@ -235,7 +235,15 @@
      a one-line one), so its descriptions do NOT share a line. Myles asked for
      them to, which is what the h2 min-height below buys. */
   .s-icon{ flex:none; height:140px; }
-  .s-icon img{ width:100px; height:100px; }
+  /* .s-mark is whichever element is carrying the mark: the <img> in the
+     markup, or the live <svg> the rollover script swaps in for it. Both
+     take the same box and the same build-in, so the CSS never has to know
+     which one is there. */
+  .s-mark{ width:100px; height:100px; display:block; }
+  /* overflow must stay visible: several marks scale or slide pieces past
+     the 180-unit viewBox edge mid-morph */
+  svg.s-mark{ overflow:visible; }
+  svg.s-mark path{ fill:var(--black); }
   .service h2{
     font-weight:300;
     font-size:var(--fs-h4); line-height:1.15; letter-spacing:-.02em;
@@ -271,7 +279,7 @@
      cursor-following nudge, on the same transition every other hover
      feedback on the site uses, and lets it ease back to rest the moment
      the pointer leaves — one square moving, then moving back. */
-  .s-icon img{
+  .s-mark{
     clip-path:inset(0 0 0 0);
     transition:clip-path .9s var(--ease-out-expo), transform .4s var(--ease-out-expo);
   }
@@ -280,8 +288,8 @@
     100%{ opacity:1; clip-path:inset(0 0 0 0); }
   }
   @media (prefers-reduced-motion: no-preference){
-    .js .service:not(.in) .s-icon img{ opacity:0; }
-    .service.in .s-icon img{
+    .js .service:not(.in) .s-mark{ opacity:0; }
+    .service.in .s-mark{
       animation:icon-build var(--reveal-dur) var(--ease-out-expo) backwards;
       animation-delay:var(--d, 0ms);
     }
@@ -504,7 +512,7 @@
        these are the narrowest columns on the site */
     .service p{ font-size:16px; }
     .s-icon{ height:auto; margin-bottom:20px; }
-    .s-icon img{ width:67px; height:67px; }
+    .s-mark{ width:67px; height:67px; }
     .clients{ padding-top:75px; }
     /* The frame keeps the full 182x78 cells on mobile, but Myles asked for
        more marks in view (28 Aug 2026): ~0.75 scale — 136x58, 22 apart —
@@ -627,52 +635,52 @@
 
   <section class="services" aria-label="What we do">
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-brand-strategy.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="1"><img class="s-mark" src="assets/icons/icon-brand-strategy.svg" alt="" width="100" height="100"></div>
       <h2>Brand strategy and identity</h2>
       <p>Establish a foundation with insights and ideas that elevate your promise.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-content-campaign.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="2"><img class="s-mark" src="assets/icons/icon-content-campaign.svg" alt="" width="100" height="100"></div>
       <h2>Content and campaign strategy</h2>
       <p>Tell your brand story and build a rapport with the right people at the right time.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-copywriting.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="3"><img class="s-mark" src="assets/icons/icon-copywriting.svg" alt="" width="100" height="100"></div>
       <h2>Copywriting and brand voice</h2>
       <p>Turn complexity into clarity with creative messaging that captures your unique voice.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-brand-design.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="4"><img class="s-mark" src="assets/icons/icon-brand-design.svg" alt="" width="100" height="100"></div>
       <h2>Brand design and application</h2>
       <p>Bring creative ideas to life with meaningful experiences and well-crafted design.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-digital-dev.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="5"><img class="s-mark" src="assets/icons/icon-digital-dev.svg" alt="" width="100" height="100"></div>
       <h2>Digital development</h2>
       <p>Create beautiful digital experiences across platforms, throughout the brand journey.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-abm.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="6"><img class="s-mark" src="assets/icons/icon-abm.svg" alt="" width="100" height="100"></div>
       <h2>Account-based marketing</h2>
       <p>Grow your relationships, reputation and revenue with targeted campaigns and toolkits.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-research.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="7"><img class="s-mark" src="assets/icons/icon-research.svg" alt="" width="100" height="100"></div>
       <h2>Research and insights</h2>
       <p>Create authentic connections built on audience segmentation and market research.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-media-activation.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="8"><img class="s-mark" src="assets/icons/icon-media-activation.svg" alt="" width="100" height="100"></div>
       <h2>Media activation</h2>
       <p>Maximise media opportunities to get the engagement your campaign deserves.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-ai-experiences.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="9"><img class="s-mark" src="assets/icons/icon-ai-experiences.svg" alt="" width="100" height="100"></div>
       <h2>AI experiences</h2>
       <p>Enhance your brand and cut through with interactions that meet real human needs.</p>
     </div>
     <div class="service reveal">
-      <div class="s-icon"><img src="assets/icons/icon-brand-proximity.svg" alt="" width="100" height="100"></div>
+      <div class="s-icon" data-icon="10"><img class="s-mark" src="assets/icons/icon-brand-proximity.svg" alt="" width="100" height="100"></div>
       <h2>Brand Proximity</h2>
       <p>Take advantage of disruptive tools to get closer to the people who matter.</p>
       <a class="s-link" href="contact.html">Let’s talk about your brand →</a>
@@ -752,6 +760,10 @@
   </footer>
 </main>
 
+<!-- Flubber powers the three icons whose shapes split/merge between
+     states (4, 7, 10). Vendored locally, not from a CDN — see the icon
+     rollover block below. -->
+<script src="assets/vendor/flubber.min.js"></script>
 <script>
 (() => {
   "use strict";
@@ -794,6 +806,213 @@
     requestAnimationFrame(syncNav);
   }, {passive:true});
 
+
+  /* ================================================================== *
+   * Service icon rollovers
+   *
+   * Ported from Myles' icon set (icon-set-icon3-alt-no-rollover-colour
+   * .html). Each mark morphs to a second state on rollover and STAYS
+   * there, morphing back only on the next rollover — it is a toggle, not
+   * a hover state. Touch taps toggle it too.
+   *
+   * The ten icons use six different techniques, because the shapes are
+   * related in different ways state to state. All of them are the
+   * author's own; nothing here re-derives the geometry:
+   *   1  allRotate  four diamonds rotate+scale into their target squares
+   *   2  slide      bars and squares each slide one grid unit
+   *   3  3alt       a duplicate cluster travels up the diagonal and melts
+   *                 into the band while the real square grows out of the
+   *                 shared corner
+   *   4  flubber    whole-shape interpolation
+   *   5  slide      each piece slides straight to its target
+   *   6  anchorScale  two squares share a corner, so each scales in place
+   *   7  flubber
+   *   8  composite8   static pieces + a translating square + one triangle
+   *                 whose vertices lerp
+   *   9  composite9v3 hero square translates; the rest swaps binary at
+   *                 v=0.5, the curve's peak velocity, so the cut hides
+   *   10 flubber
+   *
+   * ⚠️ Icons 4, 7 and 10 need Flubber and it is the ONLY third-party
+   * library on the site — vendored to assets/vendor/ rather than pulled
+   * from a CDN so the page still works offline and can't break when a CDN
+   * does. Icon 4's two states have matching subpath and vertex counts and
+   * could be hand-lerped, but 7 and 10 genuinely split/merge shapes
+   * (5 subpaths -> 4, and 4 -> 5), which is exactly what Flubber is for.
+   * If the library ever fails to load, those three fall back to a binary
+   * swap at v=0.5 rather than throwing — see MORPH below.
+   *
+   * ⚠️ The marks are decorative (they carry no label the copy doesn't
+   * already give) so they are aria-hidden and deliberately NOT focusable.
+   * Adding ten tab stops for an ornament would be worse for keyboard users
+   * than leaving the flourish to pointer and touch. The demo page made
+   * them focusable because there the icon WAS the content.
+   * ================================================================== */
+  (function(){
+    const ICON_DATA = {"flubber":{"4":{"state1":"M120.000,60.000 L150.000,60.000 L150.000,90.000 L120.000,90.000 Z M90.000,90.000 L120.000,90.000 L120.000,120.000 L90.000,120.000 Z M90.000,30.000 L120.000,30.000 L120.000,60.000 L90.000,60.000 Z M60.000,60.000 L90.000,60.000 L90.000,90.000 L60.000,90.000 Z M30.000,90.000 L60.000,90.000 L60.000,150.000 L30.000,150.000 Z","state2":"M60.000,60.000 L30.000,60.000 L30.000,90.000 L60.000,90.000 Z M90.000,90.000 L60.000,90.000 L60.000,120.000 L90.000,120.000 Z M90.000,30.000 L60.000,30.000 L60.000,60.000 L90.000,60.000 Z M120.000,60.000 L90.000,60.000 L90.000,90.000 L120.000,90.000 Z M150.000,90.000 L120.000,90.000 L120.000,150.000 L150.000,150.000 Z"},"7":{"state1":"M120.000,120.000 L150.000,120.000 L150.000,150.000 L120.000,150.000 Z M90.000,90.000 L120.000,90.000 L120.000,120.000 L90.000,120.000 Z M60.000,30.000 L90.000,30.000 L90.000,90.000 L60.000,90.000 Z M30.000,120.000 L90.000,120.000 L90.000,150.000 L30.000,150.000 Z M120.000,30.000 L150.000,30.000 L150.000,60.000 L120.000,60.000 Z","state2":"M60.000,120.000 L90.000,120.000 L90.000,150.000 L60.000,150.000 Z M120.000,120.000 L90.000,120.000 L90.000,90.000 L120.000,90.000 Z M90.000,90.000 L30.000,90.000 L30.000,30.000 L90.000,30.000 Z M150.000,90.000 L120.000,90.000 L120.000,30.000 L150.000,30.000 Z"},"10":{"state1":"M30.000,30.000 L60.000,30.000 L60.000,60.000 L30.000,60.000 Z M90.000,90.000 L150.000,90.000 L150.000,120.000 L90.000,120.000 Z M30.000,60.000 L90.000,60.000 L90.000,150.000 L30.000,150.000 Z M90.000,120.000 L150.000,120.000 L150.000,150.000 L90.000,150.000 Z","state2":"M120.000,30.000 L90.000,30.000 L90.000,60.000 L120.000,60.000 Z M90.000,60.000 L60.000,60.000 L60.000,120.000 L90.000,120.000 Z M120.000,60.000 L90.000,60.000 L90.000,150.000 L120.000,150.000 Z M90.000,120.000 L30.000,120.000 L30.000,150.000 L90.000,150.000 Z M150.000,90.000 L120.000,90.000 L120.000,150.000 L150.000,150.000 Z"}},"layers":{"1allrotate":{"type":"allRotate","pieces":[{"d":"M60.000,30.000 L90.000,60.000 L60.000,90.000 L30.000,60.000 Z","cx1":60,"cy1":60,"dx":0,"dy":0,"scaleFrom":1,"scaleTo":1.414213562373095,"rotate":45},{"d":"M120.000,90.000 L150.000,120.000 L120.000,150.000 L90.000,120.000 Z","cx1":120,"cy1":120,"dx":0,"dy":0,"scaleFrom":1,"scaleTo":1.414213562373095,"rotate":45},{"d":"M120.000,30.000 L150.000,60.000 L120.000,90.000 L90.000,60.000 Z","cx1":120,"cy1":60,"dx":15,"dy":-15,"scaleFrom":1,"scaleTo":0.7071067811865475,"rotate":45},{"d":"M60.000,90.000 L90.000,120.000 L60.000,150.000 L30.000,120.000 Z","cx1":60,"cy1":120,"dx":-15,"dy":15,"scaleFrom":1,"scaleTo":0.7071067811865475,"rotate":45}]},"2alt":{"type":"slide","pieces":[{"d":"M60.000,60.000 L150.000,60.000 L150.000,30.000 L60.000,30.000 Z","dx":-30,"dy":0},{"d":"M30.000,150.000 L120.000,150.000 L120.000,120.000 L30.000,120.000 Z","dx":30,"dy":0},{"d":"M30.000,90.000 L60.000,90.000 L60.000,60.000 L30.000,60.000 Z","dx":0,"dy":30},{"d":"M120.000,120.000 L150.000,120.000 L150.000,90.000 L120.000,90.000 Z","dx":0,"dy":-30}]},"5":{"type":"slide","pieces":[{"d":"M89.400,29.400 L150.600,29.400 L150.600,150.600 L89.400,150.600 Z","dx":-60,"dy":0},{"d":"M29.400,29.400 L60.600,29.400 L60.600,60.600 L29.400,60.600 Z","dx":90,"dy":90},{"d":"M29.400,89.400 L90.600,89.400 L90.600,150.600 L29.400,150.600 Z","dx":60,"dy":-60}]},"6":{"type":"anchorScale","pieces":[{"d":"M150.000,30.000 L60.000,30.000 L60.000,120.000 L150.000,120.000 Z","ax":150,"ay":30,"scaleTo":0.3333333333333333},{"d":"M60.000,120.000 L30.000,120.000 L30.000,150.000 L60.000,150.000 Z","ax":30,"ay":150,"scaleTo":3.0}]},"8":{"type":"composite8","static":["M29.400,29.400 L60.600,29.400 L60.600,120.600 L29.400,120.600 Z","M150.000,30.000 L90.000,30.000 L150.000,90.000 Z","M59.400,119.400 L90.600,119.400 L90.600,150.600 L59.400,150.600 Z"],"hero":{"d":"M59.400,29.400 L90.600,29.400 L90.600,60.600 L59.400,60.600 Z","dx":0,"dy":60},"triFrom":[[150,150],[150,90],[90,150]],"triTo":[[150,150],[150,90],[90,90]]},"9":{"type":"composite9v3","static":"M119.400,89.400 L150.600,89.400 L150.600,120.600 L119.400,120.600 Z","hero":{"d":"M120.000,30.000 L150.000,30.000 L150.000,60.000 L120.000,60.000 Z","dx":0,"dy":60},"restFrom":"M30.000,30.000 L60.000,30.000 L60.000,60.000 L30.000,60.000 Z M60.000,60.000 L90.000,60.000 L90.000,90.000 L60.000,90.000 Z M60.000,90.000 L90.000,90.000 L90.000,120.000 L60.000,120.000 Z M30.000,90.000 L60.000,90.000 L60.000,120.000 L30.000,120.000 Z M60.000,120.000 L90.000,120.000 L90.000,150.000 L60.000,150.000 Z M119.400,119.400 L150.600,119.400 L150.600,150.600 L119.400,150.600 Z M60.000,60.000 L90.000,60.000 L60.000,30.000 L60.000,60.000 Z","restTo":"M89.932,30.000 L59.989,30.000 L30.000,59.989 L30.000,89.978 L59.989,89.978 L30.000,119.989 L30.000,150.000 L59.989,150.000 L59.989,120.011 L90.000,120.011 L90.000,90.000 L59.967,90.000 L59.967,59.989 L89.932,59.989 L89.932,30.000 Z"}}};
+    ICON_DATA.layers['3alt'] = {
+  band: { d: "M60.000,90.000 L90.000,90.000 L90.000,120.000 L60.000,120.000 Z M90.000,60.000 L120.000,60.000 L120.000,90.000 L90.000,90.000 Z M90.000,90.000 L90.000,60.000 L60.000,90.000 L90.000,90.000 Z M120.000,60.000 L120.000,30.000 L90.000,60.000 L120.000,60.000 Z M90.000,90.000 L90.000,120.000 L120.000,90.000 L90.000,90.000 Z M120.000,60.000 L120.000,90.000 L150.000,60.000 L120.000,60.000 Z M120.000,60.000 L150.000,60.000 L120.000,30.000 L120.000,60.000 Z" },
+  square: { d: "M30.000,120.000 L60.000,120.000 L60.000,150.000 L30.000,150.000 Z" },
+  traveler: {
+    pieces: [
+      "M30.000,120.000 L60.500,119.500 L60.000,150.000 L30.000,150.000 Z",
+      "M60.500,120.500 L60.000,90.000 L30.000,120.000 L60.500,120.500 Z",
+      "M59.500,119.500 L60.000,150.000 L90.000,120.000 L59.500,119.500 Z"
+    ],
+    dx: 30, dy: -30
+  }
+};
+
+    /* the author's own timing — a short, symmetric cubic in-out. This is a
+       direct state change like the case study's fold, not one of the
+       site's scroll entrances, so it does not use --reveal-dur/expo. */
+    const DUR = 420;
+    const EASE = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+    const NS = 'http://www.w3.org/2000/svg';
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+    const path = (d, opts) => {
+      const p = document.createElementNS(NS,'path');
+      p.setAttribute('d', d);
+      if (opts && opts.opacity !== undefined) p.style.opacity = opts.opacity;
+      return p;
+    };
+    const group = svg => { const g = document.createElementNS(NS,'g'); svg.appendChild(g); return g; };
+    const lerpPt = (a,b,t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t];
+    const polyD = pts => `M${pts[0][0].toFixed(3)},${pts[0][1].toFixed(3)} ` +
+      pts.slice(1).map(p=>`L${p[0].toFixed(3)},${p[1].toFixed(3)}`).join(' ') + ' Z';
+
+    /* Each builder appends its pieces to the <svg> and returns a render(v)
+       where v is 0 (state 1) to 1 (state 2). Straight from the source. */
+    const BUILD = {
+      allRotate(svg, cfg){
+        const wraps = cfg.pieces.map(p => { const g = group(svg); g.appendChild(path(p.d)); return g; });
+        return v => cfg.pieces.forEach((p,i) => {
+          const s = p.scaleFrom + (p.scaleTo - p.scaleFrom) * v;
+          const cx = p.cx1 + p.dx * v, cy = p.cy1 + p.dy * v;
+          wraps[i].setAttribute('transform',
+            `translate(${cx} ${cy}) scale(${s}) rotate(${p.rotate*v}) translate(${-p.cx1} ${-p.cy1})`);
+        });
+      },
+      slide(svg, cfg){
+        const wraps = cfg.pieces.map(p => { const g = group(svg); g.appendChild(path(p.d)); return g; });
+        return v => cfg.pieces.forEach((p,i) =>
+          wraps[i].setAttribute('transform', `translate(${p.dx*v} ${p.dy*v})`));
+      },
+      anchorScale(svg, cfg){
+        const wraps = cfg.pieces.map(p => { const g = group(svg); g.appendChild(path(p.d)); return g; });
+        return v => cfg.pieces.forEach((p,i) => {
+          const s = 1 + (p.scaleTo - 1) * v;
+          wraps[i].setAttribute('transform',
+            `translate(${p.ax} ${p.ay}) scale(${s}) translate(${-p.ax} ${-p.ay})`);
+        });
+      },
+      diagonal(svg, cfg){          // icon 3
+        svg.appendChild(path(cfg.band.d));
+        const sq = group(svg); sq.appendChild(path(cfg.square.d));
+        const trav = group(svg); cfg.traveler.pieces.forEach(d => trav.appendChild(path(d)));
+        const AX = 60, AY = 120;   // the corner the cluster shares with the band
+        return v => {
+          trav.setAttribute('transform', `translate(${cfg.traveler.dx*v} ${cfg.traveler.dy*v})`);
+          sq.setAttribute('transform', `translate(${AX} ${AY}) scale(${v}) translate(${-AX} ${-AY})`);
+        };
+      },
+      composite8(svg, cfg){
+        cfg.static.forEach(d => svg.appendChild(path(d)));
+        const heroWrap = group(svg); heroWrap.appendChild(path(cfg.hero.d));
+        const tri = path(polyD(cfg.triFrom)); svg.appendChild(tri);
+        return v => {
+          heroWrap.setAttribute('transform', `translate(${cfg.hero.dx*v} ${cfg.hero.dy*v})`);
+          tri.setAttribute('d', polyD(cfg.triFrom.map((p,i) => lerpPt(p, cfg.triTo[i], v))));
+        };
+      },
+      composite9v3(svg, cfg){
+        svg.appendChild(path(cfg.static));
+        const heroWrap = group(svg); heroWrap.appendChild(path(cfg.hero.d));
+        const from = path(cfg.restFrom), to = path(cfg.restTo, {opacity:0});
+        svg.appendChild(from); svg.appendChild(to);
+        return v => {
+          heroWrap.setAttribute('transform', `translate(${cfg.hero.dx*v} ${cfg.hero.dy*v})`);
+          const showTo = v >= 0.5;
+          from.style.opacity = showTo ? 0 : 1;
+          to.style.opacity   = showTo ? 1 : 0;
+        };
+      },
+      morph(svg, cfg){             // icons 4, 7, 10
+        const p = path(cfg.state1); svg.appendChild(p);
+        /* Guarded: if the vendored library is missing for any reason the
+           icon still works, it just cuts rather than morphs. */
+        const fn = (window.flubber && window.flubber.interpolate)
+          ? window.flubber.interpolate(cfg.state1, cfg.state2, { maxSegmentLength: 2 })
+          : null;
+        return v => p.setAttribute('d',
+          v <= 0 ? cfg.state1 : v >= 1 ? cfg.state2 :
+          fn ? fn(v) : (v >= 0.5 ? cfg.state2 : cfg.state1));
+      }
+    };
+
+    /* icon number -> [builder, config] */
+    const L = ICON_DATA.layers, F = ICON_DATA.flubber;
+    const ICONS = {
+      1:  ['allRotate',    L['1allrotate']],
+      2:  ['slide',        L['2alt']],
+      3:  ['diagonal',     L['3alt']],
+      4:  ['morph',        F['4']],
+      5:  ['slide',        L['5']],
+      6:  ['anchorScale',  L['6']],
+      7:  ['morph',        F['7']],
+      8:  ['composite8',   L['8']],
+      9:  ['composite9v3', L['9']],
+      10: ['morph',        F['10']]
+    };
+
+    /* Toggle: rolls to state 2 and stays; the next rollover returns it.
+       Interrupting mid-flight reverses from wherever it is rather than
+       snapping, and the duration scales with the distance left to travel
+       so a quick back-and-forth doesn't feel sluggish. */
+    function wire(el, render){
+      let raf = null, value = 0, from = 0, to = 0, start = null, current = 0;
+      function frame(ts){
+        if (start === null) start = ts;
+        const dur = DUR * Math.max(Math.abs(to - from), 0.05);
+        const t = Math.min((ts - start) / dur, 1);
+        value = from + (to - from) * EASE(t);
+        render(value);
+        if (t < 1) raf = requestAnimationFrame(frame);
+        else { value = to; render(value); raf = null; }
+      }
+      function toggle(){
+        current = current === 0 ? 1 : 0;
+        if (reduceMotion.matches){ value = current; render(value); return; }
+        if (raf) cancelAnimationFrame(raf);
+        from = value; to = current; start = null;
+        raf = requestAnimationFrame(frame);
+      }
+      el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') toggle(); });
+      el.addEventListener('click',        e => { if (e.pointerType !== 'mouse') toggle(); });
+      render(0);
+    }
+
+    /* Replace each <img> mark with its live SVG. The img stays in the
+       markup as the no-JS fallback — it is the same state-1 artwork — so a
+       blocked script leaves the page exactly as it was before this
+       feature existed. */
+    document.querySelectorAll('.s-icon[data-icon]').forEach(wrap => {
+      const n = wrap.dataset.icon;
+      const spec = ICONS[n];
+      if (!spec) return;
+      const img = wrap.querySelector('img');
+      const svg = document.createElementNS(NS,'svg');
+      svg.setAttribute('viewBox','0 0 180 180');
+      svg.setAttribute('aria-hidden','true');
+      svg.setAttribute('focusable','false');
+      svg.setAttribute('class','s-mark');
+      const render = BUILD[spec[0]](svg, spec[1]);
+      if (img) img.replaceWith(svg); else wrap.appendChild(svg);
+      wire(wrap, render);
+    });
+  })();
+
   /* ---- magnetic icon hover ----
      Each icon nudges a few pixels toward the cursor as it moves overhead,
      and eases back to rest the moment the pointer leaves — the icon read
@@ -803,15 +1022,15 @@
   if (!matchMedia("(prefers-reduced-motion: reduce)").matches){
     const MAGNET_RANGE = 8; // max px of travel in any one direction
     document.querySelectorAll(".s-icon").forEach(wrap => {
-      const img = wrap.querySelector("img");
+      const img = wrap.querySelector(".s-mark");
       wrap.addEventListener("mousemove", e => {
         const r = wrap.getBoundingClientRect();
         const relX = (e.clientX - r.left) / r.width - 0.5;   // -0.5..0.5
         const relY = (e.clientY - r.top) / r.height - 0.5;
-        img.style.transform =
+        if (img) img.style.transform =
           `translate(${(relX * MAGNET_RANGE * 2).toFixed(1)}px, ${(relY * MAGNET_RANGE * 2).toFixed(1)}px)`;
       });
-      wrap.addEventListener("mouseleave", () => { img.style.transform = ""; });
+      wrap.addEventListener("mouseleave", () => { if (img) img.style.transform = ""; });
     });
   }
 

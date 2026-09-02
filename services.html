@@ -243,7 +243,25 @@
   /* overflow must stay visible: several marks scale or slide pieces past
      the 180-unit viewBox edge mid-morph */
   svg.s-mark{ overflow:visible; }
-  svg.s-mark path{ fill:var(--black); }
+  /* ⚠️ The stroke is not decoration — it closes seams. Every icon is built
+     from several separate <path>s, and two shapes meeting edge-to-edge each
+     get their own anti-aliasing pass, so the background shows through as a
+     faint keyline down the join. Bleeding each shape outward by a 1px
+     stroke in its own fill colour makes neighbours overlap by a full pixel
+     (no seam) while a free edge overhangs by half a one (invisible).
+     `non-scaling-stroke` pins that to SCREEN pixels, so the bleed stays
+     exactly 1px whether the mark is 100px, 67px on mobile, or mid-morph
+     with a piece scaled 3x — expressing it in viewBox units would grow
+     with the shape and visibly fatten it. This is the same fix the nav's
+     logo mark uses, for the same reason. `round` joins, not miter: icon 8's
+     triangle has an acute corner that would throw a spike. */
+  svg.s-mark path{
+    fill:var(--black);
+    stroke:var(--black);
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;
+  }
   .service h2{
     font-weight:300;
     font-size:var(--fs-h4); line-height:1.15; letter-spacing:-.02em;
@@ -274,14 +292,14 @@
      side by 100%. `backwards` holds that small square through each icon's
      stagger delay so nothing flashes full-size before its turn.
 
-     Hover is a separate concern on a separate property (transform, not
-     clip-path), so the two motions can't collide: JS drives a small
-     cursor-following nudge, on the same transition every other hover
-     feedback on the site uses, and lets it ease back to rest the moment
-     the pointer leaves — one square moving, then moving back. */
+     Hover is a separate concern entirely: the mark morphs to its second
+     state and stays there (see the rollover block in the script). There
+     used to be a cursor-following "magnetic" nudge on transform as well;
+     it was removed on 2 Sep 2026 — with the morph doing the talking, a
+     second, softer motion following the pointer read as wobble. */
   .s-mark{
     clip-path:inset(0 0 0 0);
-    transition:clip-path .9s var(--ease-out-expo), transform .4s var(--ease-out-expo);
+    transition:clip-path .9s var(--ease-out-expo);
   }
   @keyframes icon-build{
     0%  { opacity:0; clip-path:inset(45% 45% 45% 45%); }
@@ -1012,27 +1030,6 @@
       wire(wrap, render);
     });
   })();
-
-  /* ---- magnetic icon hover ----
-     Each icon nudges a few pixels toward the cursor as it moves overhead,
-     and eases back to rest the moment the pointer leaves — the icon read
-     as "one square", so this is that square moving, then moving back.
-     Bound tight (8px) so it reads as a nudge, not a drag; skipped entirely
-     under reduced motion, matching every other animation on the page. */
-  if (!matchMedia("(prefers-reduced-motion: reduce)").matches){
-    const MAGNET_RANGE = 8; // max px of travel in any one direction
-    document.querySelectorAll(".s-icon").forEach(wrap => {
-      const img = wrap.querySelector(".s-mark");
-      wrap.addEventListener("mousemove", e => {
-        const r = wrap.getBoundingClientRect();
-        const relX = (e.clientX - r.left) / r.width - 0.5;   // -0.5..0.5
-        const relY = (e.clientY - r.top) / r.height - 0.5;
-        if (img) img.style.transform =
-          `translate(${(relX * MAGNET_RANGE * 2).toFixed(1)}px, ${(relY * MAGNET_RANGE * 2).toFixed(1)}px)`;
-      });
-      wrap.addEventListener("mouseleave", () => { if (img) img.style.transform = ""; });
-    });
-  }
 
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 

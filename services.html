@@ -355,7 +355,12 @@
    * Awards — sortable table, rows cascade in
    * ------------------------------------------------------------------ */
   .awards{ padding:100px var(--pad-x) 60px; }
-  .awards .statement{ margin-bottom:62px; }
+  /* ⚠️ 100, not the frame's 62. Figma draws 62px from the heading's
+     baseline to the table header; Myles asked for 100 (2 Sep 2026) so the
+     heading sits in the same air as the other section headings. Mobile
+     keeps 50 — half, on the mobile 25px grid — rather than 100, which
+     would swallow the phone viewport. */
+  .awards .statement{ margin-bottom:100px; }
   /* The table is set to the footer's columns, so the two read as one grid
      down the page rather than two systems that happen to share a margin.
      The footer is four flex children at `flex:1 1 0` with a 30px gap, so a

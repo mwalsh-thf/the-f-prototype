@@ -181,12 +181,11 @@
     font-weight:300;
     /* ⚠️ Optical compensation, not the frame: Figma draws both columns at
        40 Light, but the lead is fully inked (F Red + Off Black on the dark
-       ground) while the form is mid-grey ghosts, and solid type reads a
-       size bigger than ghost type at equal metrics. 0.9x brings the two
-       into optical balance; derived from --fs-h3 so it tracks the mobile
-       step automatically. Measured equal before the trim — this is about
-       how it reads, not what it measures (Myles, 28 Aug). */
-    font-size:calc(var(--fs-h3) * .9); line-height:1.15; letter-spacing:-.02em;
+       ground) while the form is mid-grey ghosts. 0.9x overshot — it then
+       read too small — so it is 0.95x now: 38px against the form's 40 at
+       1440, i.e. 2px down rather than 4 (Myles, 2 Sep). Derived from
+       --fs-h3 so it tracks the mobile step automatically. */
+    font-size:calc(var(--fs-h3) * .95); line-height:1.15; letter-spacing:-.02em;
     max-width:500px;
   }
   .contact-lead .red{ color:var(--f-red); }

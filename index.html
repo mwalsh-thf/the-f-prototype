@@ -520,20 +520,17 @@
   .logos.dragging{ cursor:grabbing; }
   .logos-track{ display:flex; width:max-content; will-change:transform; }
   .logos-set{ display:flex; align-items:center; }
-  /* Each logo gets an identical box and is contained within it, so wordmarks
-     of different proportions read at the same optical size instead of the
-     tallest one dominating. */
-  /* Sized so the tallest source (100px) is still being scaled *down* at the
-     largest box — the supplied logos are only ~182×80 PNGs, so going past
-     that would just magnify their pixels. */
-  .logos-set img{
-    display:block;
-    width:clamp(190px,17.4vw,250px);
-    height:clamp(62px,5.8vw,84px);
-    object-fit:contain; object-position:center;
-    margin-right:clamp(52px,6.2vw,96px);
-    pointer-events:none;
+  /* The marks sit in the frame's own 182 x 78 cell, 30 apart — the same
+     treatment as the Services band, so the two read as one component.
+     Each file is 182 units wide with its own height, which is what keeps
+     the marks at their true relative sizes rather than forcing a wordmark
+     and a roundel to a common height. */
+  .logos-set .cell{
+    width:182px; height:78px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    margin-right:30px;
   }
+  .logos-set img{ width:100%; height:auto; display:block; pointer-events:none; }
 
   /* ------------------------------------------------------------------ *
    * Contact — the closing call to action above the footer
@@ -739,18 +736,9 @@
       transform:scale(.867);
       transform-origin:bottom right;
     }
-    /* The desktop sizing is vw-driven, which collapses to the clamp minimums
-       on a phone and leaves the logos small. Mobile gets its own, larger box —
-       still sized so the ~182px sources aren't being magnified. */
-    /* Two sources of whitespace here: the gap between boxes, and the slack
-       inside each one (the box was far wider than the widest logo drawn in
-       it). Both are pulled in — the box is now barely wider than the largest
-       mark, so the spacing you see is mostly the margin. */
-    .logos-set img{
-      width:clamp(180px,48vw,200px);
-      height:clamp(72px,20vw,88px);
-      margin-right:clamp(24px,7vw,40px);
-    }
+    /* Same step-down as the Services band: ~0.75 scale, so more marks are
+       in view at once on a phone. */
+    .logos-set .cell{ width:136px; height:58px; margin-right:22px; }
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
     /* the 712/393-style pairs are unreadable side by side at this width, so
@@ -1077,12 +1065,36 @@
   <section class="logos" id="logos" aria-label="Clients">
     <div class="logos-track" id="logosTrack">
       <div class="logos-set">
-      <img src="assets/logo-khazna.png" width="182" height="80" alt="Khazna">
-      <img src="assets/logo-2x.png" width="182" height="100" alt="2X">
-      <img src="assets/logo-champion-homes.png" width="182" height="85" alt="Champion Homes">
-      <img src="assets/logo-teledyne.png" width="182" height="78" alt="Teledyne">
-      <img src="assets/logo-hiscox.png" width="182" height="78" alt="Hiscox">
-      <img src="assets/logo-wates.png" width="182" height="78" alt="Wates">
+      <div class="cell"><img src="assets/logos/01-bloomberg.svg" alt="Bloomberg" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/02-ibm.svg" alt="IBM" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/03-microsoft.svg" alt="Microsoft" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/04-adobe.svg" alt="Adobe" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/05-maersk.svg" alt="Maersk" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/06-siemens.svg" alt="Siemens" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/07-toshiba.svg" alt="Toshiba" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/08-dassault-systemes.svg" alt="Dassault Systèmes" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/09-tata.svg" alt="Tata" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/10-tcs.svg" alt="Tata Consultancy Services" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/11-ust.svg" alt="UST" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/12-g42.svg" alt="G42" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/13-khazna.svg" alt="Khazna" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/14-2xe.svg" alt="2XE" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/15-champion-homes.svg" alt="Champion Homes" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/16-teledyne.svg" alt="Teledyne" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/17-hiscox.svg" alt="Hiscox" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/18-wates.svg" alt="Wates" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/19-yokogawa.svg" alt="Yokogawa" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/20-genius-sports.svg" alt="Genius Sports" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/21-ardonagh.svg" alt="The Ardonagh Group" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/22-dematic.svg" alt="Dematic" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/23-wellsaid.svg" alt="WellSaid" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/24-aarete.svg" alt="AArete" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/25-startech.svg" alt="StarTech.com" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/26-agia-affinity.svg" alt="AGIA Affinity" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/27-everywhen.svg" alt="Everywhen" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/28-inception42.svg" alt="Inception" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/29-price-forbes.svg" alt="Price Forbes" loading="lazy" decoding="async"></div>
+      <div class="cell"><img src="assets/logos/30-core42.svg" alt="Core42" loading="lazy" decoding="async"></div>
       </div>
     </div>
   </section>
@@ -1754,7 +1766,7 @@
    * offset follows the pointer 1:1; on release it simply resumes from
    * wherever it was left — including any direction the drag was heading.
    * ------------------------------------------------------------------ */
-  const TICKER_SPEED = 28;      // px per second
+  const TICKER_SPEED = 22;      // px per second — matches the Services bands
   const logosEl   = document.getElementById("logos");
   const trackEl   = document.getElementById("logosTrack");
   if (logosEl && trackEl){

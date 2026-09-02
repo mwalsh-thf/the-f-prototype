@@ -492,6 +492,14 @@
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
+    /* ⚠️ The hard break in the headline is dropped on mobile. At 32px in a
+       325px column "We don't just love what we do." already wraps on its
+       own, so forcing a second break after it left "We own it." stranded
+       under a half-empty line. Without the <br> the sentence simply flows.
+       Note the markup keeps a real space BEFORE the <br>: hiding a <br>
+       with display:none removes the break AND the whitespace, so without
+       that space the two sentences collide into "…what we do.We own it." */
+    .wrap-lg{ display:none; }
     .masthead{ padding-top:calc(var(--nav-h) + 50px); }
     .masthead-intro{ padding:50px var(--pad-x); }
     .team{ grid-template-columns:1fr; row-gap:50px; padding-block:25px 75px; }
@@ -608,7 +616,7 @@
 
 <main>
   <section class="masthead">
-    <h1>We don’t just love what we do.<br>We own it.</h1>
+    <h1>We don’t just love what we do. <br class="wrap-lg">We own it.</h1>
   </section>
   <div class="masthead-intro">
     <p>We’re a team of creative and strategic experts who value imagination and innovation in equal measure, because we know this is the magic combination that will get you closer to your customers – faster.</p>

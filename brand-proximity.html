@@ -86,6 +86,13 @@
 
     --nav-h:clamp(90px,17vh,140px);
     --logo-h:52.44px;
+    /* The logo's ink bottom: the mark is --logo-h tall, centred in the
+       nav's box, so the bar has (nav-h − logo-h)/2 of empty tail below it
+       (README, "The header sits in equal air"). Everything on this page
+       that the frame spaces "100 from the top" is measured from HERE, not
+       from the nav's box — the frame's own bar is 140 with a 40 logo, so
+       its 100 is 100 below the ink. */
+    --logo-bottom:calc((var(--nav-h) + var(--logo-h)) / 2);
     --page-max:2200px;
     --sbw:0px;
     --pad-x:100px;
@@ -185,7 +192,12 @@
     transition:color .35s var(--ease-out-expo);
   }
   .nav-links a:hover{color:var(--ink-footer)}
-  .nav-links a[aria-current="page"]{ color:var(--ink-footer); }
+  /* ⚠️ The current page is deliberately NOT highlighted (Myles, 3 Sep
+     2026). The `aria-current="page"` attribute stays in the markup — it is
+     what tells a screen reader which page this is — but it carries no ink
+     of its own, so every link rests at the same tone and only hover
+     changes. Don't reinstate a colour rule here: the site-wide decision
+     is that the bar doesn't announce where you are. */
 
   /* Full-bleed helper — the standard --sbw breakout (README, "Full-bleed
      breakouts"). Every coloured ground on this page uses it; the content
@@ -203,28 +215,34 @@
   /* ------------------------------------------------------------------ *
    * 1. The hero
    *
-   * Frame 3437:2917: the nav's 140, then the headline and Mosaic 1 both
-   * start 100px below it (headline top 100 in the section, mosaic top 98),
-   * mosaic 966 square centred, and the section ends on the mosaic's own
-   * bottom edge — the Context screen follows with its own air.
+   * Frame 3437:2917 (re-measured 3 Sep 2026 after Myles tightened the
+   * spacing): the section is 1016 tall under the 140 nav, and BOTH the
+   * headline's cap and Mosaic 1's top edge sit at y≈50 in it — i.e.
+   * exactly 100px below the logo's ink. Pixel-scanned off the render: cap
+   * bands at 51 / 121 / 194 (69px pitch = 60 x 1.15) and the mosaic's
+   * grid origin at 49.5, its 966 square ending flush on the section's
+   * bottom edge. The old frame had 150 of air there.
    * ------------------------------------------------------------------ */
   .bp-hero{
     background:var(--hero-bg);
     color:var(--ink-footer);
-    padding:calc(var(--nav-h) + 100px) 0 0;
+    padding:calc(var(--logo-bottom) + 100px) 0 0;
   }
   .bp-hero-band{
     position:relative;
     display:flex; justify-content:center;
   }
-  /* Narrow enough that the headline breaks "Show up / and stand / out" over
-     three lines, as the frame sets it, rather than being hard-wrapped with
-     <br>s that would break at other widths. 300px sits mid-way between the
-     widest line (252) and the width at which "Show up and" would fit
-     (~340), so the break survives small font-metric differences. */
+  /* ⚠️ The breaks are REAL <br>s now, not a width that happens to wrap
+     there (Myles, 3 Sep 2026: "keep it so it breaks like the figma to keep
+     the title condensed and across three lines"). The frame sets the type
+     at 60 on a 618 box with two explicit breaks; a wrap width holds those
+     three lines at 60px but not once --fs-h2's clamp pulls the size down
+     on a narrow desktop, where 300px would fit "Show up and" on one line.
+     Breaks travel with the copy instead, so the shape is the same at every
+     size. Width is now only a guard against the box catching the mosaic. */
   .bp-hero-headline{
     position:absolute; left:0; top:0;
-    width:min(300px,26vw);
+    width:max-content; max-width:min(420px,32vw);
     font-weight:300;
     font-size:var(--fs-h2); line-height:1.15; letter-spacing:-.02em;
   }
@@ -388,14 +406,14 @@
      (18.2% of the content area, so it grows with the cap), H4 heading,
      30 down to the copy. The copy is the frame's own two-paragraph block:
      a SemiBold lead line, an empty line, then the body — all Details.
-     ⚠️ The 100 is measured from the LOGO'S INK, not the card's edge: the
-     frame's "100 from the top" put the heading 4px under the logo, which
-     read as touching. (nav-h + logo-h)/2 is the logo's bottom edge. On
-     short windows the 100 eases so the block and the sub-nav can't meet. */
+     ⚠️ The 100 is measured from the LOGO'S INK (--logo-bottom), not the
+     card's edge: the frame's "100 from the top" put the heading 4px under
+     the logo, which read as touching. On short windows the 100 eases so
+     the block and the sub-nav can't meet. */
   .bp-text{
     position:absolute;
     left:var(--pad-x);
-    top:calc((var(--nav-h) + var(--logo-h)) / 2 + clamp(50px,11.1vh,100px));
+    top:calc(var(--logo-bottom) + clamp(50px,11.1vh,100px));
     width:calc(max(226px, (100% - 2 * var(--pad-x)) * .182));
   }
   .bp-heading{
@@ -442,22 +460,39 @@
   .bp-subnav button[aria-current="true"]{ opacity:1; }
   .bp-subnav button:focus-visible{ outline:1px solid currentColor; outline-offset:4px; }
 
-  /* Reveal inside a card once it has locked: heading, then copy on the
-     site's stagger. Driven from the chased state by the script (.in when
-     the card lands, removed again once it has slid most of the way back
-     down, so a second visit reveals again). */
+  /* ---- The card's text is a SCROLL LAYER, not a one-shot reveal ----
+   *
+   * ⚠️ It used to arrive on the site's 2.2s reveal and then simply stay
+   * put until the state had gone (`.in`, removed at v < k − 0.6). Going
+   * BACKWARD that left a fully-inked text block sliding down the screen
+   * with its card, straight across the sub-nav in the bottom-left corner
+   * — Myles' note of 3 Sep 2026. Going forward it did the same over the
+   * outgoing card.
+   *
+   * So it is now the homepage's own copy layer (see `layer()` there): the
+   * script writes opacity and a small parallax straight from the chased
+   * state, on a distance window around the card's own state — in over the
+   * last quarter of the card's rise, out over the first half of its
+   * departure, in both directions. Nothing is ever visible more than half
+   * a state from where it belongs, so it cannot reach the sub-nav.
+   * The 2.2s entrance stays for the hero masthead and everything below
+   * the stage; inside a scroll experience the homepage's model is the one
+   * that matches, and it is what makes the fade feel like part of the
+   * scroll rather than an animation the scroll happens to trigger. */
+  /* ⚠️ The block carries the OPACITY and the parallax DISTANCE (--tp);
+     the transform itself is applied by its children. Anything that
+     transforms this box — an inline transform, or even
+     `will-change:transform` — makes it a containing block for absolutely
+     positioned descendants, and on mobile the heading and the copy are
+     absolute (they leave the block for their own bands). Transforming it
+     re-parented them here, put them 25px in from where they belong and
+     collapsed the mosaic's measured band to its 160px floor. A custom
+     property and opacity are both safe: opacity makes a stacking context
+     but not a containing block. */
+  .js .bp-card .bp-text{ opacity:0; will-change:opacity; }
   .js .bp-card .bp-heading,
-  .js .bp-card .bp-copy{
-    opacity:0;
-    transform:translate3d(0, var(--reveal-shift), 0);
-    transition:opacity var(--reveal-dur) var(--ease-out-expo),
-               transform var(--reveal-dur) var(--ease-out-expo);
-  }
-  .js .bp-card .bp-copy{ transition-delay:var(--reveal-stagger); }
-  .js .bp-card.in .bp-heading,
-  .js .bp-card.in .bp-copy{ opacity:1; transform:none; }
+  .js .bp-card .bp-copy{ transform:translate3d(0, var(--tp, 0px), 0); }
   @media (prefers-reduced-motion: reduce){
-    .js .bp-card .bp-heading, .js .bp-card .bp-copy,
     .js .bp-context-copy, .js .bp-stat{ opacity:1; transform:none; transition:none; }
   }
 
@@ -481,35 +516,58 @@
    * the same frame, the seam is invisible. That is the whole "stays on
    * top and morphs" effect.
    *
-   * The canvas is 1.4x the stage on every side (inset -20%) because the
-   * frame draws Mosaics 3 and 4 with a LARGER cell than Mosaic 2 (56 vs
-   * 42 at 1440 — ZOOM in the script), so the zoomed art outgrows the
-   * base box. --u is one unit of the BASE box, and every overlay is
-   * written in those units, so the overlays scale with the art at every
-   * size without a second set of numbers.
+   * ⚠️ EVERYTHING IS ON ONE EXACT GRID, and that is deliberate down to
+   * the device pixel (Myles, 3 Sep 2026: "no unaligned squares or key
+   * lines poking out"). measure() picks a base cell that is a whole
+   * number of DEVICE pixels and then derives the box from it — the stage
+   * is 14 x 16 cells, so --mosaic-w / --mosaic-h are exact multiples of
+   * the cell and the stage's own left/top are rounded to device pixels
+   * too. Every square is drawn at `origin + k x cell`, so adjacent
+   * squares share an edge to the pixel: no cell is a pixel bigger than
+   * its neighbour and no ground shows through a join. Before this the
+   * cell was fractional (42.05 x scale) and each square's four edges
+   * were rounded independently, so cells varied by a device pixel and
+   * the joins between light and dark squares read as ragged.
+   *
+   * The canvas overhangs the stage by --mosaic-over, which is THREE
+   * CELLS, not a percentage — the frame draws Mosaics 3 and 4 with a
+   * larger cell than Mosaic 2 (56 vs 42 at 1440, ZOOM in the script) so
+   * the zoomed art runs about 2.4 cells past the base box, and a
+   * percentage overhang would put the canvas's own origin on a fraction
+   * of a device pixel and undo all of the above.
    * ------------------------------------------------------------------ */
   .bp-mosaic-stage{
     position:absolute;
     left:var(--mosaic-left); top:var(--mosaic-top);
-    width:var(--mosaic-w);
-    aspect-ratio:840/960;
+    width:var(--mosaic-w); height:var(--mosaic-h);
     --u:calc(var(--mosaic-w) / 840);
     will-change:transform;
   }
-  .bp-mosaic{
-    position:absolute; left:-20%; top:-20%;
-    width:140%; height:140%;
-    pointer-events:auto;
+  .bp-mosaic,
+  .bp-overlay{
+    position:absolute;
+    left:calc(-1 * var(--mosaic-over)); top:calc(-1 * var(--mosaic-over));
+    width:calc(100% + 2 * var(--mosaic-over));
+    height:calc(100% + 2 * var(--mosaic-over));
   }
+  .bp-mosaic{ pointer-events:auto; }
 
   /* ---- The overlays ----
-     Written in the stage's unit space, allowed to hang outside the art
-     (several do — the frame's overlays sit half off the mosaic). Heights
-     are minimums so the boxes grow with the copy once the type hits its
-     floor on small screens rather than clipping. pointer-events:none
-     throughout: the mouse-gravity hover belongs to the canvas beneath. */
+     ⚠️ Placed and sized in CELLS of their own mosaic, from `data-cell`
+     ("col,row,w,h" — quarter-cell precision), written to px by
+     placeOverlays() off the same grid the squares use. The frame draws
+     them on that grid: measured against each mosaic's own cell its boxes
+     come out 4 x 3.75, 4 x 3 and 4.5 x 4 cells, and pop-up 2's height is
+     exactly three cells — which is Myles' "the larger square boxes are
+     the exact height of three of the smaller square boxes". Written in
+     the stage's unit space (as they first were) they landed on arbitrary
+     fractions of a cell and their edges cut through the squares.
+     They may hang outside the art, and several do. Heights are minimums
+     so a box grows with its copy once the type hits its floor on a small
+     screen rather than clipping — the only case where an edge leaves the
+     grid, and it is the bottom one. pointer-events:none throughout: the
+     mouse-gravity hover belongs to the canvas beneath. */
   .bp-overlay{
-    position:absolute; inset:0;
     z-index:1;
     pointer-events:none;
     overflow:visible;
@@ -876,7 +934,7 @@
   <section class="bp-hero bleed">
     <div class="bp-inner">
       <div class="bp-hero-band">
-        <h1 class="bp-hero-headline">Show up and stand out</h1>
+        <h1 class="bp-hero-headline">Show up<br>and stand<br>out</h1>
         <div class="bp-hero-mosaic">
           <canvas id="bpMosaicOne" aria-hidden="true"></canvas>
           <!-- Wordmark over the mosaic, in the mosaic's own 966 coordinate
@@ -955,14 +1013,14 @@
                Mosaic 2 is the state on screen. Positions are the frame's,
                converted to the art's units (1 unit = 42.052/60 px at 1440). -->
           <div class="bp-overlay" id="bpPops" aria-hidden="true">
-            <div class="bp-pop" data-origin="br" style="left:calc(43 * var(--u)); top:calc(60 * var(--u)); width:calc(257 * var(--u)); min-height:calc(180 * var(--u)); background:#7EA3FF;">
+            <div class="bp-pop" data-origin="br" data-cell="0.75,1,4.25,3" style="background:#7EA3FF;">
               <p>180 topics in 51 clusters, built from 1101 of your sources</p>
             </div>
-            <div class="bp-pop" data-origin="bl" style="left:calc(720 * var(--u)); top:calc(300 * var(--u)); width:calc(245 * var(--u)); min-height:calc(237 * var(--u)); background:#F45944; --fig:57;">
+            <div class="bp-pop" data-origin="bl" data-cell="12,5,4,4" style="background:#F45944; --fig:57;">
               <p class="bp-pop-fig">41.5%</p>
               <p>Your Brand Proximity score</p>
             </div>
-            <div class="bp-pop" data-origin="tr" style="left:calc(-90 * var(--u)); top:calc(660 * var(--u)); width:calc(270 * var(--u)); min-height:calc(240 * var(--u)); background:#368F8E; --fig:38.5;">
+            <div class="bp-pop" data-origin="tr" data-cell="-1.5,11,4.5,4" style="background:#368F8E; --fig:38.5;">
               <p class="bp-pop-fig">34%</p>
               <p>of your published expertise talks about Healthcare</p>
             </div>
@@ -986,7 +1044,7 @@
           <!-- The frame's three overlay cards, in the art's units. The dark
                one carries the frame's PLACEHOLDER copy, reproduced as drawn. -->
           <div class="bp-overlay" aria-hidden="true">
-            <div class="bp-pop ink-dark" data-origin="bl" style="--k:0; left:calc(740 * var(--u)); top:calc(62 * var(--u)); width:calc(317 * var(--u)); min-height:calc(300 * var(--u)); background:#A9C2FF;">
+            <div class="bp-pop ink-dark" data-origin="bl" data-cell="11,3.25,4,3.75" style="--k:0; background:#A9C2FF;">
               <p class="bp-pop-title">Buyer profile</p>
               <div class="bp-pop-rows">
                 <div class="bp-pop-row"><span class="l">Motivations</span><span class="v">142</span></div>
@@ -994,11 +1052,11 @@
                 <div class="bp-pop-row"><span class="l">Questions</span><span class="v">13</span></div>
               </div>
             </div>
-            <div class="bp-pop ink-dark is-strip" data-origin="tr" style="--k:1; left:calc(-9 * var(--u)); top:calc(288 * var(--u)); width:calc(427 * var(--u)); min-height:calc(163 * var(--u)); background:#BFD1FF;">
+            <div class="bp-pop ink-dark is-strip" data-origin="tr" data-cell="1.75,6,5.25,2" style="--k:1; background:#BFD1FF;">
               <p class="hd"><span><span class="mk"></span>Buyer profile</span><span>1/19</span></p>
               <p class="nm">Chief technology officer<br><span class="sub">Financial services</span></p>
             </div>
-            <div class="bp-pop" data-origin="tl" style="--k:2; left:calc(420 * var(--u)); top:calc(612 * var(--u)); width:calc(317 * var(--u)); min-height:calc(300 * var(--u)); background:#20325F;">
+            <div class="bp-pop" data-origin="tl" data-cell="7,10,4,3.75" style="--k:2; background:#20325F;">
               <p class="bp-pop-title">xxxxxx</p>
               <div class="bp-pop-rows">
                 <div class="bp-pop-row"><span class="l">xxxxx</span><span class="v">142</span></div>
@@ -1026,15 +1084,15 @@
           <!-- The frame's three overlay cards. "XX%" and its lorem are the
                frame's PLACEHOLDER copy, reproduced as drawn. -->
           <div class="bp-overlay" aria-hidden="true">
-            <div class="bp-pop" data-origin="bl" style="--k:0; left:calc(614 * var(--u)); top:calc(102 * var(--u)); width:calc(317 * var(--u)); min-height:calc(300 * var(--u)); background:#511E17; --fig:57;">
+            <div class="bp-pop" data-origin="bl" data-cell="9,3.25,4,3.75" style="--k:0; background:#511E17; --fig:57;">
               <p class="bp-pop-fig">92</p>
               <p>AEO pages generated</p>
             </div>
-            <div class="bp-pop ink-dark" data-origin="tr" style="--k:1; left:calc(-24 * var(--u)); top:calc(238 * var(--u)); width:calc(317 * var(--u)); min-height:calc(250 * var(--u)); background:#F89082; --fig:38.5;">
+            <div class="bp-pop ink-dark" data-origin="tr" data-cell="1,5,4,3" style="--k:1; background:#F89082; --fig:38.5;">
               <p class="bp-pop-fig">XX%</p>
               <p>Et id sem faucibus fringilla felis elementum tortor ornare venenatis.</p>
             </div>
-            <div class="bp-pop ink-dark to-end" data-origin="tr" style="--k:2; left:calc(-104 * var(--u)); top:calc(562 * var(--u)); width:calc(317 * var(--u)); min-height:calc(250 * var(--u)); background:#F9ACA1;">
+            <div class="bp-pop ink-dark to-end" data-origin="tr" data-cell="0,9,4,3" style="--k:2; background:#F9ACA1;">
               <p>Buyer questions meet your evidence in a ~150 word direct answer.</p>
             </div>
           </div>
@@ -1233,7 +1291,8 @@
      Mobile holds a single scale: the band the mosaic sits in there has
      no room for the larger cell. */
   const ZOOM = [1, 1, 1, 1.34, 1.34];
-  const CANVAS_OVER = 0.2;                  // .bp-mosaic's -20% inset
+  const ZOOM_MAX = 1.34;
+  const OVER_CELLS = 3;                     // the canvas's overhang, in cells
 
   function clamp01(v){ return v < 0 ? 0 : v > 1 ? 1 : v; }
   function clamp(v, a, b){ return v < a ? a : v > b ? b : v; }
@@ -1265,10 +1324,19 @@
    * a sticky element's rect reports where it is stuck (notes, trap 0d).
    * ------------------------------------------------------------------ */
   let H = innerHeight, STEP = 760, ctxH = H, lockY = 0, isMobile = false;
-  let scale = 1, boxW = 0, boxH = 0, dpr = 1;     // canvas / art scale
+  let boxW = 0, boxH = 0, dpr = 1;
+  /* ⚠️ The grid, and the only numbers the mosaic is ever drawn from:
+     cell1  the base cell (Mosaic 2's), a WHOLE number of device pixels
+     over   the canvas's overhang round the stage — OVER_CELLS x cell1, so
+            also whole device pixels
+     cx/cy  the grid's centre in the canvas's own pixel space (the stage is
+            14 x 16 cells, so the centre is over + 7 / 8 cells)
+     Everything else — square positions, overlay boxes — is cx/cy plus a
+     whole (or quarter, for an overlay) number of cells. See the stage's
+     CSS comment for why this is exact rather than merely close. */
+  let cell1 = 1, over = 0, cx = 0, cy = 0;
 
   function fitCanvasBuffer(){
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
     mosaicCanvases.forEach((c, i) => {
       c.width = Math.round(boxW * dpr);
       c.height = Math.round(boxH * dpr);
@@ -1304,12 +1372,13 @@
     const innerW = Math.min(W, PAGE_MAX);
     const padX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pad-x")) || 100;
     const contentW = innerW - 2 * padX;
-    let mw, mx, my;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let want, mx, my;
     if (!isMobile){
       cards.forEach(card => { card.querySelector(".bp-heading").style.top = ""; });
-      mw = Math.min(contentW * 0.4748, H * 0.7475 * MOSAIC_BOX.w / MOSAIC_BOX.h);
+      want = Math.min(contentW * 0.4748, H * 0.7475 * MOSAIC_BOX.w / MOSAIC_BOX.h);
       mx = (W - innerW) / 2 + padX + contentW * 0.4005;
-      my = H / 2 - mw * MOSAIC_BOX.h / MOSAIC_BOX.w / 2;
+      my = 0;                                  // centred below, once the height is known
     } else {
       // The sub-nav row wraps on a phone, so each heading is placed under
       // it by measurement, and the mosaic takes the band left between the
@@ -1330,19 +1399,56 @@
         }
       });
       const band = Math.max(160, bandBottom - bandTop);
-      mw = Math.min(contentW, band * MOSAIC_BOX.w / MOSAIC_BOX.h);
-      mx = (W - mw) / 2;
-      my = bandTop + (band - mw * MOSAIC_BOX.h / MOSAIC_BOX.w) / 2;
+      want = Math.min(contentW, band * MOSAIC_BOX.w / MOSAIC_BOX.h);
+      mx = 0; my = bandTop + band / 2;         // centred on the band
     }
+
+    /* ⚠️ The box is derived from the CELL, not the other way round: one
+       cell is a whole number of device pixels and the stage is exactly
+       14 x 16 of them. That is what makes every square edge land on a
+       pixel line (see the stage's CSS comment). Rounding the box first
+       and dividing by 14 would leave a fractional cell and put the whole
+       grid back on fractions. */
+    cell1 = Math.max(2, Math.round(want / MOSAIC_BOX.w * MOSAIC_BOX.cell * dpr)) / dpr;
+    const mw = cell1 * (MOSAIC_BOX.w / MOSAIC_BOX.cell);
+    const mh = cell1 * (MOSAIC_BOX.h / MOSAIC_BOX.cell);
+    over = OVER_CELLS * Math.max(1, Math.round(cell1 * ZOOM_MAX * dpr)) / dpr;
+    cx = over + mw / 2; cy = over + mh / 2;
+    // desktop: the frame's own x, centred on the screen's height; mobile:
+    // centred in the band (my is that band's centre at this point)
+    if (isMobile) mx = (W - mw) / 2;
+    my = isMobile ? my - mh / 2 : H / 2 - mh / 2;
+    // the stage's own origin on a whole device pixel too, or the canvas's
+    // exact internal grid lands on half pixels on screen
+    mx = Math.round(mx * dpr) / dpr; my = Math.round(my * dpr) / dpr;
     pin.style.setProperty("--mosaic-w", mw.toFixed(2) + "px");
+    pin.style.setProperty("--mosaic-h", mh.toFixed(2) + "px");
+    pin.style.setProperty("--mosaic-over", over.toFixed(2) + "px");
     pin.style.setProperty("--mosaic-left", mx.toFixed(2) + "px");
     pin.style.setProperty("--mosaic-top", my.toFixed(2) + "px");
 
-    const rect = mosaicCanvas.getBoundingClientRect();
-    boxW = rect.width; boxH = rect.height;
-    scale = mw / MOSAIC_BOX.w;
+    boxW = mw + 2 * over; boxH = mh + 2 * over;
     fitCanvasBuffer();
+    placeOverlays();
     morphDirty = true;
+  }
+
+  /* The overlay cards, placed off the same grid as the squares — see the
+     .bp-pop comment. data-cell is "col,row,w,h" in cells of that card's
+     OWN mosaic, which is why the zoom is per card rather than shared. */
+  function placeOverlays(){
+    overlays.forEach((ov, i) => {
+      if (!ov) return;
+      const z = isMobile ? 1 : ZOOM[i + 2];
+      const s = Math.max(1, Math.round(cell1 * z * dpr)) / dpr;
+      ov.querySelectorAll(".bp-pop").forEach(el => {
+        const c = (el.dataset.cell || "0,0,4,4").split(",").map(Number);
+        el.style.left = (cx + (c[0] - 7) * s).toFixed(2) + "px";
+        el.style.top = (cy + (c[1] - 8) * s).toFixed(2) + "px";
+        el.style.width = (c[2] * s).toFixed(2) + "px";
+        el.style.minHeight = (c[3] * s).toFixed(2) + "px";
+      });
+    });
   }
 
   /* ------------------------------------------------------------------ *
@@ -1366,24 +1472,25 @@
     const leg = FIRST_STATE + Math.min(N_STATES - 1 - FIRST_STATE - 1, Math.floor(t));
     const lt = t - (leg - FIRST_STATE);
     const z = (isMobile ? 1 : ZOOM[leg + 1] + (ZOOM[leg + 2] - ZOOM[leg + 1]) * lt);
-    const ox = boxW * CANVAS_OVER / 1.4, oy = boxH * CANVAS_OVER / 1.4; // base box origin in the canvas
-    const cx = ox + MOSAIC_BOX.w / 2 * scale, cy = oy + MOSAIC_BOX.h / 2 * scale;
-    const s = MOSAIC_BOX.cell * scale * z;
+    // a whole number of device pixels at every frame of the morph, so the
+    // grid is exact mid-zoom as well as at rest
+    const s = Math.max(1, Math.round(cell1 * z * dpr)) / dpr;
     const cells = MOSAIC_SQUARES.map(row => {
       const ax = row[leg * 2], ay = row[leg * 2 + 1];
       const bx = row[(leg + 1) * 2], by = row[(leg + 1) * 2 + 1];
       const ac = row[N_STATES * 2 + leg], bc = row[N_STATES * 2 + leg + 1];
       const swapAt = 1 - ay / MOSAIC_BOX.h;
       const x = ax + (bx - ax) * lt, y = ay + (by - ay) * lt;
+      // in CELLS from the grid's centre — (x − 420) / 60 is a whole or
+      // half number of cells, so a square's own edges come out as exact
+      // multiples of s from cx/cy
       return {
-        x: cx + (x - MOSAIC_BOX.w / 2) * scale * z,
-        y: cy + (y - MOSAIC_BOX.h / 2) * scale * z,
+        x: cx + (x - MOSAIC_BOX.w / 2) / MOSAIC_BOX.cell * s,
+        y: cy + (y - MOSAIC_BOX.h / 2) / MOSAIC_BOX.cell * s,
         side: s,
         hex: lt < swapAt ? ac : bc,
       };
     });
-    // the zoomed grid's origin: the base box centre is a whole cell corner
-    // in every state, so snapping relative to it keeps the grid true
     return { cells, step: s, gx0: cx, gy0: cy };
   }
 
@@ -1504,6 +1611,12 @@
   const MORPH_HOLD = 0.35;
   let vTarget = 0, vShown = 0, morphDirty = true;
   let lastMorph = -1;
+  /* The card text's window (see the .bp-card .bp-text CSS note): in over
+     the last quarter of the card's rise, out over the first half of its
+     departure, with the homepage's small copy parallax. */
+  const TEXT_IN = 0.25, TEXT_OUT = 0.5;
+  const TEXT_PARALLAX = reducedMotion.matches ? 0 : 24;
+  const texts = cards.map(c => c.querySelector(".bp-text"));
 
   function readScroll(){
     vTarget = clamp((window.scrollY - lockY) / STEP, 0, STATES);
@@ -1521,10 +1634,17 @@
       const ty = clamp01(k - v) * H;
       cards[i].style.transform = `translate3d(0,${ty.toFixed(2)}px,0)`;
       if (i > 0 && stages[i]) stages[i].style.transform = `translate3d(0,${(-ty).toFixed(2)}px,0)`;
-      // text reveal, re-armed on the way back down
-      const landed = v >= k - 0.02;
-      if (landed && !cards[i].classList.contains("in")) cards[i].classList.add("in");
-      else if (v < k - 0.6 && cards[i].classList.contains("in")) cards[i].classList.remove("in");
+      // the text layer — opacity and parallax straight from the state
+      const t = texts[i];
+      if (t){
+        const d = v - k;
+        const op = smoothstep(clamp01(1 - Math.abs(d) / (d < 0 ? TEXT_IN : TEXT_OUT)));
+        t.style.opacity = op.toFixed(3);
+        t.style.visibility = op > 0.01 ? "visible" : "hidden";
+        // ⚠️ the DISTANCE only — the transform lives on the heading and the
+        // copy, never on this box (see its CSS note)
+        t.style.setProperty("--tp", (-d * TEXT_PARALLAX).toFixed(1) + "px");
+      }
     }
 
     // The sub-nav: fades in as card 1 rises (the homepage's sub-menu

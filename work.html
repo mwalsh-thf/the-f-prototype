@@ -171,7 +171,12 @@
     transition:color .35s var(--ease-out-expo);
   }
   .nav-links a:hover{color:#fff}
-  .nav-links a[aria-current="page"]{ color:#fff; }
+  /* ⚠️ The current page is deliberately NOT highlighted (Myles, 3 Sep
+     2026). The `aria-current="page"` attribute stays in the markup — it is
+     what tells a screen reader which page this is — but it carries no ink
+     of its own, so every link rests at the same tone and only hover
+     changes. Don't reinstate a colour rule here: the site-wide decision
+     is that the bar doesn't announce where you are. */
 
   /* ------------------------------------------------------------------ *
    * Page head — "Our work" + intro copy on the 4-col grid

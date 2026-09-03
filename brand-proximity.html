@@ -296,6 +296,9 @@
    * dies silently (same rule as the articles' sticky images).
    * ------------------------------------------------------------------ */
   .bp-stage{ position:relative; }
+  /* The scroll-snap markers — see their markup. Zero-size and inert; only
+     the mobile block gives them a snap alignment. */
+  .bp-snap{ position:absolute; left:0; width:1px; height:1px; pointer-events:none; }
   .bp-pin{
     position:sticky; top:0;
     height:100vh;
@@ -396,9 +399,20 @@
   html:not(.js) .bp-pin{ position:static; height:auto; overflow:visible; }
   html:not(.js) .bp-context{ min-height:0; }
   html:not(.js) .bp-card{ position:relative; transform:none; }
+  /* ⚠️ ALL THREE CARDS ARE INKED OFF BLACK (Myles, 3 Sep 2026): "unify the
+     text on the scrolling experience to be black so it matches the
+     navigation". The frame inks the Insight and AEO sections WHITE and the
+     first build reproduced that — so the copy changed colour twice on the
+     way down while the painted nav above it stayed Off Black. One ink for
+     the whole experience instead, the nav's own. It also retires the
+     sub-nav's `.is-white` flip, which existed only to follow the cards.
+     ⚠️ The overlay pop-ups keep their own ink: each sits on its own
+     saturated ground (#511E17, #20325F, #368F8E …) where black would be
+     unreadable, so they stay as the frame draws them — white on the dark
+     grounds, `.ink-dark` on the pale ones. Flagged in the notes. */
   .bp-card.is-content{ background:var(--green-20); color:var(--ink-footer); z-index:1; }
-  .bp-card.is-insight{ background:var(--insight-blue); color:#fff; z-index:2; }
-  .bp-card.is-aeo{ background:var(--red-base); color:#fff; z-index:3; }
+  .bp-card.is-insight{ background:var(--insight-blue); color:var(--ink-footer); z-index:2; }
+  .bp-card.is-aeo{ background:var(--red-base); color:var(--ink-footer); z-index:3; }
   .bp-card .bp-inner{ position:relative; height:100%; pointer-events:none; }
   .bp-card .bp-text{ pointer-events:auto; }
 
@@ -433,12 +447,15 @@
      100 above the screen's bottom edge. ONE element, a child of the pin
      above all three cards (z-index 4), so like the mosaic it holds still
      while the cards wipe under it: the script fades it in as card 1
-     rises, marks the nearest state current (100%, the rest 40%), and
-     flips its ink to white the moment a white-ink card's top edge passes
-     under it. Click jumps to that state on the same chase as the wheel.
+     rises and marks the nearest state current (100%, the rest 40% — the
+     nav's own treatment, since the ink is the nav's too now). Click jumps
+     to that state on the same chase as the wheel.
      ⚠️ It used to be one nav per card, revealed with the card's text —
      it wiped away with the card and, on the white cards, the card-scoped
-     40% rule out-ranked the current state's 100%. */
+     40% rule out-ranked the current state's 100%.
+     ⚠️ Hidden entirely on mobile (Myles, 3 Sep 2026) — see the mobile
+     block. Nothing else depends on it, but `measure()` no longer reads it
+     for the heading's position, which it used to. */
   .bp-subnav{
     position:absolute;
     left:max(var(--pad-x), calc((100% - var(--page-max)) / 2 + var(--pad-x)));
@@ -447,9 +464,7 @@
     display:flex; flex-direction:column; gap:15px; align-items:flex-start;
     color:var(--ink-footer);
     opacity:0; pointer-events:none;
-    transition:color .35s var(--ease-out-expo);
   }
-  .bp-subnav.is-white{ color:#fff; }
   .bp-subnav button{
     font:inherit; font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
     background:none; border:0; padding:0; margin:0;
@@ -770,27 +785,66 @@
   }
 
   /* ================================================================== *
-   * Mobile — the homepage's own mobile pattern for the stage: sub-nav as
-   * a centred row under the permanent bar, the heading beneath it, the
-   * mosaic in the band that's left, and the copy in a bottom band. The
-   * overlays are hidden: at a phone's mosaic size they can't hold their
-   * copy and would sit over the text bands. Flagged in the notes.
+   * Mobile — rebuilt 3 Sep 2026 to Myles' notes.
+   *
+   * The stage is three bands on the 25px grid, and nothing else: the
+   * heading 50 below the logo's ink, the mosaic centred in the screen,
+   * the copy in a 50-bottom band. No sub-nav ("remove the sub-navigation
+   * on mobile") and no overlays — at a phone's mosaic size they can't
+   * hold their copy and would sit over the text.
+   *
+   * The mosaic is deliberately SMALLER than the band it sits in (72% of
+   * the column, capped at 80% of the band), so the air above and below it
+   * is part of the design rather than what's left over: "scale it down so
+   * we have more space between the copy and we can move the main title
+   * higher up".
+   *
+   * ⚠️ The hero title drops its hard breaks here and runs the full width
+   * — see .bp-hero-headline br below, and mind the whitespace trap.
+   *
+   * ⚠️ Scrolling is NATIVE SNAP on mobile, not the desktop's timer — see
+   * `html{scroll-snap-type}` and .bp-snap below, and "Snap-to-state" in
+   * the script.
    * ================================================================== */
   @media (max-width:767px){
     :root{
       --nav-h:90px;
       --pad-x:25px;
+      /* ⚠️ The MARK is 40 here, so the token has to say so: --logo-bottom
+         is derived from it, and everything spaced "50 below the logo's
+         ink" on this page reads it. Left at the desktop's 52.44 the token
+         resolved 6px too low and the hero title sat at 121 instead of
+         115 — small, but it is exactly the spacing being asked for. */
+      --logo-h:40px;
       --fs-h2:48px;             /* 0.8 x 60 */
       --fs-h3:32px;             /* 0.8 x 40 */
       --fs-h4:21.6px;           /* 0.8 x 27 */
     }
-    .logo{ width:40px; height:40px; margin-left:-9.5px; }
+    /* size comes from --logo-h above; this is only the bearing (10 less
+       the .5px the non-scaling seam stroke bleeds outward) */
+    .logo{ margin-left:-9.5px; }
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    .bp-hero{ padding:calc(var(--nav-h) + 25px) 0 0; }
+    /* 50 from the logo's ink to the title's cap — the mobile block unit,
+       against the desktop's 100 (which measured 165 from the page top
+       here and left the mosaic sitting too low). */
+    .bp-hero{ padding:calc(var(--logo-bottom) + 50px) 0 0; }
     .bp-hero-band{ display:block; }
-    .bp-hero-headline{ position:static; width:auto; margin-bottom:25px; }
+    .bp-hero-headline{
+      position:static;
+      width:auto; max-width:none;
+      margin-bottom:50px;
+    }
+    /* ⚠️ The title RUNS THE FULL WIDTH here: the frame's three hard lines
+       are a desktop shape, and at 48px on a 325 column they cost ~85px of
+       height that the mosaic wants. Hiding the <br>s wraps it naturally
+       to two lines instead — "so we can bring the first mosaic up".
+       ⚠️ `display:none` on a <br> removes the break AND the whitespace
+       around it, so the markup carries a REAL SPACE BEFORE each one
+       ("Show up <br>and stand <br>out") or the words collide into
+       "Show upand stand". Same trap as About's headline. */
+    .bp-hero-headline br{ display:none; }
     .bp-hero-mosaic{ width:100%; }
 
     /* The copy no longer fits a screen, so the pin grows to hold it (see
@@ -806,33 +860,44 @@
     .bp-stats{ width:auto; grid-template-columns:1fr; row-gap:50px; }
     .bp-stat-fig{ margin-bottom:16px; }
 
-    /* ⚠️ Positioned from the SCREEN, not the pin: on a phone the pin is
-       taller than the screen and stuck with its bottom on the viewport's,
-       so "top of the pin" is off-screen. --screen-off (set by measure())
-       is the pin's height less the screen's. */
-    .bp-subnav{
-      left:0; right:0; bottom:auto;
-      top:calc(var(--screen-off, 0px) + var(--nav-h) + 12px);
-      flex-direction:row; flex-wrap:wrap;
-      justify-content:center; align-items:center;
-      padding:0 var(--pad-x);
-      gap:8px clamp(10px,3vw,18px);
-      text-align:center;
-    }
-    .bp-subnav button{ font-size:clamp(11px,3.4vw,14px); }
-    /* The text block dissolves: the heading takes its own line under the
-       sub-nav row and the copy sits in a bottom band, both positioned off
-       the card rather than off the block. */
+    /* Gone on mobile. It was a centred, wrapping row under the bar; it
+       cost a band of its own at the top of every card and the three
+       states are already legible from the grounds and the headings. */
+    .bp-subnav{ display:none; }
+
+    /* The text block dissolves into two bands, both positioned off the
+       CARD (which fills the screen) rather than off the block: the
+       heading 50 below the logo's ink, the copy 50 up from the bottom.
+       ⚠️ The transform that carries the parallax must stay on these two,
+       never on .bp-text — a transformed .bp-text becomes their containing
+       block and they land 25px in from the margin (see its own note). */
     .bp-text{ position:static; width:auto; }
     .bp-card .bp-heading{
       position:absolute; left:var(--pad-x); right:var(--pad-x);
-      top:calc(var(--nav-h) + 55px); margin-bottom:0;
+      top:calc(var(--logo-bottom) + 50px); margin-bottom:0;
+      /* ⚠️ Holds the full 27, not --fs-h4's mobile 21.6. This heading is
+         the screen's own title with the sub-nav gone, and at 21.6 against
+         18px body copy there was no hierarchy left — "balanced with the
+         typography" (Myles, 3 Sep 2026). It is the site's rule for named
+         text styles (Body/Details/H5 don't shrink) applied to the one
+         place H4 is used as a section title rather than a card title; all
+         three still set on one line at 325px. Flagged as a call. */
+      font-size:27px;
     }
     .bp-card .bp-copy{
       position:absolute; left:var(--pad-x); right:var(--pad-x);
-      bottom:40px;
+      bottom:50px;
     }
     .bp-overlay{ display:none; }
+
+    /* ⚠️ Native scroll snapping, mobile only. `proximity` rather than
+       `mandatory`: the snap targets are four 1px markers inside the stage
+       and nothing else on the page has one, so mandatory would be free to
+       drag the reader out of the hero and into the stage the moment they
+       started scrolling. See the markers' own comment and "Snap-to-state"
+       in the script for why the JS snap stays as a backstop. */
+    html{ scroll-snap-type:y proximity; }
+    .bp-snap{ scroll-snap-align:start; }
 
     .contact-head, .contact-cta{ font-size:clamp(34px,10.2vw,44px); }
 
@@ -934,7 +999,11 @@
   <section class="bp-hero bleed">
     <div class="bp-inner">
       <div class="bp-hero-band">
-        <h1 class="bp-hero-headline">Show up<br>and stand<br>out</h1>
+        <!-- ⚠️ The spaces BEFORE the <br>s are load-bearing: mobile hides the
+           breaks (see .bp-hero-headline br) and `display:none` takes the
+           whitespace with them, so without these the words would run
+           together as "Show upand stand". -->
+        <h1 class="bp-hero-headline">Show up <br>and stand <br>out</h1>
         <div class="bp-hero-mosaic">
           <canvas id="bpMosaicOne" aria-hidden="true"></canvas>
           <!-- Wordmark over the mosaic, in the mosaic's own 966 coordinate
@@ -1108,9 +1177,21 @@
         </div>
       </section>
 
+      <!-- Four snap markers, one per state, positioned by measure(). They
+           are the only scroll-snap targets on the page, and they exist for
+           mobile: a phone's momentum scroll cannot be stopped from script,
+           so the platform's own snapping is the only thing that can land a
+           fling cleanly on a state. 1px boxes rather than a class on the
+           cards because a card is a screen tall and stuck — its own edges
+           are nowhere near the state's scroll position. -->
+      <div class="bp-snap" aria-hidden="true"></div>
+      <div class="bp-snap" aria-hidden="true"></div>
+      <div class="bp-snap" aria-hidden="true"></div>
+      <div class="bp-snap" aria-hidden="true"></div>
+
       <!-- The sub-nav — one element above all three cards, held still
-           while they wipe under it; the script drives its opacity, ink
-           and current state (see .bp-subnav). -->
+           while they wipe under it; the script drives its opacity and
+           current state (see .bp-subnav). Hidden on mobile. -->
       <nav class="bp-subnav" id="bpSubnav" aria-label="Brand Proximity">
         <button type="button" data-state="1" aria-current="true">Establish the supply</button>
         <button type="button" data-state="2" aria-current="false">Understand the demand</button>
@@ -1185,6 +1266,7 @@
   const context = document.getElementById("bpContext");
   const cards   = [...pin.querySelectorAll(".bp-card")];
   const subnav  = document.getElementById("bpSubnav");
+  const snaps   = [...stage.querySelectorAll(".bp-snap")];
   const subBtns = [...subnav.querySelectorAll("button[data-state]")];
   const stages  = cards.map(c => c.querySelector(".bp-mosaic-stage"));
   const overlays = cards.map(c => c.querySelector(".bp-overlay"));
@@ -1335,6 +1417,7 @@
      whole (or quarter, for an overlay) number of cells. See the stage's
      CSS comment for why this is exact rather than merely close. */
   let cell1 = 1, over = 0, cx = 0, cy = 0;
+  let mobileBand = [0, 0];        // [top, bottom] the mosaic must stay inside
 
   function fitCanvasBuffer(){
     mosaicCanvases.forEach((c, i) => {
@@ -1349,7 +1432,12 @@
     isMobile = innerWidth <= MOBILE;
     const sbw = Math.max(0, innerWidth - document.documentElement.clientWidth);
     const W = innerWidth - sbw;
-    STEP = isMobile ? Math.round(H * 0.85) : 760;
+    /* ⚠️ A state is 0.7 of the screen on a phone against the desktop's
+       flat 760 (the homepage's WHEEL_SENSITIVITY). It was 0.85, which
+       meant a decisive one-screen swipe landed just short of a state and
+       the native snap had to drag it the rest of the way; 0.7 is inside a
+       comfortable flick, so a flick advances exactly one state. */
+    STEP = isMobile ? Math.round(H * 0.7) : 760;
 
     // The Context screen: the pin holds it at the viewport's height, or
     // taller if the copy needs it. Measured with the pin's height released
@@ -1359,16 +1447,17 @@
     ctxH = Math.max(H, Math.ceil(context.getBoundingClientRect().height));
     pin.style.height = ctxH + "px";
     pin.style.top = (H - ctxH) + "px";
-    pin.style.setProperty("--screen-off", (ctxH - H) + "px");
     cards.forEach(c => { c.style.height = H + "px"; });
     stage.style.height = (ctxH + STATES * STEP) + "px";
     lockY = stage.getBoundingClientRect().top + window.scrollY + (ctxH - H);
+    // The snap markers, one per state (see their markup). Their offsets are
+    // inside the stage, so they need the same (ctxH − H) shift lockY takes.
+    snaps.forEach((el, k) => { el.style.top = ((ctxH - H) + k * STEP) + "px"; });
 
     // The mosaic box. Desktop: the frame's 588.7 x 672.8 at 596.6 / 113.1
     // on a 1440 x 900 screen — 47.48% of the content area, starting 40.05%
     // in, capped at 74.75% of the screen height, vertically centred on
-    // the screen. Mobile: centred in the band between the heading and the
-    // copy (measured off the first card, whose text is laid out).
+    // the screen. Mobile: see its own branch below.
     const innerW = Math.min(W, PAGE_MAX);
     const padX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pad-x")) || 100;
     const contentW = innerW - 2 * padX;
@@ -1380,27 +1469,25 @@
       mx = (W - innerW) / 2 + padX + contentW * 0.4005;
       my = 0;                                  // centred below, once the height is known
     } else {
-      // The sub-nav row wraps on a phone, so each heading is placed under
-      // it by measurement, and the mosaic takes the band left between the
-      // heading and the copy (read off the first card).
-      // ⚠️ offsetTop (layout), not rects: the reveal holds the heading and
-      // copy 44px low until the card lands, and a rect would read that.
-      // ⚠️ The sub-nav is a child of the PIN and the heading of a CARD; the
-      // cards sit at the pin's bottom, (ctxH − H) below its top.
-      let bandTop = 0, bandBottom = H;
-      const subBottom = subnav.offsetTop + subnav.offsetHeight - (ctxH - H);
-      cards.forEach((card, i) => {
-        const head = card.querySelector(".bp-heading");
-        const copy = card.querySelector(".bp-copy");
-        head.style.top = (subBottom + 25) + "px";
-        if (i === 0){
-          bandTop = head.offsetTop + head.offsetHeight + 25;
-          bandBottom = copy.offsetTop - 25;
-        }
-      });
-      const band = Math.max(160, bandBottom - bandTop);
-      want = Math.min(contentW, band * MOSAIC_BOX.w / MOSAIC_BOX.h);
-      mx = 0; my = bandTop + band / 2;         // centred on the band
+      /* Mobile: the heading and the copy are placed by CSS now (the
+         sub-nav is gone, so there is nothing to measure them against),
+         and the mosaic is centred in the SCREEN — scaled down to 72% of
+         the column so the air around it is designed rather than left
+         over. It is clamped to keep 25 clear of the heading above and the
+         copy below, which is what a 700-tall phone needs; on anything
+         taller the clamp never bites and it sits dead centre.
+         ⚠️ offsetTop / offsetHeight (layout), never rects: the text layer
+         holds the heading and the copy up to 24px off their place, and a
+         rect would read that. */
+      const head = cards[0].querySelector(".bp-heading");
+      const copy = cards[0].querySelector(".bp-copy");
+      const headBottom = head.offsetTop + head.offsetHeight;
+      const copyTop = copy.offsetTop;
+      want = Math.min(contentW * 0.72,
+                      Math.max(160, copyTop - headBottom - 50) * 0.8 * MOSAIC_BOX.w / MOSAIC_BOX.h);
+      mx = 0;
+      my = 0;                                  // clamped below, once the height is known
+      mobileBand = [headBottom + 25, copyTop - 25];
     }
 
     /* ⚠️ The box is derived from the CELL, not the other way round: one
@@ -1414,10 +1501,19 @@
     const mh = cell1 * (MOSAIC_BOX.h / MOSAIC_BOX.cell);
     over = OVER_CELLS * Math.max(1, Math.round(cell1 * ZOOM_MAX * dpr)) / dpr;
     cx = over + mw / 2; cy = over + mh / 2;
-    // desktop: the frame's own x, centred on the screen's height; mobile:
-    // centred in the band (my is that band's centre at this point)
-    if (isMobile) mx = (W - mw) / 2;
-    my = isMobile ? my - mh / 2 : H / 2 - mh / 2;
+    // Desktop centres the art on the screen. Mobile centres it in the band
+    // between the heading and the copy — which, with the heading 50 below
+    // the logo and the copy 50 up from the foot, sits within ~30px of the
+    // screen's own centre, so it reads as centred AND leaves equal air
+    // above and below (the mosaic is 80% of the band, so that air is 10%
+    // of it each side). Centring on the screen instead put 87 above and
+    // the bare 25 minimum below on a 700-tall phone.
+    my = H / 2 - mh / 2;
+    if (isMobile){
+      mx = (W - mw) / 2;
+      my = (mobileBand[0] + mobileBand[1]) / 2 - mh / 2;
+      my = clamp(my, mobileBand[0], Math.max(mobileBand[0], mobileBand[1] - mh));
+    }
     // the stage's own origin on a whole device pixel too, or the canvas's
     // exact internal grid lands on half pixels on screen
     mx = Math.round(mx * dpr) / dpr; my = Math.round(my * dpr) / dpr;
@@ -1648,17 +1744,13 @@
     }
 
     // The sub-nav: fades in as card 1 rises (the homepage's sub-menu
-    // arrives as its intro leaves), marks the nearest state, and goes
-    // white once a white-ink card's top edge has passed under it.
+    // arrives as its intro leaves) and marks the nearest state. Its ink is
+    // the nav's on every card now, so nothing has to follow the grounds.
     const subOp = smoothstep(clamp01((v - 0.45) / 0.45));
     subnav.style.opacity = subOp.toFixed(3);
     subnav.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
     const nearest = clamp(Math.round(v), 1, STATES);
     subBtns.forEach(b => b.setAttribute("aria-current", String(+b.dataset.state === nearest)));
-    const subTop = subnav.offsetTop - (ctxH - H);   // in card space
-    let under = 1;
-    for (let k = 2; k <= STATES; k++){ if (clamp01(k - v) * H < subTop + subnav.offsetHeight * 0.5) under = k; }
-    subnav.classList.toggle("is-white", under >= 2);
 
     // The morph clock (0 = Mosaic 2, 1 = Mosaic 3, 2 = Mosaic 4)
     let mt = 0;
@@ -1693,7 +1785,23 @@
    * runs on its own clock and fights the reader — and it CANCELS the
    * instant they scroll, touch or press a key.
    * ------------------------------------------------------------------ */
+  /* ⚠️ Two different quiet periods, because touch and wheel end
+     differently. A wheel stops when the ticks stop (the homepage's 160ms).
+     A finger leaves and the PLATFORM keeps scrolling — momentum a script
+     cannot cancel — so a 160ms snap fires into the middle of a fling and
+     the momentum simply carries on from wherever it was dropped, which is
+     what "doesn't work well on mobile" was. On touch the timer therefore
+     waits for the scroll itself to go quiet (it is reset by every scroll
+     event, so this is 420ms after the LAST one, i.e. after the fling has
+     finished) — and native scroll snapping does the landing in the normal
+     case anyway (see the .bp-snap markers). This is the backstop for a
+     fling that ends outside proximity range. */
   const SNAP_DELAY = 160;                  // index.html's own quiet period
+  const SNAP_DELAY_TOUCH = 420;            // after the fling, not during it
+  let touching = false;
+  addEventListener("touchstart", () => { touching = true; }, { passive:true });
+  addEventListener("touchend", () => { touching = false; scheduleSnap(); }, { passive:true });
+  addEventListener("touchcancel", () => { touching = false; }, { passive:true });
   const SNAP_MS = 600;
   let snapTimer = null;
   const snapEase = t => {
@@ -1737,7 +1845,7 @@
      chase lagging behind it, which read as mushy. glideScrollTo() stays
      for entering the stage from outside it. */
   function snapNow(){
-    if (glide) return;
+    if (glide || touching) return;         // never while a finger is down
     const v = (window.scrollY - lockY) / STEP;
     if (v <= 0.001 || v >= STATES - 0.001) return;     // outside the stage, or resting on an end
     const near = Math.round(v);
@@ -1747,7 +1855,7 @@
   }
   function scheduleSnap(){
     clearTimeout(snapTimer);
-    snapTimer = setTimeout(snapNow, SNAP_DELAY);
+    snapTimer = setTimeout(snapNow, isMobile ? SNAP_DELAY_TOUCH : SNAP_DELAY);
   }
 
   // The sub-nav: jump the target to that state; the chase does the rest

@@ -7,78 +7,65 @@
 <meta name="description" content="Brand Proximity — the service designed to close the gap LLMs put between you and your audience." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<!-- 600 is loaded for this page only: the frame sets each card's lead line
+     in Geist SemiBold (the articles' subheads are Medium 500). -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
   /* ==================================================================== *
    * The Frameworks — Brand Proximity
    *
-   * Ported from a separate prototype (TheFrameworks-full-site) that was
-   * built against a *different* Figma file — "Brand-Proximity", frame
-   * 222:4844, not "The F website 2026". This file keeps that page's own
-   * structure and interactivity (the stacking cards, the canvas mosaic)
-   * but wears this site's current shell: the nav/footer/tokens below are
-   * copied from work.html, not from the source prototype, so this page
-   * matches the other nine exactly rather than adding a tenth variant.
-   * Change the shared shell here and it must change in all nine other
-   * files too, per the site's standing rule.
+   * Rebuilt 3 Sep 2026 against Myles' own frame in "The F website 2026"
+   * (3437:2906) — the page moved into the main file with a refined
+   * layout, and the scroll experience was re-modelled on the homepage's.
+   * The first integration (3 Sep, earlier) came from the other designer's
+   * separate "Brand-Proximity" file; that package is still at
+   * files/brand-proximity-handoff/ but this file no longer resembles it.
    *
-   * Reached from Services — the "Let's talk about your brand" link on the
-   * Brand Proximity card — the way case-study.html hangs off Work. It is
-   * deliberately NOT a nav item: the bar stays five links site-wide, and
-   * this page marks Services as current, exactly as case-study.html marks
-   * Work.
+   * Reached from Services — the "Let's talk about your brand" link — and
+   * from article 1's inline mention; deliberately NOT a nav item, and it
+   * marks Services as current, exactly as case-study.html marks Work.
    *
-   * Integrated into the site on 3 Sep 2026 from the other designer's
-   * hand-off package (files/brand-proximity-handoff/). What changed on the
-   * way in, so nobody re-derives it:
-   *   - Shell reconciled to the live pages (--ink-footer, the menu ground,
-   *     the footer ©, aria-current, the mobile type step).
-   *   - Insight and AEO cards ink WHITE, and Insight grounds on the
-   *     frame's #5B82E3 — the package had pale #E5EDFF with black text on
-   *     both, which its own Figma does not draw (see the card rules).
-   *   - The Related tiles use the site's own Thinking art and bylines for
-   *     the posts they name; the package's images did not match its
-   *     titles.
-   *   - Scroll feel taken from index.html: the mosaic's morph is a CHASED
-   *     value (EASE_MAIN 0.10) rather than raw scrollY, and the snap glides
-   *     on the site's own curve instead of racing native smooth-scroll.
-   *     See "The scroll clock" and "Snap-to-state" in the script.
-   *   - Fill points derived from geometry, not sticky rects (which read
-   *     the stuck position, not the layout one, on resize mid-page).
+   * How the page reads, top to bottom:
    *
-   * Structure: a one-screen hero (Mosaic 1 with the intro copy bottom
-   * left, both simply in view on load — nothing scroll-driven), then three
-   * full-height cards (sage → teal → deep) that pin to the top of the
-   * viewport in turn — each one scrolls up and covers the one before it,
-   * so the page reads as a stack of cards being dealt on top of each other
-   * rather than a scroll past three sections. Pure CSS (position:sticky +
-   * rising z-index down the DOM) — no JS drives the stacking itself.
+   *   1. HERO (teal, normal flow). Headline top left, Mosaic 1 centred —
+   *      the in-flow canvas that cycles its three configurations on a
+   *      4-second loop with a mouse-gravity hover. Nothing scroll-driven.
+   *   2. THE STAGE — one sticky viewport ("the pin") that holds four
+   *      screens, driven by the same model as the homepage: scroll sets a
+   *      TARGET state, the drawn state CHASES it (EASE 0.10), and a stop
+   *      snaps to the nearest whole state. States:
+   *        0  Context — the intro copy and three stats, on the hero's
+   *           teal, filling the screen. The copy reveals first, then the
+   *           stats one by one.
+   *        1  Establish the supply (sage) — slides up over Context,
+   *           carrying the mosaic (Mosaic 2) up with it; its text and
+   *           sub-nav reveal once it locks.
+   *        2  Understand the demand (blue) — slides up under the mosaic,
+   *           which holds centre and morphs 2 -> 3.
+   *        3  Create AI-ready content (red) — same, morphing 3 -> 4.
+   *      Each state is STEP px of real scroll (760 on desktop — the
+   *      homepage's WHEEL_SENSITIVITY — so a wheel notch means the same
+   *      thing on both pages). The document genuinely scrolls: the pin is
+   *      position:sticky inside a runway exactly STEP x 3 taller than a
+   *      screen, so the scrollbar stays truthful, browser back/forward
+   *      restores correctly, and a phone's native momentum scroll works
+   *      without hijacking touch. The cards are translated by the CHASED
+   *      value, which is what gives the homepage's glide.
+   *   3. RELEASE. When the runway runs out the pin simply stops sticking
+   *      and scrolls away — the red card and the mosaic in it go with the
+   *      page like ordinary content. Nothing holds the view.
+   *   4. Contact module, Related, footer — normal flow.
    *
-   * Two entirely separate mosaics. Mosaic 1 is the hero's own in-flow
-   * canvas: a static layout with mouse-gravity hover that just scrolls
-   * away with the hero. Mosaics 2–4 are the other system — three canvases,
-   * one per card, drawn identically every frame (see "The mosaic" in the
-   * script for why one canvas can't serve all three), fixed and centred
-   * but offset by the Content card's own distance from the top of the
-   * screen, so the mosaic rides up in position in the middle of that
-   * section and then holds centre once the card pins. From there its
-   * squares morph — position and colour both — through Mosaic 3 and on to
-   * Mosaic 4 as the page scrolls past, driven by ordinary scroll position
-   * (no lock, no hijacked wheel/touch). All three cards carry an empty
-   * .bp-graphic reserving the heading/copy proportions.
+   * ⚠️ The nav on this page is FIXED (no hide-on-scroll) and PAINTED — no
+   * mix-blend-mode:difference — at Myles' instruction. Its ink is the
+   * page's Off Black at 40% for the links, like index.html's painted bar;
+   * anything copied in from the eight blending pages must swap #fff blend
+   * sources for painted ink (see the notes' trap 0a).
    *
-   * ⚠️ Design gap, flagged not filled: the Figma frame draws its OWN
-   * overlay cards on the Insight and AEO mosaics — a "Buyer profile" panel
-   * (Motivations 142 / Challenges 92 / Questions 13, "Chief technology
-   * officer, Financial services") and a "92 AEO pages generated" box with
-   * lorem placeholders. Only the Content card's three pop-ups exist here.
-   * Those two sets are the other designer's to specify (their copy is
-   * partly placeholder in the frame), so they are not invented.
-   *
-   * ⚠️ Geist Pixel isn't loaded. The source Figma frame sets its stat-style
-   * numerals in a second, standalone typeface — --font-pixel is stubbed
-   * below so that work can wire it up without touching this file again,
-   * but no font file is supplied yet. Falls back to Geist Mono.
+   * ⚠️ Three of the overlay cards (the dark Insight card, the "XX%" AEO
+   * card) carry the frame's own PLACEHOLDER copy — "xxxxxx", lorem — and
+   * are reproduced as drawn so the layout can be judged. Flagged in the
+   * notes; the copy is Myles' to write.
    * ==================================================================== */
   :root{
     --black:#272727;
@@ -88,63 +75,37 @@
     --ink-footer:#1F1F1F;     /* the site's Off Black, not pure black */
     --ink-body:#373636;
 
-    /* This page's three card grounds. Named after the Figma tint ramp each
-       comes from, not a colour description — --blue-10 reads as a light
-       blue because it is one, even though the card it grounds is called
-       "Insight" not "Blue". */
-    /* The Organising card's ground, measured off its own frame — a lighter
-       tint than the --green-20 it used to carry. */
-    --green-20:#CDE6E6;
-    /* ⚠️ The Insight ground is the frame's saturated cornflower, #5B82E3,
-       inked WHITE — measured off frame 698:2994 (section fill and every
-       text node on it). The package shipped it as the pale ramp tint
-       #E5EDFF with black text, reasoning the pale tint was unreadable
-       under white; the frame simply never used the pale tint. */
-    --insight-blue:#5B82E3;
-    --red-base:#F45944;
-
-    /* The hero's ground — the light teal from the mosaic's own palette
-       (it recurs all through MOSAIC_SQUARES), so the artwork sits on a
-       tone drawn from itself rather than a separate background colour. */
-    --hero-bg:#81C1C0;
+    /* The four screens' grounds, measured off the frame. */
+    --hero-bg:#81C1C0;        /* hero AND the Context screen */
+    --green-20:#CDE6E6;       /* Establish */
+    --insight-blue:#5B82E3;   /* Understand */
+    --red-base:#F45944;       /* Create */
     /* Source credits under each stat: the palette's deep teal, deliberately
        lower contrast than the body copy — a citation, not a reading line. */
     --hero-credit:#167170;
-    /* The closing contact module's link, measured off its own Figma frame
-       — a different, slightly warmer teal than --hero-credit rather than
-       the site's usual --f-red, matching how this module actually reads
-       in the design rather than defaulting to the generic CTA colour. */
-    --contact-cta:#206766;
 
     --nav-h:clamp(90px,17vh,140px);
+    --logo-h:52.44px;
     --page-max:2200px;
     --sbw:0px;
     --pad-x:100px;
 
-    /* The site's H2 (60/1.15) is too big for this page's card headings and
-       H4 (27) too small — they sit between the two, which the rest of the
-       site has no named style for yet. --fs-details is the site's own
-       15px Details style. */
-    --fs-h3:clamp(28px,2.78vw,40px);   /* the site's own H3 clamp */
-    --fs-details:15px;
-    /* The site's own H5 (20px), verbatim — the Related section's card
-       titles use it, same as every other article page. */
-    --fs-h5:20px;
-    /* The site's own H2, verbatim from index.html, and the Figma variable
-       Desktop/H2 (Geist Light 60/1.15 at -2% tracking) it corresponds to.
-       The hero uses it twice: the headline and the stat figures. */
+    /* The site's named styles, verbatim. */
     --fs-h2:clamp(34px,4.17vw,60px);
-
-    /* Stub only — see the note above. Falls back to Geist Mono until a
-       real Geist Pixel font file is sourced for the mosaic's own graphics. */
-    --font-pixel:"Geist Pixel","Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --fs-h3:clamp(28px,2.78vw,40px);
+    --fs-h4:clamp(21px,1.875vw,27px);
+    --fs-h5:20px;
+    --fs-details:15px;
 
     --ease-out-expo:cubic-bezier(.16,1,.3,1);
 
-    /* The mosaic's rendered width — sized off whichever viewport axis is
-       limiting so it always fills the same share of the window at any
-       size or aspect ratio. */
-    --mosaic-w:min(84vw,calc(84vh * 7 / 8));
+    /* The mosaic's box — set in px by measure() (see the script): the
+       frame's art is 588.7 x 672.8 on the 1240 content area at 1440 x 900,
+       i.e. 47.48% of the content width, capped so it never runs taller
+       than 74.75% of the viewport. --mosaic-left/top place it. */
+    --mosaic-w:588px;
+    --mosaic-left:596px;
+    --mosaic-top:113px;
 
     --reveal-dur:2.2s;
     --reveal-shift:44px;
@@ -164,7 +125,13 @@
   img{ display:block; max-width:100%; }
 
   /* ------------------------------------------------------------------ *
-   * Nav — shared component, verbatim from work.html
+   * Nav — the shared component, but PAINTED and PERMANENT here.
+   *
+   * Same box, cap, centring and --sbw correction as every other page
+   * (see the README's nav section). What differs, both at Myles'
+   * instruction: no mix-blend-mode — the ink is painted, as index.html's
+   * is — and no hide-on-scroll, so there is no .is-hidden state and no
+   * scroll handler for the bar at all.
    * ------------------------------------------------------------------ */
   .nav{
     position:fixed; top:0;
@@ -174,16 +141,13 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:0 var(--pad-x);
     z-index:40;
-    mix-blend-mode:difference;
-    transform:translateX(-50%) translateY(0);
-    transition:transform .38s var(--ease-out-expo);
+    transform:translateX(-50%);
   }
-  .nav.is-hidden{ transform:translateX(-50%) translateY(-100%); }
-  .logo{width:52.44px;height:52.44px;display:block;margin-left:-12.61px;flex:none}
+  .logo{width:var(--logo-h);height:var(--logo-h);display:block;margin-left:-12.61px;flex:none}
   .logo-mark{width:100%;height:100%;display:block;overflow:visible}
   .logo-mark polygon{
-    fill:#fff;
-    stroke:#fff;
+    fill:var(--ink-footer);
+    stroke:var(--ink-footer);
     stroke-width:1;
     vector-effect:non-scaling-stroke;
     stroke-linejoin:round;
@@ -194,8 +158,11 @@
     width:30px; height:30px; cursor:pointer; flex:none;
     position:relative;
   }
+  /* Painted ink, like index.html's squares — NOT the #fff blend source the
+     other pages use. Flips to white with the logo while the dark menu
+     overlay is open underneath. */
   .nav-menu span{
-    position:absolute; width:10px; height:10px; background:#fff;
+    position:absolute; width:10px; height:10px; background:var(--ink-footer);
     transform-origin:left center;
     transition:transform .45s var(--ease-out-expo), opacity .3s var(--ease-out-expo);
   }
@@ -203,107 +170,60 @@
   .nav-menu span:nth-child(2){ right:0; top:0; }
   .nav-menu span:nth-child(3){ left:0; bottom:0; }
   .nav-menu span:nth-child(4){ right:0; bottom:0; }
+  body.menu-open .nav-menu span{ background:#fff; }
+  body.menu-open .logo-mark polygon{ fill:#fff; stroke:#fff; }
   body.menu-open .nav-menu span:nth-child(1){ transform:scaleX(3); }
   body.menu-open .nav-menu span:nth-child(3),
   body.menu-open .nav-menu span:nth-child(4){ opacity:0; }
   .nav-menu:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px }
   .nav-links{display:flex; align-items:center; gap:30px}
+  /* The frame inks the links Off Black at 40% (rgba(31,31,31,.4)); the
+     current page and hover go to full ink. 15px, the site's Details size. */
   .nav-links a{
     font-size:15px; line-height:1.2; letter-spacing:.01em;
-    color:var(--mid-grey); text-decoration:none; white-space:nowrap;
+    color:rgba(31,31,31,.4); text-decoration:none; white-space:nowrap;
     transition:color .35s var(--ease-out-expo);
   }
-  .nav-links a:hover{color:#fff}
-  .nav-links a[aria-current="page"]{ color:#fff; }
+  .nav-links a:hover{color:var(--ink-footer)}
+  .nav-links a[aria-current="page"]{ color:var(--ink-footer); }
 
-  /* ------------------------------------------------------------------ *
-   * Shared feature layout — the hero copy and all three stacking
-   * cards use the same three-column split (heading / reserved graphic /
-   * copy), because the source frame draws all four sections on the same
-   * 25% / 50% / 25% rhythm.
-   * ------------------------------------------------------------------ */
-  .bp-feature{
-    display:grid;
-    grid-template-columns:1fr 2fr 1fr;
-    column-gap:40px;
-    align-items:center;
-    width:100%;
+  /* Full-bleed helper — the standard --sbw breakout (README, "Full-bleed
+     breakouts"). Every coloured ground on this page uses it; the content
+     column is put back inside with .bp-inner. */
+  .bleed{
+    width:calc(100vw - var(--sbw));
+    margin-inline:calc(50% - 50vw + var(--sbw) / 2);
   }
-  .bp-heading{
-    font-weight:300;
-    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
-    align-self:start;
-  }
-  @supports (text-box: trim-both cap alphabetic){
-    .bp-heading{ text-box:trim-both cap alphabetic; }
-  }
-  /* Reserves the graphic's footprint at the frame's own proportions — 7:8
-     — in every section's own grid. The mosaic itself is not inside any of
-     these boxes (see .bp-mosaic below); this purely keeps the
-     heading/copy spacing correct whether or not a graphic ever fills it. */
-  .bp-graphic{
-    display:block;
-    width:100%;
-    aspect-ratio:7/8;
-    max-width:560px;
-    justify-self:center;
-  }
-  .bp-copy{
-    display:flex; flex-direction:column; gap:20px;
-    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
-    align-self:end;
-  }
-  .bp-copy p{ margin:0; }
-
-  /* ------------------------------------------------------------------ *
-   * The hero
-   *
-   * Three parts down one teal ground: the headline top left, the mosaic
-   * centred, and the facts row (copy panel + three stats) beneath. Taller
-   * than one screen, as the source frame is — nothing here is
-   * scroll-driven, it's simply in view from the first frame and scrolls
-   * away as the Content card (Section 2) rises over it.
-   *
-   * Full-bleed like the cards: body is a max-width:var(--page-max) centred
-   * column, so the ground has to break out of it to reach both window
-   * edges, and .bp-hero-inner puts that column (and its --pad-x inset)
-   * back for the content.
-   * ------------------------------------------------------------------ */
-  .bp-hero{
-    background:var(--hero-bg);
-    color:var(--ink-footer);
-    /* 6px below the nav and 136px at the foot, both measured off the
-       frame (nav 140 / mosaic top 146 / frame bottom 1728 vs content
-       ending 1592). Capped at the frame's own values so wide windows never
-       open them up further than the design intends. */
-    padding:calc(var(--nav-h) + 6px) 0 clamp(56px,9.44vw,136px);
-    width:100vw;
-    margin-left:calc(50% - 50vw);
-    margin-right:calc(50% - 50vw);
-  }
-  .bp-hero-inner{
+  .bp-inner{
     max-width:var(--page-max);
     margin-inline:auto;
     padding-inline:var(--pad-x);
   }
 
-  /* Headline and mosaic share this band: the mosaic is centred in it and
-     the headline overlays it top left, exactly as they overlap in the
-     frame (the mosaic reaches well above and below the headline, but never
-     across it horizontally). */
+  /* ------------------------------------------------------------------ *
+   * 1. The hero
+   *
+   * Frame 3437:2917: the nav's 140, then the headline and Mosaic 1 both
+   * start 100px below it (headline top 100 in the section, mosaic top 98),
+   * mosaic 966 square centred, and the section ends on the mosaic's own
+   * bottom edge — the Context screen follows with its own air.
+   * ------------------------------------------------------------------ */
+  .bp-hero{
+    background:var(--hero-bg);
+    color:var(--ink-footer);
+    padding:calc(var(--nav-h) + 100px) 0 0;
+  }
   .bp-hero-band{
     position:relative;
     display:flex; justify-content:center;
   }
   /* Narrow enough that the headline breaks "Show up / and stand / out" over
      three lines, as the frame sets it, rather than being hard-wrapped with
-     <br>s that would break at other widths. */
+     <br>s that would break at other widths. 300px sits mid-way between the
+     widest line (252) and the width at which "Show up and" would fit
+     (~340), so the break survives small font-metric differences. */
   .bp-hero-headline{
-    position:absolute; left:0; top:48px;
-    /* 300px, not the frame's own 335: both wrap to the same three lines,
-       but 300 sits mid-way between the widest line (252) and the width at
-       which "Show up and" would fit (~340), so the break survives small
-       font-metric differences instead of hanging on 4px. */
+    position:absolute; left:0; top:0;
     width:min(300px,26vw);
     font-weight:300;
     font-size:var(--fs-h2); line-height:1.15; letter-spacing:-.02em;
@@ -311,12 +231,16 @@
   @supports (text-box: trim-both cap alphabetic){
     .bp-hero-headline{ text-box:trim-both cap alphabetic; }
   }
-  /* Square, unlike the fixed twins' 7:8 — this is the homepage module's
-     mosaic, whose frame is 1:1 (see MOSAIC_BOX in the Mosaic 1 script).
-     Width-driven at the frame's own 67% of the page, since the hero
-     scrolls rather than being pinned to one screen; the vh term is only a
-     guard so it eases down on short windows instead of towering over
-     them. */
+  /* The masthead load-in — the site's own, verbatim from work.html. */
+  @media (prefers-reduced-motion: no-preference){
+    .bp-hero-headline{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) backwards; }
+  }
+  @keyframes reveal-in{
+    from{ opacity:0; transform:translate3d(0, var(--reveal-shift), 0); }
+  }
+  /* Square — this is the homepage module's mosaic, whose frame is 1:1 (see
+     BOX_W in the Mosaic 1 script). The frame's 966 on 1440 is 67.08% of
+     the page; the vh term only eases it down on short windows. */
   .bp-hero-mosaic{
     position:relative;
     width:min(67.08vw,96vh);
@@ -327,270 +251,250 @@
     position:absolute; inset:0;
     width:100%; height:100%;
   }
+  /* Wordmark overlay — shares its canvas's box and coordinate space
+     (viewBox matches BOX_W in the script) so its paths line up with the
+     mosaic's squares. pointer-events:none so it never steals the
+     mouse-gravity hover from the canvas beneath it. */
+  .bp-mosaic-text{ pointer-events:none; }
 
-  /* The facts row — copy panel anchored left, the three stats anchored
-     right. Both children are flex:none, so every pixel the window gains
-     goes into the gap between them rather than stretching either: the
-     wider the screen, the further apart the two groups sit, each pinned to
-     its own edge of the --pad-x column. */
-  .bp-hero-facts{
-    margin-top:clamp(64px,9.58vw,138px);
-    display:flex; align-items:flex-start;
-    justify-content:space-between;
-    /* At the frame's own width the row is really four 287.5 columns on a
-       30px gutter, spanning --pad-x edge to edge (4×287.5 + 3×30 = 1240 =
-       1440 - 200). This min-gap keeps that fourth gutter honest; past
-       1440 space:between opens it up so the two groups part company. */
-    gap:30px;
+  /* ------------------------------------------------------------------ *
+   * 2. The stage — one sticky screen, four states
+   *
+   * .bp-stage is the runway: measure() sets its height to the Context
+   * screen's height plus STEP x 3, so the pin inside it sticks for exactly
+   * three states of scroll and then scrolls away with the runway. The pin
+   * is the screen: sticky, viewport-tall, overflow:hidden so the cards
+   * translating up from below are clipped to it.
+   *
+   * ⚠️ The pin's top and height are set by measure(), not here: when the
+   * Context copy is taller than the viewport (any phone) the pin is made
+   * as tall as the copy and given a NEGATIVE sticky top, so it sticks the
+   * moment its bottom edge meets the viewport's — the reader scrolls the
+   * copy up, the stats arrive, and the screen locks with the stats as its
+   * state-0 view. On a desktop where the copy fits, top is 0 and height
+   * is the viewport, i.e. the plain case.
+   *
+   * ⚠️ Nothing between .bp-stage and <body> may clip overflow, or sticky
+   * dies silently (same rule as the articles' sticky images).
+   * ------------------------------------------------------------------ */
+  .bp-stage{ position:relative; }
+  .bp-pin{
+    position:sticky; top:0;
+    height:100vh;
+    overflow:hidden;
+    background:var(--hero-bg);
   }
-  /* The intro copy — the homepage's body copy treatment, reused verbatim:
-     15/1.2 at -.3px tracking. */
-  .bp-intro-copy{
-    flex:none;
-    width:min(287.5px,20vw);
-    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.3px;
-  }
-  .bp-intro-copy p + p{ margin-top:1.2em; }
-  .bp-hero-link{
-    display:inline-block;
-    margin-top:24px;
-    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.3px;
-    color:var(--ink-footer); text-decoration:none;
-    transition:color .35s var(--ease-out-expo);
-  }
-  .bp-hero-link:hover{ color:var(--f-red); }
 
-  .bp-hero-stats{
-    flex:none;
-    width:min(922.5px,64.06vw);
+  /* ---- State 0: Context ----
+     Frame 3437:2923 — the intro copy in Desktop/H3 (40 Light) on 1021 of
+     the 1240, then 100 down to the three stats on a 1025 row. Here it is a
+     screen: nav-high padding at the top and the block centred in the
+     space left, so the frame's 100/100 padding becomes "centred in the
+     viewport" — which is what the frame's own numbers resolve to at 900. */
+  .bp-context{
+    min-height:100vh;
+    display:flex; flex-direction:column; justify-content:center;
+    gap:clamp(40px,10vh,90px);
+    /* 20 under the nav's box — 24 clear of the logo's ink — so the block
+       fits a 900 screen with the copy running a line or two longer than
+       the frame's (browser Geist wraps it at nine lines, Figma at seven). */
+    padding-top:calc(var(--nav-h) - 20px);
+    padding-bottom:40px;
+    color:var(--ink-footer);
+  }
+  .bp-context-copy{
+    width:82.3%;
+    font-weight:300;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+  }
+  /* The frame separates the two paragraphs with one empty line of the
+     same style — 1.15em — rather than a margin. */
+  .bp-context-copy p + p{ margin-top:1.15em; }
+  @supports (text-box: trim-both cap alphabetic){
+    .bp-context-copy{ text-box:trim-both cap alphabetic; }
+  }
+  /* Three stats on 82.7% of the content area, columns 283–287.5 wide with
+     the slack between them (the frame's space-between). */
+  .bp-stats{
+    width:82.7%;
     display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:30px;
+    grid-template-columns:repeat(3, minmax(0, 287.5px));
+    justify-content:space-between;
+    column-gap:30px;
   }
-  /* The frame sets the figures in the same Desktop/H2 as the headline —
-     60px Light — not a size of their own. Measured off the render: the
-     digits' cap height is 43px, which is 0.717em of 60. */
   .bp-stat-fig{
     font-weight:300;
-    font-size:var(--fs-h2); line-height:1.05; letter-spacing:-.02em;
+    font-size:var(--fs-h2); line-height:1.15; letter-spacing:-.02em;
     margin-bottom:24px;
   }
+  @supports (text-box: trim-both cap alphabetic){
+    .bp-stat-fig{ text-box:trim-both cap alphabetic; }
+  }
   .bp-stat-body{
-    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.3px;
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
     margin-bottom:16px;
   }
-  /* The site's own mono caption style — 10/17 at .6px, as the footer sets
-     it — uppercased for the credit line. */
+  /* The site's mono caption — 10/17 — uppercased for the credit line. */
   .bp-stat-credit{
     font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
-    font-size:10px; line-height:17px; letter-spacing:.6px;
+    font-size:10px; line-height:17px; letter-spacing:.07em;
     text-transform:uppercase;
     color:var(--hero-credit);
   }
+  /* Context reveal: the copy first, then the stats one by one at the
+     site's stagger. Committed by an IntersectionObserver (one-shot). */
+  .js .bp-context-copy,
+  .js .bp-stat{
+    opacity:0;
+    transform:translate3d(0, var(--reveal-shift), 0);
+    transition:opacity var(--reveal-dur) var(--ease-out-expo),
+               transform var(--reveal-dur) var(--ease-out-expo);
+  }
+  .js .bp-stat{ transition-delay:calc((var(--i) + 1) * var(--reveal-stagger)); }
+  .js .bp-context.in .bp-context-copy,
+  .js .bp-context.in .bp-stat{ opacity:1; transform:none; }
 
-  /* ------------------------------------------------------------------ *
-   * The three stacking cards
-   *
-   * Each is position:sticky at top:0 with a rising z-index down the DOM,
-   * so as the next card's sticky point is reached it scrolls up from
-   * below and covers the one currently pinned — cards being dealt on top
-   * of each other, not three sections scrolling past. height (not
-   * min-height) so .bp-feature below has a definite parent height to
-   * resolve its own height:100% against.
-   *
-   * That stacking only works at all because sticky has no natural release
-   * point here: each card's containing block is <main>, which spans the
-   * whole page, so once stuck a card would in principle stay glued at
-   * top:0 forever — it only ever appears to end because the next card
-   * paints over it at a higher z-index. Fine between the three of them,
-   * but the AEO card is the last one, and nothing after it is another
-   * full-screen card meant to cover it the same way — left alone, its red
-   * background would keep rendering behind every section that follows for
-   * the rest of the page, bleeding through any gap that isn't fully
-   * opaque. .stack-released is the actual fix — paint() adds it to <html>
-   * the instant the AEO card fully arrives, switching all three cards to
-   * position:static in one go so they let go and scroll away like
-   * ordinary content from there, instead of staying permanently pinned
-   * underneath. The mosaic stage (position:fixed regardless of its card's
-   * own position) gets hidden in that same instant — see its own comment
-   * below — so nothing is left rendering behind the page either way. */
+  /* ---- States 1–3: the cards ----
+     Each is a full screen pinned to the BOTTOM of the pin (the pin can be
+     taller than a screen — see above), stacked by z-index in DOM order
+     and translated down by (k − v) screens from the script, so card k
+     rises over card k−1 as v runs k−1 → k. overflow:hidden on the card
+     clips its own mosaic stage, which is what lets the mosaic hold still
+     under a rising card (see .bp-mosaic-stage). */
   .bp-card{
-    position:sticky; top:0;
+    position:absolute; left:0; right:0; bottom:0;
     height:100vh;
-    display:flex;
-    /* Flat 100px top/bottom — not nav-h relative — so the heading sits
-       exactly 100px from the card's own top edge and the copy exactly
-       100px above its bottom edge, per the source brief. .bp-feature
-       stretches to fill this so .bp-heading/.bp-copy's align-self:
-       start/end land on those two edges rather than centring as a block. */
-    padding:100px 0;
-    /* Full-bleed: break the card's background out of body's own
-       max-width:var(--page-max) centred column so it spans the whole
-       viewport edge-to-edge. Content stays put — .bp-feature below puts
-       the page-max column, and its var(--pad-x) inset, back for the
-       heading/copy/mosaic layer. */
-    width:100vw;
-    margin-left:calc(50% - 50vw);
-    margin-right:calc(50% - 50vw);
+    overflow:hidden;
+    transform:translate3d(0,100%,0);
+    will-change:transform;
   }
-  .stack-released .bp-card{ position:static; }
-  /* position:relative matters as much as height:100% here: it's what lets
-     .bp-feature (and so its heading/copy) compare by DOM order against
-     the mosaic canvas, which lives as .is-content's own first DOM child
-     (see the markup and "The mosaic" below) — a positioned descendant
-     always paints above a static one regardless of which comes first in
-     markup, so without this the plain-static .bp-feature would lose to
-     the positioned canvas even though it comes second. Positioned, it
-     wins by DOM order instead, which keeps the text on top. */
-  .bp-card .bp-feature{
-    position:relative; height:100%;
-    max-width:var(--page-max);
-    margin-inline:auto;
-    padding-inline:var(--pad-x);
-  }
-  /* .bp-feature's own empty .bp-graphic reservation would otherwise
-     swallow the mouse events the canvas's gravity hover needs once it's
-     sitting behind it — let empty regions pass through and re-enable only
-     the text, which still wants to be selectable. */
-  .bp-card .bp-feature{ pointer-events:none; }
-  .bp-card .bp-heading,
-  .bp-card .bp-copy{ pointer-events:auto; }
-  /* Ink per card is the frame's: Content is dark on sage; Insight and AEO
-     are WHITE on their saturated grounds (every text node on those two
-     sections is #ffffff in the frame). The package had all three dark. */
-  .bp-card.is-content{ background:var(--green-20); color:#000000; z-index:10; }
-  .bp-card.is-insight{ background:var(--insight-blue); color:#fff; z-index:11; }
-  .bp-card.is-aeo{ background:var(--red-base); color:#fff; z-index:12; }
-  .bp-card .bp-copy{ opacity:.82; }
+  /* No script: the stage degrades to four ordinary sections in flow (the
+     mosaics can't draw, but every word is readable). */
+  html:not(.js) .bp-pin{ position:static; height:auto; overflow:visible; }
+  html:not(.js) .bp-context{ min-height:0; }
+  html:not(.js) .bp-card{ position:relative; transform:none; }
+  .bp-card.is-content{ background:var(--green-20); color:var(--ink-footer); z-index:1; }
+  .bp-card.is-insight{ background:var(--insight-blue); color:#fff; z-index:2; }
+  .bp-card.is-aeo{ background:var(--red-base); color:#fff; z-index:3; }
+  .bp-card .bp-inner{ position:relative; height:100%; pointer-events:none; }
+  .bp-card .bp-text,
+  .bp-card .bp-subnav{ pointer-events:auto; }
 
-  /* The cards' own variant of the shared three-column split: unlike the
-     hero, all of their text stacks in the left-hand column and hangs off
-     the top edge — heading, then subheader, then body — with the reserved
-     graphic column spanning both rows beside it and the third column left
-     empty. (The mosaic is viewport-centred and fixed, so it takes no part
-     in this grid either way; the reservation is only there to hold the
-     column rhythm.) */
-  .bp-card .bp-feature{
-    grid-template-rows:auto 1fr;
-    align-items:start;
-    row-gap:32px;
+  /* The text block: frame 3438:5569 — 100 from the top, 226 wide
+     (18.2% of the content area, so it grows with the cap), H4 heading,
+     30 down to the copy. The copy is the frame's own two-paragraph block:
+     a SemiBold lead line, an empty line, then the body — all Details. On
+     short windows the 100 eases so the block and the sub-nav can't meet. */
+  .bp-text{
+    position:absolute;
+    left:var(--pad-x);
+    top:clamp(60px,11.1vh,100px);
+    width:calc(max(226px, (100% - 2 * var(--pad-x)) * .182));
   }
-  .bp-card .bp-heading{ grid-column:1; grid-row:1; }
-  .bp-card .bp-graphic{ grid-column:2; grid-row:1 / span 2; align-self:center; }
-  .bp-card .bp-copy{ grid-column:1; grid-row:2; align-self:start; gap:32px; }
-  /* The frame sets this block on a narrower measure than the column it
-     sits in — roughly three quarters of it — rather than letting the lines
-     run the column's full width. Kept proportional so it holds at any
-     window size instead of only at the frame's own. */
-  .bp-card .bp-copy{ max-width:78%; }
-  /* The subheader: the card's one-line promise, between the heading and
-     the body copy, at the site's own H5 size. */
-  .bp-subhead{
-    font-size:clamp(17px,1.39vw,20px);
-    line-height:1.2; letter-spacing:-.02em;
+  .bp-heading{
+    font-weight:300;
+    font-size:var(--fs-h4); line-height:1.2; letter-spacing:-.02em;
+    margin-bottom:30px;
+  }
+  @supports (text-box: trim-both cap alphabetic){
+    .bp-heading{ text-box:trim-both cap alphabetic; }
+  }
+  .bp-copy{ font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em; }
+  .bp-copy .bp-lead{ font-weight:600; }
+  .bp-copy p + p{ margin-top:1.2em; }
+
+  /* The sub-nav: the homepage's sub-menu idea on this page's three
+     states. Frame 3438:5259 — three Details lines 15 apart, bottom-left,
+     ending 100 above the card's bottom edge. The current state is full
+     ink; the others sit at 50% on the sage card and 40% on the white-ink
+     cards, as the frame paints them. Click glides to that state. */
+  .bp-subnav{
+    position:absolute;
+    left:var(--pad-x);
+    bottom:clamp(40px,11.1vh,100px);
+    display:flex; flex-direction:column; gap:15px; align-items:flex-start;
+  }
+  .bp-subnav button{
+    font:inherit; font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    background:none; border:0; padding:0; margin:0;
+    color:currentColor; opacity:.5; cursor:pointer; text-align:left;
+    transition:opacity .5s var(--ease-out-expo);
+  }
+  .bp-card.is-insight .bp-subnav button,
+  .bp-card.is-aeo .bp-subnav button{ opacity:.4; }
+  .bp-subnav button:hover,
+  .bp-subnav button[aria-current="true"]{ opacity:1; }
+  .bp-subnav button:focus-visible{ outline:1px solid currentColor; outline-offset:4px; }
+
+  /* Reveal inside a card once it has locked: heading, copy, then sub-nav
+     on the site's stagger. Driven from the chased state by the script
+     (.in when the card lands, removed again once it has slid most of the
+     way back down, so a second visit reveals again). */
+  .js .bp-card .bp-heading,
+  .js .bp-card .bp-copy,
+  .js .bp-card .bp-subnav{
+    opacity:0;
+    transform:translate3d(0, var(--reveal-shift), 0);
+    transition:opacity var(--reveal-dur) var(--ease-out-expo),
+               transform var(--reveal-dur) var(--ease-out-expo);
+  }
+  .js .bp-card .bp-copy{ transition-delay:var(--reveal-stagger); }
+  .js .bp-card .bp-subnav{ transition-delay:calc(2 * var(--reveal-stagger)); }
+  .js .bp-card.in .bp-heading,
+  .js .bp-card.in .bp-copy,
+  .js .bp-card.in .bp-subnav{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .js .bp-card .bp-heading, .js .bp-card .bp-copy, .js .bp-card .bp-subnav,
+    .js .bp-context-copy, .js .bp-stat{ opacity:1; transform:none; transition:none; }
   }
 
   /* ------------------------------------------------------------------ *
    * The mosaic stage — Mosaics 2, 3 and 4
    *
-   * The stage, not the canvas, is what's positioned: position:fixed and
-   * centred on the viewport via CSS, with the script adding a translateY
-   * equal to the Content card's own distance from the top of the screen
-   * (see paint()) — so while that card is still rising this sits exactly
-   * where it would if it were glued inside it, riding up in position in
-   * the middle of the section, and lands dead centre at the moment the
-   * card pins. From there the offset is zero and it simply holds centre
-   * while the morph plays out. The canvas lives inside it, so it inherits
-   * that one transform rather than being positioned separately. The
-   * pop-ups get their own instance of this same box (.is-pops, a
-   * page-level sibling of the cards — see its markup) driven with the
-   * identical transform, so the two layers stay registered to each other
-   * while the pop-ups sit clear of the cards' own stacking.
+   * One stage per card, all three drawn identically every frame (a canvas
+   * paints above its card's ground and below its text only by being that
+   * card's child, so one element can't serve three cards). The stage is
+   * the frame's art box — 840 x 960 units, --mosaic-w wide — placed by
+   * measure() at the frame's own spot on the content area and vertically
+   * centred on the screen.
    *
-   * *Where it lives in the DOM* still matters for stacking: it's
-   * .bp-card.is-content's own first child (see the markup), not a
-   * page-level sibling. A flat z-index can't put an element between a
-   * stacking context's own background and its content — .is-content's
-   * explicit z-index (for the card-over-card effect) traps its whole
-   * subtree as one atomic unit against outside siblings, so there's no
-   * number that would sit "inside" it. Being an actual child sidesteps
-   * that: a box always paints above its own parent's background
-   * regardless of z-index, and .bp-feature (after it in DOM, made
-   * position:relative for exactly this) then out-ranks it by DOM order —
-   * so the mosaic sits above the Content card's background but below its
-   * text. .is-insight/.is-aeo (z-index 11/12) then cover the mosaic along
-   * with the rest of the Content card once they arrive.
+   * The first card's stage RIDES UP with the card: there is no mosaic
+   * beneath it, so it arrives in the middle of the sage panel as the
+   * panel rises. The second and third cards' stages are COUNTER-
+   * TRANSLATED by the script — the card moves up by t, its stage moves
+   * down by t — so the mosaic holds the exact screen position of the one
+   * beneath while the card wipes up under it; the card's overflow:hidden
+   * clips the rising copy to the card, and because every canvas draws
+   * the same frame, the seam is invisible. That is the whole "stays on
+   * top and morphs" effect.
    *
-   * None of the three cards can unstick on its own via bounded CSS —
-   * each one's containing block is <main>, which spans the whole page, so
-   * left alone a stuck card would stay pinned at top:0 forever. Between
-   * the three cards that's harmless (the next one simply paints over the
-   * last at a higher z-index, which is the whole "dealt on top of each
-   * other" effect above) — but the AEO card is the last of them, and
-   * nothing after it is another full-screen card meant to cover it the
-   * same way. Left unaddressed, its red background — and this stage,
-   * still fixed and centred — would go on rendering behind every section
-   * of the page that follows, bleeding through any gap that isn't fully
-   * opaque. paint() fixes this directly: the instant the AEO card fully
-   * arrives, it adds .stack-released to <html>, which switches all three
-   * cards to position:static in the same frame — so they let go and
-   * scroll away like ordinary content instead of staying pinned — and
-   * hides this stage at the same time, since being position:fixed it
-   * wouldn't otherwise follow its card's release. From that point on nothing
-   * here is painted, listening for hover, or redrawn per frame; scrolling
-   * back up into the group re-engages both together.
+   * The canvas is 1.4x the stage on every side (inset -20%) because the
+   * frame draws Mosaics 3 and 4 with a LARGER cell than Mosaic 2 (56 vs
+   * 42 at 1440 — ZOOM in the script), so the zoomed art outgrows the
+   * base box. --u is one unit of the BASE box, and every overlay is
+   * written in those units, so the overlays scale with the art at every
+   * size without a second set of numbers.
    * ------------------------------------------------------------------ */
   .bp-mosaic-stage{
-    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    position:absolute;
+    left:var(--mosaic-left); top:var(--mosaic-top);
     width:var(--mosaic-w);
-    aspect-ratio:7/8;
-    /* One mosaic unit: the stage is MOSAIC_BOX.w units wide, so every
-       overlay below can be written in the frame's own 840x960 coordinates
-       and scales with the artwork automatically, all the way to mobile —
-       no JS, no container queries, no separate mobile sizes. */
+    aspect-ratio:840/960;
     --u:calc(var(--mosaic-w) / 840);
-    /* Hidden until the Content card enters the screen (see paint()) —
-       being fixed, it would otherwise sit on screen from the very top of
-       the page, over the hero it has nothing to do with. */
-    visibility:hidden;
+    will-change:transform;
   }
-  /* The pop-up layer's own stage — the same box, lifted clear of all three
-     cards' z-indices (10/11/12) because it's a page-level sibling of them
-     rather than a child of any one. See its markup for why that matters. */
-  .bp-mosaic-stage.is-pops{ z-index:13; pointer-events:none; }
   .bp-mosaic{
-    position:absolute; inset:0;
-    width:100%; height:100%;
+    position:absolute; left:-20%; top:-20%;
+    width:140%; height:140%;
     pointer-events:auto;
   }
 
-  /* Wordmark overlay — shares its canvas's box and coordinate space
-     (viewBox matches MOSAIC_BOX in the script) so its paths line up with
-     the mosaic's squares. pointer-events:none so it never steals the
-     mouse-gravity hover from the canvas beneath it. */
-  .bp-mosaic-text{ pointer-events:none; }
-
-  /* ------------------------------------------------------------------ *
-   * The mosaic's overlays — the pop-ups
-   *
-   * They sit in the stage's unit space (see --u above), so they track the
-   * artwork at every size rather than being re-laid-out per breakpoint.
-   * They're allowed to hang outside the mosaic's own box — the teal pop-up
-   * starts 90 units left of it — so the layer doesn't clip. Their heights
-   * are minimums, not fixed: the frame's height is what the copy needs at
-   * full size, but once the type hits its readability floor on small
-   * screens the box has to grow with it rather than clip.
-   *
-   * z-index keeps the layer above the canvas: both are absolutely
-   * positioned inside the stage and the overlay already wins on DOM order,
-   * but the pop-ups sitting over the artwork is the point of them rather
-   * than a side effect of markup sequence, so it's stated rather than
-   * inherited.
-   *
-   * pointer-events:none throughout: the mouse-gravity hover belongs to the
-   * canvas underneath, and the pop-ups take no part in it. Nothing here is
-   * affected by the mouse at all.
-   * ------------------------------------------------------------------ */
+  /* ---- The overlays ----
+     Written in the stage's unit space, allowed to hang outside the art
+     (several do — the frame's overlays sit half off the mosaic). Heights
+     are minimums so the boxes grow with the copy once the type hits its
+     floor on small screens rather than clipping. pointer-events:none
+     throughout: the mouse-gravity hover belongs to the canvas beneath. */
   .bp-overlay{
     position:absolute; inset:0;
     z-index:1;
@@ -599,34 +503,52 @@
   }
   .bp-pop{
     position:absolute;
-    display:flex; flex-direction:column;
+    display:flex; flex-direction:column; justify-content:space-between;
+    /* 16px at the frame's scale */
+    padding:calc(22.8 * var(--u));
+    /* H5 (20) at the frame's scale, floored for the smallest screens */
+    font-size:max(11px, calc(28.5 * var(--u)));
+    line-height:1.2; letter-spacing:-.02em;
     color:#fff;
-    /* Scales with the mosaic, with a floor so the smallest phones stay
-       readable rather than following the artwork all the way down. */
-    font-size:max(11px, calc(28.57 * var(--u)));
-    line-height:1.2;
-    letter-spacing:-.02em;
-    /* 20 units top/bottom, 23 left/right — the frame's insets aren't
-       square, and the difference is what lets pop-up 1's four lines sit
-       inside its stated height instead of pushing it a few px taller. */
-    padding:calc(20 * var(--u)) calc(23 * var(--u));
   }
+  .bp-pop.ink-dark{ color:var(--ink-footer); }
+  .bp-pop.to-end{ justify-content:flex-end; }
   .bp-pop p{ margin:0; }
-  /* The figure above the caption in pop-ups 2 and 3 — its own size per
-     pop-up, since the frame sets them differently (41.5% at 57 units,
-     34% at 40). space-between then pins the figure to the top of the box
-     and the caption to the bottom, as the frame has them. */
-  .bp-pop{ justify-content:space-between; }
+  /* The figure above a caption: H4 (27) or H3 (40) at the frame's scale,
+     per box — --fig carries the frame's size in units. */
   .bp-pop-fig{
     font-weight:300;
-    font-size:calc(var(--fig, 40) * var(--u));
-    line-height:1;
-    letter-spacing:-.02em;
+    font-size:max(14px, calc(var(--fig, 38.5) * var(--u)));
+    line-height:1.15; letter-spacing:-.02em;
   }
+  /* The "Buyer profile" rows — label in H4, value in 16px, baseline-ish */
+  .bp-pop-title{ font-weight:300; }
+  .bp-pop-rows{ display:flex; flex-direction:column; gap:calc(22.8 * var(--u)); }
+  .bp-pop-row{ display:flex; justify-content:space-between; align-items:flex-end; gap:1em; }
+  .bp-pop-row .l{ font-weight:300; font-size:max(13px, calc(38.5 * var(--u))); line-height:1.15; white-space:nowrap; }
+  .bp-pop-row .v{ font-size:max(10px, calc(22.8 * var(--u))); line-height:1.2; }
+  /* The profile strip (frame 3438:6088): a 13.7px header row with the
+     diamond marker and a 1/19 count, then the two-line name group at 22px
+     on 1.1. Its own padding (12.6) and gap (7.9), as drawn. */
+  .bp-pop.is-strip{
+    justify-content:flex-start;
+    padding:calc(18 * var(--u));
+    gap:calc(11.2 * var(--u));
+  }
+  .bp-pop.is-strip .hd{
+    display:flex; justify-content:space-between; align-items:center;
+    font-weight:300; font-size:max(9px, calc(19.6 * var(--u))); line-height:1.33;
+  }
+  .bp-pop.is-strip .hd .mk{
+    display:inline-block; width:.42em; height:.42em; margin-right:.55em;
+    background:currentColor; transform:rotate(45deg);
+  }
+  .bp-pop.is-strip .nm{ font-weight:300; font-size:max(12px, calc(31.3 * var(--u))); line-height:1.1; }
+  .bp-pop.is-strip .nm .sub{ color:#737380; }
   /* Entry: the box expands out of whichever corner faces the middle of the
-     mosaic, and the text fades up inside it just behind the expansion.
-     data-origin picks the corner (br/bl/tr), which is also the corner the
-     box collapses back into on the way out. */
+     mosaic and the text fades up inside it just behind the expansion.
+     data-origin picks the corner, which is also where it collapses back
+     into once the state moves on. */
   .bp-pop{
     opacity:0;
     transform:scale(.04);
@@ -640,6 +562,7 @@
     opacity:1;
     transform:scale(1);
     transition:transform .62s var(--ease-out-expo), opacity .3s var(--ease-out-expo);
+    transition-delay:calc(var(--k, 0) * .18s);
   }
   .bp-pop > *{
     opacity:0;
@@ -649,58 +572,38 @@
   .bp-pop.is-in > *{
     opacity:1;
     transform:none;
-    transition-delay:.22s;
+    transition-delay:calc(.22s + var(--k, 0) * .18s);
   }
   @media (prefers-reduced-motion: reduce){
-    .bp-pop, .bp-pop.is-in,
-    .bp-pop > *, .bp-pop.is-in > *{
-      transition:none;
-      transform:none;
-    }
+    .bp-pop, .bp-pop.is-in, .bp-pop > *, .bp-pop.is-in > *{ transition:none; transform:none; }
     .bp-pop{ opacity:0; }
     .bp-pop.is-in, .bp-pop.is-in > *{ opacity:1; }
   }
 
-  .js .bp-card .bp-heading,
-  .js .bp-card .bp-copy{
-    opacity:0;
-    transform:translate3d(0, var(--reveal-shift), 0);
-    transition:opacity var(--reveal-dur) var(--ease-out-expo),
-               transform var(--reveal-dur) var(--ease-out-expo);
-  }
-  .js .bp-card .bp-copy{ transition-delay:var(--reveal-stagger); }
-  .js .bp-card.in .bp-heading,
-  .js .bp-card.in .bp-copy{ opacity:1; transform:none; }
-  @media (prefers-reduced-motion: reduce){
-    .js .bp-card .bp-heading,
-    .js .bp-card .bp-copy{ opacity:1; transform:none; transition:none; }
-  }
-
   /* ------------------------------------------------------------------ *
-   * Contact — the closing call to action, verbatim from index.html's own
-   * .contact/.contact-head/.contact-cta, with this page's own copy.
+   * 3. Contact — the frame now sets this in the site's own H2 with the
+   * CTA in F Red (3438:6370: 200 top and bottom, 60 Light, red link).
    * ------------------------------------------------------------------ */
   .contact{
     position:relative; z-index:20;
     background:var(--bg);
-    padding:clamp(90px,13vh,190px) var(--pad-x);
+    padding:clamp(100px,13.9vw,200px) var(--pad-x);
   }
   .contact-head, .contact-cta{
     display:block;
-    font-size:clamp(30px,4.03vw,62px);
+    font-size:var(--fs-h2);
     font-weight:300;
-    line-height:1.2;
-    letter-spacing:-1px;
+    line-height:1.15;
+    letter-spacing:-.02em;
   }
-  .contact-head{ color:var(--black); }
+  .contact-head{ color:var(--ink-footer); }
   .contact-cta{
-    color:var(--contact-cta); text-decoration:none;
+    color:var(--f-red); text-decoration:none;
     width:max-content; max-width:100%;
   }
-  .contact-cta:focus-visible{ outline:1px solid var(--contact-cta); outline-offset:6px; }
-  /* Measured off the Figma frame: .53em square, its top sitting on the
-     ascender rather than the cap — drawn rather than using the ↗
-     character, whose glyph doesn't sit right against Geist's own metrics. */
+  .contact-cta:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px; }
+  /* Drawn arrow, as index.html's — the ↗ glyph's solid head doesn't sit
+     right against Geist's metrics. */
   .contact-arrow{
     display:inline-block;
     width:.53em; height:.53em;
@@ -711,12 +614,11 @@
   }
   .contact-cta:hover .contact-arrow,
   .contact-cta:focus-visible .contact-arrow{ transform:translateX(.16em); }
-  @media (prefers-reduced-motion: reduce){
-    .contact-arrow{ transition:none; }
-  }
+  @media (prefers-reduced-motion: reduce){ .contact-arrow{ transition:none; } }
 
   /* ------------------------------------------------------------------ *
-   * Related articles — verbatim from article-2.html, retitled
+   * 4. Related — frame 3438:6396: H3 title, 100 down, two 605 tiles 30
+   * apart, each a 605 SQUARE, title in H4 Light on 493, mono byline.
    * ------------------------------------------------------------------ */
   .related{ position:relative; z-index:20; background:var(--bg); padding:100px var(--pad-x); }
   .related h2{
@@ -725,11 +627,7 @@
     color:var(--black);
     margin-bottom:100px;
   }
-  @supports (text-box: trim-both cap alphabetic){
-    .related h2{ text-box:trim-both cap alphabetic; }
-  }
-  /* Two up, top aligned — the two tiles carry different media ratios (the
-     frame draws one landscape and one portrait) and are meant to. */
+  @supports (text-box: trim-both cap alphabetic){ .related h2{ text-box:trim-both cap alphabetic; } }
   .related-grid{
     display:grid; grid-template-columns:1fr 1fr;
     column-gap:30px; align-items:start;
@@ -739,22 +637,19 @@
     text-decoration:none; color:inherit; min-width:0;
   }
   .rel-media{
-    width:100%; background:var(--ph,#D9D9D9);
-    border-radius:1px; overflow:hidden; position:relative;
+    width:100%; aspect-ratio:1;
+    background:#D9D9D9; overflow:hidden; position:relative;
   }
-  /* Each tile carries its post's own media ratio from thinking.html, so
-     the artwork is the same crop the Thinking grid shows. */
-  .rel-card.r-janelle .rel-media{ aspect-ratio:756/1009; }
-  .rel-card.r-guidelines .rel-media{ aspect-ratio:363/307; }
   .rel-media img{
     width:100%; height:100%; object-fit:cover; object-position:center;
     transition:transform .6s var(--ease-out-expo);
   }
   .rel-card:hover .rel-media img{ transform:scale(1.04); }
   .rel-card h3{
-    font-weight:400;
-    font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
+    font-weight:300;
+    font-size:var(--fs-h4); line-height:1.2; letter-spacing:-.02em;
     color:var(--ink-footer);
+    max-width:493px;
   }
   .rel-card .byline{
     font-family:"Geist Mono","Geist Mono Fallback",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -762,9 +657,7 @@
     color:var(--ink-footer);
   }
 
-  /* One-shot fade/rise-in, shared by the heading and both cards — same
-     mechanic as every other page's .reveal, added here since this page
-     otherwise only reveals its own .bp-card text (see the JS observer). */
+  /* The site's one-shot scroll reveal, for the contact module and Related. */
   .js .reveal{
     opacity:0;
     transform:translate3d(0, var(--reveal-shift), 0);
@@ -791,70 +684,86 @@
   .footer a:hover{ color:var(--f-red); }
   .footer .links a{ margin-right:14px; }
 
+  /* Short windows: the card block and the sub-nav both ease in from the
+     edges (see their clamps); the Context screen tightens its gap. */
+  /* ⚠️ A laptop screen (1280 x 720, 1366 x 768) can't hold the Context
+     block at the frame's sizes — measured 775px at 720 — and the pin would
+     answer by scrolling its top edge (the copy's first line) up under the
+     logo. So under 760px the copy and the figures follow the viewport
+     height instead: at 720 the copy runs at 30px and the figures at 47,
+     and the block measures ~670. The frame's sizes return at 900. */
+  @media (max-height:760px) and (min-width:768px){
+    .bp-context{ gap:clamp(30px,8vh,60px); padding-bottom:30px; }
+    .bp-context-copy{ font-size:min(var(--fs-h3), 4.2vh); }
+    .bp-stat-fig{ font-size:min(var(--fs-h2), 6.5vh); }
+  }
+
   /* ================================================================== *
-   * Mobile — shared nav collapse; the feature grid drops to one column
+   * Mobile — the homepage's own mobile pattern for the stage: sub-nav as
+   * a centred row under the permanent bar, the heading beneath it, the
+   * mosaic in the band that's left, and the copy in a bottom band. The
+   * overlays are hidden: at a phone's mosaic size they can't hold their
+   * copy and would sit over the text bands. Flagged in the notes.
    * ================================================================== */
   @media (max-width:767px){
     :root{
       --nav-h:90px;
       --pad-x:25px;
-      /* the site's mobile type rule — display sizes at 0.8x desktop,
-         named text styles unchanged (see README, "Mobile") */
-      --fs-h2:48px;
-      --fs-h3:32px;
-      /* --fs-details deliberately stays 15 here — the site's named text
-         styles don't shrink on mobile (see the mobile system notes on the
-         other pages); this page's own source prototype had dropped it to
-         13, which this port doesn't carry over. */
+      --fs-h2:48px;             /* 0.8 x 60 */
+      --fs-h3:32px;             /* 0.8 x 40 */
+      --fs-h4:21.6px;           /* 0.8 x 27 */
     }
     .logo{ width:40px; height:40px; margin-left:-9.5px; }
     .nav-menu{ display:block; }
     .nav-links{ display:none; }
 
-    /* The hero unstacks entirely here: at this width the headline can't sit
-       beside the mosaic, and the facts row can't hold four columns. Headline
-       returns to normal flow above the mosaic, the mosaic goes width-driven,
-       and the copy panel and stats become one column each. */
-    .bp-hero{ padding:calc(var(--nav-h) + 32px) 0 64px; }
+    .bp-hero{ padding:calc(var(--nav-h) + 25px) 0 0; }
     .bp-hero-band{ display:block; }
-    .bp-hero-headline{
-      position:static;
-      width:auto;
-      margin-bottom:32px;
-    }
+    .bp-hero-headline{ position:static; width:auto; margin-bottom:25px; }
     .bp-hero-mosaic{ width:100%; }
-    .bp-hero-facts{
-      margin-top:48px;
-      flex-direction:column;
-      gap:40px;
+
+    /* The copy no longer fits a screen, so the pin grows to hold it (see
+       measure()) and the reader scrolls it; the 25px grid throughout. */
+    .bp-context{
+      min-height:0;
+      justify-content:flex-start;
+      gap:50px;
+      padding-top:calc(var(--nav-h) + 25px);
+      padding-bottom:50px;
     }
-    .bp-intro-copy{ width:auto; }
-    .bp-hero-stats{
-      width:auto;
-      grid-template-columns:1fr;
-      gap:36px;
+    .bp-context-copy{ width:auto; }
+    .bp-stats{ width:auto; grid-template-columns:1fr; row-gap:50px; }
+    .bp-stat-fig{ margin-bottom:16px; }
+
+    .bp-subnav{
+      left:0; right:0; bottom:auto;
+      top:calc(var(--nav-h) + 12px);
+      flex-direction:row; flex-wrap:wrap;
+      justify-content:center; align-items:center;
+      padding:0 var(--pad-x);
+      gap:8px clamp(10px,3vw,18px);
+      text-align:center;
     }
+    .bp-subnav button{ font-size:clamp(11px,3.4vw,14px); }
+    /* The text block dissolves: the heading takes its own line under the
+       sub-nav row and the copy sits in a bottom band, both positioned off
+       the card rather than off the block. */
+    .bp-text{ position:static; width:auto; }
+    .bp-card .bp-heading{
+      position:absolute; left:var(--pad-x); right:var(--pad-x);
+      top:calc(var(--nav-h) + 55px); margin-bottom:0;
+    }
+    .bp-card .bp-copy{
+      position:absolute; left:var(--pad-x); right:var(--pad-x);
+      bottom:40px;
+    }
+    .bp-overlay{ display:none; }
 
-    .bp-feature{ grid-template-columns:1fr; row-gap:32px; }
-    .bp-graphic{ max-width:320px; }
-    .bp-copy{ align-self:auto; }
-
-    /* One column here, so the cards' explicit row/column placements would
-       otherwise conjure a phantom second column back for the graphic. */
-    .bp-card .bp-heading,
-    .bp-card .bp-graphic,
-    .bp-card .bp-copy{ grid-column:1; grid-row:auto; }
-    .bp-card .bp-copy{ max-width:none; }
-
-    .bp-card{ padding-top:calc(var(--nav-h) + 32px); padding-bottom:40px; }
-
-    /* The desktop clamp bottoms out at 30px on a phone, which reads small
-       for a closing statement — verbatim from index.html's own override. */
     .contact-head, .contact-cta{ font-size:clamp(34px,10.2vw,44px); }
 
     .related{ padding:75px var(--pad-x); }
     .related h2{ margin-bottom:50px; }
-    .related-grid{ grid-template-columns:1fr; row-gap:56px; }
+    .related-grid{ grid-template-columns:1fr; row-gap:50px; }
 
     .footer{ flex-wrap:wrap; row-gap:24px; }
     .footer > div{ flex:1 1 45%; }
@@ -946,14 +855,9 @@
 
 <main>
 
-  <!-- ---------- 1. Hero — Mosaic 1 and the intro copy ---------- -->
-  <!-- Both in view on load: one screen, nothing scroll-driven. Mosaic 1 is
-       a normal in-flow element (unlike #bpMosaic/Insight/Aeo below, which
-       are the fixed-canvas system for Mosaics 2–4) — static render plus
-       its own mouse-gravity hover, no morph, and it simply scrolls away as
-       the Content card rises over it. See the "Mosaic 1" script block. -->
-  <section class="bp-hero">
-    <div class="bp-hero-inner">
+  <!-- ---------- 1. Hero — Mosaic 1 and the headline ---------- -->
+  <section class="bp-hero bleed">
+    <div class="bp-inner">
       <div class="bp-hero-band">
         <h1 class="bp-hero-headline">Show up and stand out</h1>
         <div class="bp-hero-mosaic">
@@ -962,20 +866,12 @@
                space (viewBox matches BOX_W in the Mosaic 1 script) so its
                paths line up with the squares. "brand"/"proximity" are each
                grouped so gravity moves every letter in a word by one shared
-               offset — the word stays a single solid block over its squares
-               instead of the letters drifting apart. "brand" sits on a black
-               square cluster so it's inked white; "proximity" sits on a
-               light run, so it stays black.
-               The paths are drawn once, at Mosaic 1A's own placement, and
-               each configuration then moves the whole word to its own spot
-               with a transform (see STATES in the script) — 1B lays
-               "proximity" out horizontally, which is a rotate(90) of the
-               same glyphs rather than a second copy of them. Two nested
-               groups on "proximity" because the two transforms belong to
-               different spaces: the outer one carries the mouse-gravity
-               shift, which has to stay in the mosaic's own upright
-               coordinates, and the inner one the configuration's placement
-               and rotation. -->
+               offset. "brand" sits on a black square cluster so it's inked
+               white; "proximity" sits on a light run, so it stays black.
+               Two nested groups on "proximity" because the two transforms
+               belong to different spaces: the outer one carries the
+               mouse-gravity shift, the inner one the configuration's
+               placement and rotation (see STATES in the script). -->
           <svg class="bp-mosaic-text" id="bpMosaicText" viewBox="0 0 966 966" aria-hidden="true">
         <g id="bpWordBrand" fill="#FFFFFF">
           <path d="M536.568 634.678C533.647 634.678 531.107 633.959 528.948 632.519C526.831 631.080 525.201 629.048 524.058 626.423C522.915 623.799 522.344 620.687 522.344 617.089C522.344 613.491 522.915 610.379 524.058 607.755C525.201 605.130 526.831 603.098 528.948 601.659C531.107 600.220 533.647 599.500 536.568 599.500C538.811 599.500 540.864 599.987 542.727 600.960C544.590 601.892 545.987 603.225 546.918 604.961V588.832H552.252V633.916H547.426L547.235 628.836C546.304 630.657 544.886 632.096 542.981 633.154C541.076 634.170 538.938 634.678 536.568 634.678ZM537.647 629.598C539.637 629.598 541.309 629.090 542.664 628.074C544.060 627.058 545.119 625.619 545.838 623.756C546.558 621.851 546.918 619.629 546.918 617.089C546.918 614.464 546.558 612.221 545.838 610.358C545.119 608.496 544.060 607.077 542.664 606.104C541.309 605.088 539.637 604.580 537.647 604.580C534.684 604.580 532.313 605.702 530.535 607.945C528.799 610.146 527.932 613.194 527.932 617.089C527.932 620.941 528.799 623.989 530.535 626.233C532.313 628.477 534.684 629.598 537.647 629.598Z"/>
@@ -1000,165 +896,183 @@
           </svg>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- The facts row — copy panel left, three stats right. See
-           .bp-hero-facts for how the two groups stay pinned to their own
-           edges as the window widens. -->
-      <div class="bp-hero-facts">
-        <div class="bp-intro-copy">
-          <p>Most B2B buyers use AI to assess their options and guide their decisions. Visibility in these searches can make or break your brand. So why not turn the tools to your advantage?</p>
+  <!-- ---------- 2. The stage: Context, then the three cards ---------- -->
+  <!-- See ".bp-stage" in the CSS and "The scroll model" in the script. The
+       runway's height and the pin's geometry are set by measure(). -->
+  <section class="bp-stage bleed" id="bpStage">
+    <div class="bp-pin" id="bpPin">
+
+      <!-- State 0: Context (frame 3437:2923) -->
+      <div class="bp-context bp-inner" id="bpContext">
+        <div class="bp-context-copy">
+          <p>Most B2B buyers use AI to assess their options and guide their decisions. Visibility in these searches can make or break your brand. So why not turn the tools to your advantage</p>
           <p>We help B2B brands embrace the new world of AI discovery with Brand Proximity, an AI-powered managed service. We&rsquo;ll show you exactly how you show up in AI search &ndash; then improve it, so you can get closer to your audience with answers that speak to real human needs.</p>
-          <a class="bp-hero-link" href="contact.html">Request your free sample report &rarr;</a>
         </div>
-        <div class="bp-hero-stats">
-          <div class="bp-stat">
+        <div class="bp-stats">
+          <div class="bp-stat" style="--i:0">
             <p class="bp-stat-fig">94%</p>
             <p class="bp-stat-body">94% of B2B buyers use AI during their decision-making process.</p>
             <p class="bp-stat-credit">Forrester, Buyers&rsquo; Journey Survey 2025 / State of Business Buying 2026</p>
           </div>
-          <div class="bp-stat">
+          <div class="bp-stat" style="--i:1">
             <p class="bp-stat-fig">2x</p>
             <p class="bp-stat-body">Twice as many buyers name generative AI as their most meaningful source of information.</p>
             <p class="bp-stat-credit">Forrester, Buyers&rsquo; Journey Survey 2025</p>
           </div>
-          <div class="bp-stat">
+          <div class="bp-stat" style="--i:2">
             <p class="bp-stat-fig">69%</p>
             <p class="bp-stat-body">69% of buyers chose a different vendor than they planned because AI recommended it. One in three chose a vendor they had never heard of.</p>
             <p class="bp-stat-credit">G2, The Answer Economy, 2026</p>
           </div>
         </div>
       </div>
+
+      <!-- State 1: Establish the supply (frame 3438:5257) -->
+      <section class="bp-card is-content" data-state="1">
+        <div class="bp-mosaic-stage">
+          <canvas class="bp-mosaic" id="bpMosaic" aria-hidden="true"></canvas>
+          <!-- The three pop-ups, cycled one at a time by the script while
+               Mosaic 2 is the state on screen. Positions are the frame's,
+               converted to the art's units (1 unit = 42.052/60 px at 1440). -->
+          <div class="bp-overlay" id="bpPops" aria-hidden="true">
+            <div class="bp-pop" data-origin="br" style="left:calc(43 * var(--u)); top:calc(60 * var(--u)); width:calc(257 * var(--u)); min-height:calc(180 * var(--u)); background:#7EA3FF;">
+              <p>180 topics in 51 clusters, built from 1101 of your sources</p>
+            </div>
+            <div class="bp-pop" data-origin="bl" style="left:calc(720 * var(--u)); top:calc(300 * var(--u)); width:calc(245 * var(--u)); min-height:calc(237 * var(--u)); background:#F45944; --fig:57;">
+              <p class="bp-pop-fig">41.5%</p>
+              <p>Your Brand Proximity score</p>
+            </div>
+            <div class="bp-pop" data-origin="tr" style="left:calc(-90 * var(--u)); top:calc(660 * var(--u)); width:calc(270 * var(--u)); min-height:calc(240 * var(--u)); background:#368F8E; --fig:38.5;">
+              <p class="bp-pop-fig">34%</p>
+              <p>of your published expertise talks about Healthcare</p>
+            </div>
+          </div>
+        </div>
+        <div class="bp-inner">
+          <div class="bp-text">
+            <h2 class="bp-heading">Establish the&nbsp;supply</h2>
+            <div class="bp-copy">
+              <p class="bp-lead">Get the right story, evidence and expertise in front of the right people.</p>
+              <p>We can help you understand the knowledge you already have in your content ecosystem, identify the subjects and ideas that matter, and use AI to group it into a connected, authoritative body of knowledge.</p>
+            </div>
+          </div>
+          <nav class="bp-subnav" aria-label="Brand Proximity">
+            <button type="button" data-state="1" aria-current="true">Establish the supply</button>
+            <button type="button" data-state="2" aria-current="false">Understand the demand</button>
+            <button type="button" data-state="3" aria-current="false">Create AI content</button>
+          </nav>
+        </div>
+      </section>
+
+      <!-- State 2: Understand the demand (frame 3438:5575) -->
+      <section class="bp-card is-insight" data-state="2">
+        <div class="bp-mosaic-stage">
+          <canvas class="bp-mosaic" id="bpMosaicInsight" aria-hidden="true"></canvas>
+          <!-- The frame's three overlay cards, in the art's units. The dark
+               one carries the frame's PLACEHOLDER copy, reproduced as drawn. -->
+          <div class="bp-overlay" aria-hidden="true">
+            <div class="bp-pop ink-dark" data-origin="bl" style="--k:0; left:calc(740 * var(--u)); top:calc(62 * var(--u)); width:calc(317 * var(--u)); min-height:calc(300 * var(--u)); background:#A9C2FF;">
+              <p class="bp-pop-title">Buyer profile</p>
+              <div class="bp-pop-rows">
+                <div class="bp-pop-row"><span class="l">Motivations</span><span class="v">142</span></div>
+                <div class="bp-pop-row"><span class="l">Challenges</span><span class="v">92</span></div>
+                <div class="bp-pop-row"><span class="l">Questions</span><span class="v">13</span></div>
+              </div>
+            </div>
+            <div class="bp-pop ink-dark is-strip" data-origin="tr" style="--k:1; left:calc(-9 * var(--u)); top:calc(288 * var(--u)); width:calc(427 * var(--u)); min-height:calc(163 * var(--u)); background:#BFD1FF;">
+              <p class="hd"><span><span class="mk"></span>Buyer profile</span><span>1/19</span></p>
+              <p class="nm">Chief technology officer<br><span class="sub">Financial services</span></p>
+            </div>
+            <div class="bp-pop" data-origin="tl" style="--k:2; left:calc(420 * var(--u)); top:calc(612 * var(--u)); width:calc(317 * var(--u)); min-height:calc(300 * var(--u)); background:#20325F;">
+              <p class="bp-pop-title">xxxxxx</p>
+              <div class="bp-pop-rows">
+                <div class="bp-pop-row"><span class="l">xxxxx</span><span class="v">142</span></div>
+                <div class="bp-pop-row"><span class="l">xxxxxx</span><span class="v">92</span></div>
+                <div class="bp-pop-row"><span class="l">xxxx</span><span class="v">13</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bp-inner">
+          <div class="bp-text">
+            <h2 class="bp-heading">Understand the&nbsp;demand</h2>
+            <div class="bp-copy">
+              <p class="bp-lead">Go beyond personas to understand what your audience is really asking.</p>
+              <p>We build an interactive representation of the people, challenges and conversations that matter to your brand. This will help you understand their motivations and triggers and make more meaningful connections.</p>
+            </div>
+          </div>
+          <nav class="bp-subnav" aria-label="Brand Proximity">
+            <button type="button" data-state="1" aria-current="false">Establish the supply</button>
+            <button type="button" data-state="2" aria-current="true">Understand the demand</button>
+            <button type="button" data-state="3" aria-current="false">Create AI content</button>
+          </nav>
+        </div>
+      </section>
+
+      <!-- State 3: Create AI-ready content (frame 3438:6130) -->
+      <section class="bp-card is-aeo" data-state="3">
+        <div class="bp-mosaic-stage">
+          <canvas class="bp-mosaic" id="bpMosaicAeo" aria-hidden="true"></canvas>
+          <!-- The frame's three overlay cards. "XX%" and its lorem are the
+               frame's PLACEHOLDER copy, reproduced as drawn. -->
+          <div class="bp-overlay" aria-hidden="true">
+            <div class="bp-pop" data-origin="bl" style="--k:0; left:calc(614 * var(--u)); top:calc(102 * var(--u)); width:calc(317 * var(--u)); min-height:calc(300 * var(--u)); background:#511E17; --fig:57;">
+              <p class="bp-pop-fig">92</p>
+              <p>AEO pages generated</p>
+            </div>
+            <div class="bp-pop ink-dark" data-origin="tr" style="--k:1; left:calc(-24 * var(--u)); top:calc(238 * var(--u)); width:calc(317 * var(--u)); min-height:calc(250 * var(--u)); background:#F89082; --fig:38.5;">
+              <p class="bp-pop-fig">XX%</p>
+              <p>Et id sem faucibus fringilla felis elementum tortor ornare venenatis.</p>
+            </div>
+            <div class="bp-pop ink-dark to-end" data-origin="tr" style="--k:2; left:calc(-104 * var(--u)); top:calc(562 * var(--u)); width:calc(317 * var(--u)); min-height:calc(250 * var(--u)); background:#F9ACA1;">
+              <p>Buyer questions meet your evidence in a ~150 word direct answer.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bp-inner">
+          <div class="bp-text">
+            <h2 class="bp-heading">Create AI-ready content</h2>
+            <div class="bp-copy">
+              <p class="bp-lead">Create the content AI needs to see without losing your human touch.</p>
+              <p>We bring together a precise understanding of what your audience is asking with smart ways to surface your expertise, automatically generating webpages that get AI&rsquo;s attention while connecting deeply with your customers.</p>
+            </div>
+          </div>
+          <nav class="bp-subnav" aria-label="Brand Proximity">
+            <button type="button" data-state="1" aria-current="false">Establish the supply</button>
+            <button type="button" data-state="2" aria-current="false">Understand the demand</button>
+            <button type="button" data-state="3" aria-current="true">Create AI content</button>
+          </nav>
+        </div>
+      </section>
+
     </div>
   </section>
 
-  <!-- ---------- 2. Content card (sage) ---------- -->
-  <section class="bp-card is-content">
-    <!-- The mosaic (Mosaics 2–4) — position:fixed via .bp-mosaic, offset
-         by the script so it rides up in the middle of this card and holds
-         centre once the card pins. Its DOM position here has no effect on
-         where it appears on screen; it's this card's first child
-         deliberately: see
-         "The mosaic" in the CSS for why that (not a z-index) is what
-         paints it above this card's background but below its own
-         heading/copy, and lets .is-insight/.is-aeo still cover it later.
-         Those two cards each have their own twin of this canvas, by the
-         same mechanic — see #bpMosaicInsight and #bpMosaicAeo. -->
-    <div class="bp-mosaic-stage" id="bpStage2">
-      <canvas class="bp-mosaic" id="bpMosaic" aria-hidden="true"></canvas>
-    </div>
-    <div class="bp-feature">
-      <h2 class="bp-heading">Establish the supply</h2>
-      <!-- Empty — reserves the grid's proportions only, same as every
-           other section. -->
-      <div class="bp-graphic" aria-hidden="true"></div>
-      <div class="bp-copy">
-        <p class="bp-subhead">Get the right story, evidence and expertise in front of the right people.</p>
-        <p>We can help you understand the knowledge you already have in your content ecosystem, identify the subjects and ideas that matter, and use AI to group it into a connected, authoritative body of knowledge.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ---------- 3. Insight card (blue) ---------- -->
-  <section class="bp-card is-insight">
-    <!-- The mosaic's twin — exactly the same mechanic as #bpMosaic in the
-         Content card: same .bp-mosaic fixed/centred box, placed as this
-         card's first child so it paints above this card's background but
-         below its own heading/copy. Both canvases are drawn identically
-         every frame, so when this card slides up and covers the Content
-         one the mosaic simply carries on — a single canvas can't do that,
-         because it can only ever live in one card's stacking context. -->
-    <div class="bp-mosaic-stage">
-      <canvas class="bp-mosaic" id="bpMosaicInsight" aria-hidden="true"></canvas>
-    </div>
-    <div class="bp-feature">
-      <h2 class="bp-heading">Understand the demand</h2>
-      <div class="bp-graphic" aria-hidden="true"></div>
-      <div class="bp-copy">
-        <p class="bp-subhead">Go beyond personas to understand what your audience is really asking.</p>
-        <p>We build an interactive representation of the people, challenges and conversations that matter to your brand. This will help you understand their motivations and triggers and make more meaningful connections.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ---------- 4. AEO card (red) ---------- -->
-  <section class="bp-card is-aeo">
-    <!-- The mosaic's third twin — same mechanic as #bpMosaicInsight above,
-         one canvas per card the mosaic has to appear inside. -->
-    <div class="bp-mosaic-stage">
-      <canvas class="bp-mosaic" id="bpMosaicAeo" aria-hidden="true"></canvas>
-    </div>
-    <div class="bp-feature">
-      <h2 class="bp-heading">Create AI-ready content</h2>
-      <div class="bp-graphic" aria-hidden="true"></div>
-      <div class="bp-copy">
-        <p class="bp-subhead">Create the content AI needs to see without losing your human touch.</p>
-        <p>We bring together a precise understanding of what your audience is asking with smart ways to surface your expertise, automatically generating webpages that get AI’s attention while connecting deeply with your customers.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- The pop-up layer — a page-level sibling of the three cards, not a
-       child of any one of them, and that placement is the whole point.
-       Inside the Content card it was trapped in that card's stacking
-       context, so the instant the Insight card began wiping up over it the
-       pop-ups went under along with everything else that card owns — they
-       appeared to fall behind the mosaic, because the mosaic carried on
-       (each card has its own canvas twin) while the pop-ups didn't. Out
-       here at z-index:13 they clear all three cards, so they stay in front
-       of whichever mosaic is on screen throughout the wipe. Everything else
-       is unchanged: same fixed, centred .bp-mosaic-stage box and the same
-       --u unit space, and paint() gives it the identical rise transform as
-       the Content card's own stage, so it stays registered to the artwork
-       to the pixel. .contact/.related (z-index:20) still cover it. -->
-  <div class="bp-mosaic-stage is-pops" id="bpPopStage" aria-hidden="true">
-    <!-- The pop-ups, in the mosaic's own 840x960 unit space (see
-         .bp-overlay). They're cycled one at a time by the script, each
-         expanding out of the corner that faces the middle of the mosaic
-         and collapsing back into it once the reader scrolls on. -->
-    <div class="bp-overlay">
-      <div class="bp-pop" data-origin="br" style="left:calc(60 * var(--u)); top:calc(60 * var(--u)); width:calc(240 * var(--u)); min-height:calc(180 * var(--u)); background:#7EA3FF;">
-        <p>180 topics in 51 clusters, built from 1101 of your sources</p>
-      </div>
-      <div class="bp-pop" data-origin="bl" style="left:calc(720 * var(--u)); top:calc(300 * var(--u)); width:calc(246 * var(--u)); min-height:calc(236 * var(--u)); background:#F45944; --fig:57;">
-        <p class="bp-pop-fig">41.5%</p>
-        <p>Your Brand Proximity score</p>
-      </div>
-      <div class="bp-pop" data-origin="tr" style="left:calc(-60 * var(--u)); top:calc(660 * var(--u)); width:calc(240 * var(--u)); min-height:calc(240 * var(--u)); background:#368F8E; --fig:40;">
-        <p class="bp-pop-fig">34%</p>
-        <p>of your published expertise talks about Healthcare</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Once the reader has scrolled past the group entirely, normal page
-       scrolling resumes: this section, .related and the footer are
-       ordinary content from here (see .stack-released and paint()'s own
-       comments for how the group above actually lets go rather than
-       remaining pinned underneath). -->
+  <!-- ---------- 3. Contact ---------- -->
   <section class="contact" aria-label="Contact">
     <h2 class="contact-head reveal">Want to know how your brand shows up?</h2>
     <a class="contact-cta reveal" href="contact.html">Request a free sample report<svg class="contact-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
   </section>
 
-  <!-- ---------- 5. Related articles ---------- -->
-  <!-- Verbatim from article-2.html's own Related section, retitled. -->
+  <!-- ---------- 4. Related ---------- -->
   <section class="related">
     <h2 class="reveal">Our latest AI thinking</h2>
     <div class="related-grid">
-      <!-- ⚠️ Art and bylines are the named posts' OWN, from thinking.html —
-           the site's standing rule for Related tiles. The package paired
-           this headline with the coffee photo and the Janelle post with
-           Ross's poster, neither of which is that post's artwork. The
-           Janelle post has a page, so it links there. -->
-      <a class="rel-card r-janelle reveal" href="article-2.html">
-        <div class="rel-media"><img src="assets/thinking/06-janelle-shoes.jpg" alt="" loading="lazy" decoding="async"></div>
-        <h3>I am challenging: Janelle</h3>
-        <p class="byline">By Rose | 24.03.26 | Culture</p>
+      <!-- Art and bylines are the named posts' own, from thinking.html —
+           the frame draws Charlotte's photo for the first (its unsplash
+           source IS that card's art) and the Q for the second, both square. -->
+      <a class="rel-card reveal" href="thinking.html">
+        <div class="rel-media"><img src="assets/thinking/10-charlotte-photo.jpg" alt="" loading="lazy" decoding="async"></div>
+        <h3>AI; didn&rsquo;t read. Why audiences are craving personality.</h3>
+        <p class="byline">By Janelle | 29.04.26 | AI</p>
       </a>
-      <a class="rel-card r-guidelines reveal" href="thinking.html">
-        <div class="rel-media"><img src="assets/thinking/07-answers-alphabet.png" alt="" loading="lazy" decoding="async"></div>
-        <h3>Are your brand guidelines ready to deliver behaviour?</h3>
-        <p class="byline">By Don | 17.08.26 | AI</p>
+      <a class="rel-card reveal" href="article.html">
+        <div class="rel-media"><img src="assets/thinking/04-answers-q.png" alt="" loading="lazy" decoding="async"></div>
+        <h3>Your brand has got the answers. AI just can&rsquo;t find them.</h3>
+        <p class="byline">By Louise | 17.08.26 | AI</p>
       </a>
     </div>
   </section>
@@ -1181,7 +1095,7 @@
 
   document.documentElement.classList.add("js");
 
-  /* ---- the semi-sticky nav, verbatim from work.html ---- */
+  /* ---- --sbw, as every page measures it ---- */
   function measureScrollbar(){
     const w = window.innerWidth - document.documentElement.clientWidth;
     document.documentElement.style.setProperty("--sbw", Math.max(0, w) + "px");
@@ -1189,45 +1103,40 @@
   measureScrollbar();
   addEventListener("resize", measureScrollbar, {passive:true});
 
-  const navEl = document.querySelector(".nav");
-  const NAV_HIDE_DELTA = 10;
-  let lastNavY = 0, navH = 0, navTicking = false;
-  function measureNav(){ navH = navEl.offsetHeight; }
-  measureNav();
-  addEventListener("resize", measureNav, {passive:true});
-  function syncNav(){
-    navTicking = false;
-    const y = window.scrollY || 0;
-    if (innerWidth <= 767){ navEl.classList.remove("is-hidden"); lastNavY = y; return; }
-    const dy = y - lastNavY;
-    if (Math.abs(dy) < NAV_HIDE_DELTA) return;
-    const hide = dy > 0 && y > navH;
-    if (hide !== navEl.classList.contains("is-hidden")) navEl.classList.toggle("is-hidden", hide);
-    lastNavY = y;
-  }
-  addEventListener("scroll", () => {
-    if (navTicking) return;
-    navTicking = true;
-    requestAnimationFrame(syncNav);
-  }, {passive:true});
+  /* The nav is fixed and permanent on this page — no hide-on-scroll, so
+     no scroll handler for it. See the .nav comment. */
 
-  /* Each stacking card's text rises in once the card has actually pinned —
-     the card's own position:sticky already produces the cover-the-previous-
-     one motion; this only fades/rises the text inside it once it's on
-     screen. One-shot, like the rest of the site's reveals. */
-  const cardObserver = new IntersectionObserver((entries, obs) => {
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const PAGE_MAX = 2200;                   // mirrors --page-max
+  const MOBILE = 767;
+  const STATES = 3;                         // cards; Context is state 0
+
+  const stage   = document.getElementById("bpStage");
+  const pin     = document.getElementById("bpPin");
+  const context = document.getElementById("bpContext");
+  const cards   = [...pin.querySelectorAll(".bp-card")];
+  const stages  = cards.map(c => c.querySelector(".bp-mosaic-stage"));
+  const overlays = cards.map(c => c.querySelector(".bp-overlay"));
+  const mosaicCanvases = cards.map(c => c.querySelector(".bp-mosaic"));
+  const mosaicCtxs = mosaicCanvases.map(c => c.getContext("2d"));
+  const mosaicCanvas = mosaicCanvases[0];
+
+  /* ------------------------------------------------------------------ *
+   * Reveals that are not scroll-model driven
+   * ------------------------------------------------------------------ */
+  // Context: copy first, stats one by one (the CSS carries the stagger).
+  // The context sits inside the sticky pin, which IntersectionObserver
+  // handles fine — it reads rendered rects.
+  const contextObserver = new IntersectionObserver((entries, obs) => {
     for (const entry of entries){
       if (!entry.isIntersecting) continue;
       entry.target.classList.add("in");
       obs.unobserve(entry.target);
     }
-  }, { threshold:.6 });
-  document.querySelectorAll(".bp-card").forEach(el => cardObserver.observe(el));
+  }, { rootMargin: "0px 0px -12% 0px", threshold: 0.15 });
+  contextObserver.observe(context);
 
-  /* The Related section's heading and cards — same one-shot fade/rise-in
-     as every other page's .reveal (see article-2.html's own copy of this
-     observer), added here since this page otherwise only wires up its own
-     .bp-card text above. */
+  // Contact and Related — the site's standard one-shot reveal.
   const revealObserver = new IntersectionObserver((entries, obs) => {
     for (const entry of entries){
       if (!entry.isIntersecting) continue;
@@ -1238,113 +1147,84 @@
   document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
 
   /* ------------------------------------------------------------------ *
-   * The mosaic
+   * The mosaic data — Mosaics 1–4
    *
-   * Ported from the separate Brand-Proximity landing-page prototype —
-   * same mechanic: a <canvas> repainted continuously from ordinary scroll
-   * position (no lock, no hijacked wheel/touch), mouse-gravity hover on
-   * top. Scaled down from a full-viewport background to one centred box,
-   * using Figma's own four mosaic layouts.
-   *
-   * Ninety-one squares, read straight off the source frame's own mosaic
-   * exports: [x1,y1,x2,y2,x3,y3,x4,y4, c1,c2,c3,c4] — four states'
-   * centre-points then four states' colours, one shared coordinate space.
-   * State 2 is the redrawn Mosaic 2 layout, taken from its own SVG export
-   * and paired to the existing state-3 squares by minimum total travel
-   * (optimal assignment, not nearest-first), so the 2 -> 3 leg still reads
-   * as squares stepping to nearby cells rather than crossing the frame.
-   * Matching the 90 across states isn't 1:1 by layer name — Figma has
-   * every square just named "Vector" — so it's done by colour: the
-   * accent-coloured squares keep their exact colour between states and
-   * are paired to their exact colour match nearest by position; the rest
-   * are the shared greens re-balanced in bulk between states, paired
-   * nearest-position regardless of colour and cross-fading (hard swap,
-   * not a blend) from whichever colour they started with.
-   *
-   * The canvas itself never moves and is never reparented — .bp-mosaic is
-   * permanently position:fixed, centred via top/left/transform in CSS.
+   * Ninety-one squares: [x1,y1,x2,y2,x3,y3,x4,y4, c1,c2,c3,c4] — four
+   * states' centre-points then four states' colours, one shared 840 x 960
+   * coordinate space on a 60-unit cell (14 x 16). States 1 and 2 are the
+   * other designer's data (state 1 belongs to the hero's own Mosaic 1
+   * system and is unused here; state 2 matches Myles' frame square for
+   * square). ⚠️ States 3 and 4 were RE-DERIVED on 3 Sep 2026 from Myles'
+   * frame (3438:6006 and 3438:6264): the Understand mosaic is now 81
+   * squares on a lighter blue ramp (#4165BD / #5B82E3 / #7EA3FF …) and
+   * the Create mosaic 80 squares on the red ramp, both centred in the
+   * grid. Each of the 91 squares was paired to a target by colour first,
+   * then nearest cell; the ten or eleven surplus squares in each state
+   * double up on their nearest target's cell (drawn on top, invisible)
+   * rather than vanishing. Mean travel 2.5 cells on 2 -> 3, 1.2 on 3 -> 4.
    * ------------------------------------------------------------------ */
   const MOSAIC_BOX = { w: 840, h: 960, cell: 60 };
   const MOSAIC_SQUARES = [
-    [510,510,330,330,510,510,510,510,'#2A3655','#D4E0FF','#7EA3FF','#FBC8C1'],[570,510,270,150,570,510,570,510,'#546DAA','#A9C2FF','#93B2FF','#F89082'],
-    [210,330,210,870,630,750,570,810,'#7EA3FF','#041716','#2A3655','#F89082'],[270,390,150,390,270,390,270,390,'#7EA3FF','#82C1C0','#A9C2FF','#7A2D22'],
-    [210,390,450,750,450,750,450,750,'#A9C2FF','#125E5D','#192133','#F67563'],[450,570,450,570,450,570,450,570,'#93B2FF','#041716','#6988D4','#1B5655'],
-    [810,270,750,270,750,270,570,210,'#F67563','#A33B2D','#D4E0FF','#511E17'],[390,870,210,810,630,690,510,810,'#F45944','#0F4B4A','#2A3655','#F89082'],
-    [570,810,570,690,570,690,570,690,'#F67563','#368F8E','#2A3655','#FDDEDA'],[510,690,510,690,510,690,510,690,'#F9ACA1','#0F4B4A','#154544','#CB4A39'],
-    [390,750,390,750,390,750,390,750,'#A9C2FF','#125E5D','#3F5180','#F89082'],[330,930,150,750,150,750,210,810,'#D4E0FF','#368F8E','#192133','#FEF4F3'],
-    [330,750,330,750,330,750,330,750,'#FBC8C1','#CDE6E6','#192133','#FAACA2'],[570,270,570,270,570,270,570,270,'#BFD1FF','#F67563','#BFD1FF','#A33B2D'],
-    [390,690,450,690,450,690,450,690,'#E5EDFF','#0F4B4A','#0B2222','#F45944'],[330,450,330,450,330,450,330,450,'#000000','#167170','#BFD1FF','#005366'],
-    [510,450,510,450,510,450,510,450,'#BFD1FF','#57ACAB','#93B2FF','#F89082'],[270,210,330,810,750,690,270,150,'#A9C2FF','#041716','#192133','#F67563'],
-    [330,210,690,210,810,570,330,90,'#A9C2FF','#F9ACA1','#6988D4','#511E17'],[330,570,330,570,330,570,330,570,'#BFD1FF','#ABD6D5','#FFFFFF','#F45944'],
-    [390,210,510,30,750,630,270,210,'#BFD1FF','#93B2FF','#6988D4','#31120E'],[510,210,690,90,810,450,450,90,'#3F5280','#F9ACA1','#BFD1FF','#A33B2D'],
-    [630,510,330,150,630,510,390,390,'#546DAA','#93B2FF','#F89082','#FAACA2'],[510,630,510,630,510,630,510,630,'#A9C2FF','#0B3938','#2A3655','#CB4A39'],
-    [570,330,450,90,570,330,570,330,'#3F5280','#E5EDFF','#D4E0FF','#F45944'],[270,90,390,330,630,630,390,810,'#BFD1FF','#314B8E','#546DAA','#FAACA2'],
-    [150,150,150,930,810,750,210,90,'#A9C2FF','#041716','#2A3655','#F67563'],[450,270,270,30,450,270,450,270,'#A9C2FF','#A9C2FF','#D4E0FF','#F45944'],
-    [210,570,210,690,210,690,210,690,'#F9ACA1','#041716','#3F5180','#FBC8C1'],[570,450,570,450,570,450,570,450,'#F89082','#368F8E','#A9C2FF','#B5CCCC'],
-    [150,510,150,510,150,510,210,510,'#A33B2D','#57ACAB','#93B2FF','#F89082'],[90,570,150,630,150,630,210,450,'#A33B2D','#368F8E','#3F5180','#F45944'],
-    [390,90,690,150,750,330,570,150,'#B5CCCC','#F67563','#D4E0FF','#511E17'],[510,270,450,150,510,270,510,270,'#206766','#314B8E','#D4E0FF','#CB4A39'],
-    [270,510,270,510,270,510,270,510,'#D2E1E0','#167170','#7EA3FF','#F45944'],[270,270,270,270,270,270,270,270,'#458080','#7EA3FF','#D4E0FF','#511E17'],
-    [210,450,270,690,270,690,270,690,'#206766','#072625','#3F5180','#FAACA2'],[510,330,390,150,510,330,510,330,'#206766','#93B2FF','#D4E0FF','#F67563'],
-    [150,270,690,270,810,690,270,90,'#90B3B3','#F89082','#546DAA','#A33B2D'],[330,30,390,270,690,630,330,210,'#458080','#A9C2FF','#546DAA','#F67563'],
-    [390,570,390,570,390,570,390,570,'#8FB3B2','#041716','#546DAA','#A33B2D'],[630,450,570,330,630,450,390,450,'#B5CCCC','#511E17','#A9C2FF','#7A2D22'],
-    [630,270,750,150,810,330,510,90,'#1B5655','#F45944','#D4E0FF','#722A20'],[450,150,750,450,750,450,450,150,'#6A9A99','#511E17','#7EA3FF','#A33B2D'],
-    [330,510,330,510,330,510,330,510,'#B5CCCC','#167170','#93B2FF','#CB4A39'],[270,630,270,630,270,630,270,630,'#458080','#0B3938','#2A3655','#FAACA2'],
-    [210,90,270,810,690,690,210,270,'#B5CCCC','#57ACAB','#192133','#31120E'],[270,150,570,210,690,510,390,270,'#90B3B3','#F67563','#6988D4','#F67563'],
-    [390,630,390,630,390,630,390,630,'#458080','#125E5D','#3F5180','#F67563'],[330,630,330,630,330,630,330,630,'#458080','#0F4B4A','#546DAA','#F89082'],
-    [330,690,270,750,270,750,270,750,'#B5CCCC','#82C1C0','#2A3655','#FAACA2'],[450,510,390,450,450,510,450,510,'#206766','#167170','#93B2FF','#A33B2D'],
-    [510,390,270,90,510,390,510,390,'#D2E1E0','#20325F','#BFD1FF','#F67563'],[330,150,210,510,510,570,510,570,'#458080','#167170','#546DAA','#FBC8C1'],
-    [630,90,750,210,810,390,390,210,'#B5CCCC','#FBC8C1','#7EA3FF','#F45944'],[330,390,330,390,330,390,330,390,'#000000','#125E5D','#D4E0FF','#7A2D22'],
-    [30,450,210,630,210,630,210,630,'#90B3B3','#82C1C0','#3F5180','#F89082'],[390,270,690,330,750,570,330,150,'#D2E1E0','#F89082','#93B2FF','#CB4A39'],
-    [330,270,150,870,570,750,570,750,'#B5CCCC','#125E5D','#192133','#F45944'],[270,330,270,210,270,330,270,330,'#B5CCCC','#7EA3FF','#BFD1FF','#511E17'],
-    [570,570,330,270,570,570,570,570,'#90B3B3','#4164BD','#93B2FF','#FBC8C1'],[270,570,270,570,270,570,270,570,'#6A9A99','#0B3938','#7EA3FF','#F67563'],
-    [210,150,330,210,630,570,330,330,'#B5CCCC','#93B2FF','#3F5180','#511E17'],[270,450,270,450,270,450,270,450,'#B5CCCC','#57ACAB','#BFD1FF','#A33B2D'],
-    [390,510,390,510,390,510,390,510,'#B5CCCC','#0F4B4A','#546DAA','#9B0000'],[90,390,150,690,150,690,270,810,'#90B3B3','#57ACAB','#3F5180','#FBC8C1'],
-    [570,30,750,390,750,390,450,210,'#D2E1E0','#FBC8C1','#BFD1FF','#F45944'],[450,630,450,630,450,630,450,630,'#B5CCCC','#0B3938','#1B5655','#EB0000'],
-    [390,330,630,90,750,510,390,150,'#458080','#F89082','#6988D4','#A33B2D'],[210,270,450,810,690,750,450,810,'#B5CCCC','#57ACAB','#192133','#F89082'],
-    [90,330,210,570,570,630,570,630,'#D2E1E0','#ABD6D5','#6988D4','#FBC8C1'],[630,390,510,90,630,390,510,210,'#B5CCCC','#93B2FF','#BFD1FF','#A33B2D'],
-    [450,330,450,330,450,330,450,330,'#B5CCCC','#82C1C0','#BFD1FF','#F89082'],[330,330,510,750,510,750,510,750,'#000000','#167170','#192133','#F45944'],
-    [450,390,450,390,450,390,450,390,'#1B5655','#368F8E','#93B2FF','#FAACA2'],[150,330,630,30,810,630,210,210,'#6A9A99','#31120E','#2A3655','#511E17'],
-    [390,450,390,690,390,690,390,690,'#000000','#CDE6E6','#546DAA','#FF684F'],[150,450,150,810,90,690,210,330,'#B5CCCC','#125E5D','#2A3655','#7A2D22'],
-    [210,510,150,450,90,630,210,390,'#458080','#ABD6D5','#FFFFFF','#CB4A39'],[150,570,150,570,150,570,210,570,'#206766','#57ACAB','#3F5180','#F67563'],
-    [570,390,570,390,570,390,570,390,'#458080','#31120E','#D4E0FF','#F45944'],[690,570,390,210,690,570,330,270,'#458080','#7EA3FF','#F67563','#F89082'],
-    [690,390,630,210,690,390,510,150,'#458080','#511E17','#BFD1FF','#7A2D22'],[330,90,630,270,690,450,390,330,'#90B3B3','#FDDEDA','#A9C2FF','#F89082'],
-    [210,210,270,870,750,750,210,150,'#458080','#368F8E','#192133','#100605'],[450,450,450,450,450,450,450,450,'#B5CCCC','#368F8E','#8FB3B2','#FAACA2'],
-    [150,390,90,750,90,750,330,810,'#458080','#57ACAB','#192133','#FBC8C1'],[450,210,750,330,810,510,390,90,'#B5CCCC','#F9ACA1','#93B2FF','#7A2C22'],
-    [750,210,750,90,810,270,570,90,'#90B3B3','#F45944','#E5EDFF','#000000'],[390,810,210,750,210,750,210,750,'#B5CCCC','#CDE6E6','#192133','#FBC8C1'],
-    [390,390,330,690,330,690,330,690,'#000000','#ABD6D5','#192133','#F89082']
+    [510,510,330,330,690,270,570,270,'#2A3655','#D4E0FF','#D4E0FF','#511E17'],[570,510,270,150,210,270,210,270,'#546DAA','#A9C2FF','#A9C2FF','#F45944'],
+    [210,330,210,870,690,750,570,750,'#7EA3FF','#041716','#4165BD','#F45944'],[270,390,150,390,210,390,210,390,'#7EA3FF','#82C1C0','#93B2FF','#F89082'],
+    [210,390,450,750,450,750,450,750,'#A9C2FF','#125E5D','#20325F','#F67563'],[450,570,450,570,450,570,450,570,'#93B2FF','#041716','#5B82E3','#F45944'],
+    [810,270,750,270,690,570,570,570,'#F67563','#A33B2D','#7EA3FF','#CB4A39'],[390,870,210,810,30,690,150,270,'#F45944','#0F4B4A','#4165BD','#F67563'],
+    [570,810,570,690,570,690,570,690,'#F67563','#368F8E','#4165BD','#CB4A39'],[510,690,510,690,510,690,510,690,'#F9ACA1','#0F4B4A','#7EA3FF','#F45944'],
+    [390,750,390,750,390,750,390,750,'#A9C2FF','#125E5D','#4165BD','#F89082'],[330,930,150,750,150,750,150,750,'#D4E0FF','#368F8E','#4165BD','#FDDEDA'],
+    [330,750,330,750,330,750,330,750,'#FBC8C1','#CDE6E6','#4165BD','#FAACA2'],[570,270,570,270,570,510,570,510,'#BFD1FF','#F67563','#4165BD','#CB4A39'],
+    [390,690,450,690,450,690,450,690,'#E5EDFF','#0F4B4A','#314B8E','#F67563'],[330,450,330,450,450,510,450,510,'#000000','#167170','#4165BD','#CB4A39'],
+    [510,450,510,450,510,450,510,450,'#BFD1FF','#57ACAB','#7EA3FF','#A33B2D'],[270,210,330,810,570,630,570,630,'#A9C2FF','#041716','#4165BD','#CB4A39'],
+    [330,210,690,210,690,630,570,630,'#A9C2FF','#F9ACA1','#93B2FF','#CB4A39'],[330,570,330,570,330,570,330,570,'#BFD1FF','#ABD6D5','#5B82E3','#F67563'],
+    [390,210,510,30,510,390,510,390,'#BFD1FF','#93B2FF','#93B2FF','#511E17'],[510,210,690,90,690,270,570,210,'#3F5280','#F9ACA1','#D4E0FF','#31120E'],
+    [630,510,330,150,210,390,150,390,'#546DAA','#93B2FF','#93B2FF','#F89082'],[510,630,510,630,510,630,510,630,'#A9C2FF','#0B3938','#5B82E3','#F45944'],
+    [570,330,450,90,450,210,450,210,'#3F5280','#E5EDFF','#93B2FF','#511E17'],[270,90,390,330,210,570,210,570,'#BFD1FF','#314B8E','#314B8E','#FAACA2'],
+    [150,150,150,930,150,750,150,210,'#A9C2FF','#041716','#4165BD','#F67563'],[450,270,270,30,510,270,510,270,'#A9C2FF','#A9C2FF','#A9C2FF','#31120E'],
+    [210,570,210,690,90,690,150,330,'#F9ACA1','#041716','#314B8E','#F89082'],[570,450,570,450,570,450,570,450,'#F89082','#368F8E','#5B82E3','#7A2D22'],
+    [150,510,150,510,90,510,150,510,'#A33B2D','#57ACAB','#5B82E3','#FAACA2'],[90,570,150,630,150,630,150,630,'#A33B2D','#368F8E','#7EA3FF','#FBC8C1'],
+    [390,90,690,150,690,690,570,690,'#B5CCCC','#F67563','#5B82E3','#CB4A39'],[510,270,450,150,450,630,450,630,'#206766','#314B8E','#314B8E','#F67563'],
+    [270,510,270,510,270,510,270,510,'#D2E1E0','#167170','#93B2FF','#F67563'],[270,270,270,270,210,330,210,330,'#458080','#7EA3FF','#7EA3FF','#F67563'],
+    [210,450,270,690,270,690,270,690,'#206766','#072625','#7EA3FF','#FDDEDA'],[510,330,390,150,450,210,390,210,'#206766','#93B2FF','#93B2FF','#7A2D22'],
+    [150,270,690,270,690,510,570,510,'#90B3B3','#F89082','#7EA3FF','#CB4A39'],[330,30,390,270,390,390,390,390,'#458080','#A9C2FF','#A9C2FF','#CB4A39'],
+    [390,570,390,570,390,570,390,570,'#8FB3B2','#041716','#7EA3FF','#F67563'],[630,450,570,330,630,390,570,330,'#B5CCCC','#511E17','#7EA3FF','#511E17'],
+    [630,270,750,150,690,270,510,210,'#1B5655','#F45944','#D4E0FF','#31120E'],[450,150,750,450,690,450,270,210,'#6A9A99','#511E17','#A9C2FF','#A33B2D'],
+    [330,510,330,510,330,510,330,510,'#B5CCCC','#167170','#7EA3FF','#F89082'],[270,630,270,630,270,630,270,630,'#458080','#0B3938','#7EA3FF','#F89082'],
+    [210,90,270,810,630,750,570,750,'#B5CCCC','#57ACAB','#4165BD','#F45944'],[270,150,570,210,570,570,570,570,'#90B3B3','#F67563','#5B82E3','#CB4A39'],
+    [390,630,390,630,390,630,390,630,'#458080','#125E5D','#5B82E3','#F89082'],[330,630,330,630,330,630,330,630,'#458080','#0F4B4A','#5B82E3','#F9ACA1'],
+    [330,690,270,750,270,750,270,750,'#B5CCCC','#82C1C0','#5B82E3','#FAACA2'],[450,510,390,450,390,450,390,450,'#206766','#167170','#93B2FF','#F45944'],
+    [510,390,270,90,210,690,210,690,'#D2E1E0','#20325F','#20325F','#FBC8C1'],[330,150,210,510,210,510,210,510,'#458080','#167170','#4165BD','#F89082'],
+    [630,90,750,210,630,630,570,630,'#B5CCCC','#FBC8C1','#5B82E3','#CB4A39'],[330,390,330,390,270,390,270,390,'#000000','#125E5D','#A9C2FF','#F67563'],
+    [30,450,210,630,210,630,210,630,'#90B3B3','#82C1C0','#4165BD','#FBC8C1'],[390,270,690,330,690,330,270,330,'#D2E1E0','#F89082','#BFD1FF','#F45944'],
+    [330,270,150,870,150,750,210,210,'#B5CCCC','#125E5D','#4165BD','#CB4A39'],[270,330,270,210,210,450,210,450,'#B5CCCC','#7EA3FF','#7EA3FF','#F9ACA1'],
+    [570,570,330,270,510,510,510,510,'#90B3B3','#4164BD','#7EA3FF','#A33B2D'],[270,570,270,570,270,570,270,570,'#6A9A99','#0B3938','#93B2FF','#F89082'],
+    [210,150,330,210,390,330,390,330,'#B5CCCC','#93B2FF','#93B2FF','#A33B2D'],[270,450,270,450,270,450,270,450,'#B5CCCC','#57ACAB','#93B2FF','#F67563'],
+    [390,510,390,510,390,510,390,510,'#B5CCCC','#0F4B4A','#93B2FF','#F45944'],[90,390,150,690,150,690,150,690,'#90B3B3','#57ACAB','#4165BD','#FDDEDA'],
+    [570,30,750,390,690,390,270,270,'#D2E1E0','#FBC8C1','#A9C2FF','#F45944'],[450,630,450,630,510,570,510,570,'#B5CCCC','#0B3938','#7EA3FF','#CB4A39'],
+    [390,330,630,90,690,270,390,270,'#458080','#F89082','#D4E0FF','#A33B2D'],[210,270,450,810,570,750,570,750,'#B5CCCC','#57ACAB','#20325F','#F45944'],
+    [90,330,210,570,90,630,330,450,'#D2E1E0','#ABD6D5','#4165BD','#F45944'],[630,390,510,90,510,330,510,330,'#B5CCCC','#93B2FF','#93B2FF','#31120E'],
+    [450,330,450,330,450,330,450,330,'#B5CCCC','#82C1C0','#5B82E3','#7A2D22'],[330,330,510,750,510,750,510,750,'#000000','#167170','#5B82E3','#F45944'],
+    [450,390,450,390,450,390,450,390,'#1B5655','#368F8E','#7EA3FF','#7A2D22'],[150,330,630,30,690,270,330,270,'#6A9A99','#31120E','#D4E0FF','#CB4A39'],
+    [390,450,390,690,390,690,390,690,'#000000','#CDE6E6','#5B82E3','#F89082'],[150,450,150,810,30,750,150,750,'#B5CCCC','#125E5D','#4165BD','#FDDEDA'],
+    [210,510,150,450,210,450,150,450,'#458080','#ABD6D5','#7EA3FF','#FAACA2'],[150,570,150,570,90,570,150,570,'#206766','#57ACAB','#5B82E3','#FBC8C1'],
+    [570,390,570,390,570,390,570,390,'#458080','#31120E','#93B2FF','#7A2D22'],[690,570,390,210,450,270,450,270,'#458080','#7EA3FF','#7EA3FF','#511E17'],
+    [690,390,630,210,630,570,570,570,'#458080','#511E17','#7EA3FF','#CB4A39'],[330,90,630,270,630,510,330,330,'#90B3B3','#FDDEDA','#93B2FF','#CB4A39'],
+    [210,210,270,870,630,690,570,690,'#458080','#368F8E','#5B82E3','#CB4A39'],[450,450,450,450,450,450,450,450,'#B5CCCC','#368F8E','#5B82E3','#A33B2D'],
+    [150,390,90,750,90,750,150,750,'#458080','#57ACAB','#20325F','#FDDEDA'],[450,210,750,330,630,450,330,390,'#B5CCCC','#F9ACA1','#93B2FF','#F45944'],
+    [750,210,750,90,690,270,330,210,'#90B3B3','#F45944','#D4E0FF','#A33B2D'],[390,810,210,750,210,750,210,750,'#B5CCCC','#CDE6E6','#20325F','#FBC8C1'],
+    [390,390,330,690,330,690,330,690,'#000000','#ABD6D5','#4165BD','#FAACA2']
   ];
 
-  // One canvas per card the mosaic has to appear inside — a canvas paints
-  // above its own card's background but below that card's text only by
-  // being that card's first child, so a single element can't serve two
-  // cards. All are identical and co-located, drawn the same every frame,
-  // so the handoff as one card covers the next is invisible. mosaicCanvas
-  // (the Content card's) stays the one that's measured, since it's on
-  // screen first.
-  const mosaicCanvas = document.getElementById("bpMosaic");
-  const mosaicTwin = document.getElementById("bpMosaicInsight");
-  const mosaicTwinAeo = document.getElementById("bpMosaicAeo");
-  const mosaicCanvases = [mosaicCanvas, mosaicTwin, mosaicTwinAeo].filter(Boolean);
-  const mosaicCtxs = mosaicCanvases.map(c => c.getContext("2d"));
-  // The stage is the positioned box (see .bp-mosaic-stage): one transform
-  // and one visibility per card, carrying the canvas and its overlays.
-  const stages = mosaicCanvases.map(c => c.closest(".bp-mosaic-stage"));
-  const stage2 = document.getElementById("bpStage2");
-  // The pop-up layer's stage — not one of the canvas stages above (it holds
-  // no canvas), so it's picked up separately and then driven in lockstep
-  // with stages[0]: same rise, same visibility, same hide on release.
-  const popStage = document.getElementById("bpPopStage");
-  const overlay2 = popStage && popStage.querySelector(".bp-overlay");
-  const contentEl = document.querySelector(".bp-card.is-content");
-  const insightEl = document.querySelector(".bp-card.is-insight");
-  const aeoEl = document.querySelector(".bp-card.is-aeo");
-  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  /* ⚠️ The frame draws Mosaics 3 and 4 at a LARGER cell than Mosaic 2 —
+     56.45 / 56.23 against 42.05 at 1440, i.e. 1.34x — so the art zooms
+     about its centre as it morphs, and the canvas is 1.4x the base box
+     to hold it (see .bp-mosaic). Indexed by state (1..4); state 1 unused.
+     Mobile holds a single scale: the band the mosaic sits in there has
+     no room for the larger cell. */
+  const ZOOM = [1, 1, 1, 1.34, 1.34];
+  const CANVAS_OVER = 0.2;                  // .bp-mosaic's -20% inset
 
   function clamp01(v){ return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function clamp(v, a, b){ return v < a ? a : v > b ? b : v; }
   function smoothstep(t){ return t * t * (3 - 2 * t); }
-  // Deterministic per-square jitter so each square's gravity radius/pull
-  // differs a little — the pulled-in cluster reads as organic, not a
-  // perfect disc.
   function hashUnit(i, seed){
     let h = (i * 374761393 + seed * 668265263) | 0;
     h = Math.imul(h ^ (h >>> 13), 1274126177);
@@ -1352,8 +1232,27 @@
     return (h >>> 0) / 4294967295;
   }
 
-  let scale = 1, boxW = 0, boxH = 0, dpr = 1;
-  let contentFillY = 1, insightFillY = 1, aeoFillY = 1;
+  /* ------------------------------------------------------------------ *
+   * Geometry — measure()
+   *
+   * Everything the scroll model needs is derived here, on load and on
+   * resize (and from a ResizeObserver on the canvas, since the pane used
+   * to build this never dispatches a resize event):
+   *   H        the screen (innerHeight)
+   *   STEP     px of scroll per state — the homepage's WHEEL_SENSITIVITY
+   *            (760) on desktop, so a wheel notch means the same thing on
+   *            both pages; on a phone 85% of the screen so a native flick
+   *            lands about one state on.
+   *   ctxH     the Context screen's height: the viewport, or the copy if
+   *            that's taller (phones). The pin takes this height and a
+   *            sticky top of H − ctxH (0 or negative — see .bp-pin).
+   *   lockY    the scrollY at which the pin sticks, i.e. state 0.
+   *   the mosaic box: --mosaic-w/left/top on the pin, in px.
+   * ⚠️ lockY is read from the STAGE (normal flow), never from the pin —
+   * a sticky element's rect reports where it is stuck (notes, trap 0d).
+   * ------------------------------------------------------------------ */
+  let H = innerHeight, STEP = 760, ctxH = H, lockY = 0, isMobile = false;
+  let scale = 1, boxW = 0, boxH = 0, dpr = 1;     // canvas / art scale
 
   function fitCanvasBuffer(){
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1364,50 +1263,126 @@
     });
   }
 
-  // The canvas is fixed and centred (see .bp-mosaic), so all this measures
-  // is: its own current box (for sizing the drawing buffer and scaling
-  // MOSAIC_SQUARES to it), and contentFillY / insightFillY / aeoFillY —
-  // the scrollY at which each card's sticky top:0 has fully taken over the
-  // viewport. Those are what the mosaic's morph legs are timed to land on,
-  // and aeoFillY doubles as the release point: see .stack-released and
-  // paint() for why nothing here needs a scroll position of its own.
-  const heroEl = document.querySelector(".bp-hero");
   function measure(){
+    H = innerHeight;
+    isMobile = innerWidth <= MOBILE;
+    const sbw = Math.max(0, innerWidth - document.documentElement.clientWidth);
+    const W = innerWidth - sbw;
+    STEP = isMobile ? Math.round(H * 0.85) : 760;
+
+    // The Context screen: the pin holds it at the viewport's height, or
+    // taller if the copy needs it. Measured with the pin's height released
+    // so the copy reports its natural size.
+    pin.style.height = "auto";
+    context.style.minHeight = isMobile ? "0" : H + "px";
+    ctxH = Math.max(H, Math.ceil(context.getBoundingClientRect().height));
+    pin.style.height = ctxH + "px";
+    pin.style.top = (H - ctxH) + "px";
+    cards.forEach(c => { c.style.height = H + "px"; });
+    stage.style.height = (ctxH + STATES * STEP) + "px";
+    lockY = stage.getBoundingClientRect().top + window.scrollY + (ctxH - H);
+
+    // The mosaic box. Desktop: the frame's 588.7 x 672.8 at 596.6 / 113.1
+    // on a 1440 x 900 screen — 47.48% of the content area, starting 40.05%
+    // in, capped at 74.75% of the screen height, vertically centred on
+    // the screen. Mobile: centred in the band between the heading and the
+    // copy (measured off the first card, whose text is laid out).
+    const innerW = Math.min(W, PAGE_MAX);
+    const padX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pad-x")) || 100;
+    const contentW = innerW - 2 * padX;
+    let mw, mx, my;
+    if (!isMobile){
+      cards.forEach(card => { card.querySelector(".bp-heading").style.top = ""; });
+      mw = Math.min(contentW * 0.4748, H * 0.7475 * MOSAIC_BOX.w / MOSAIC_BOX.h);
+      mx = (W - innerW) / 2 + padX + contentW * 0.4005;
+      my = H / 2 - mw * MOSAIC_BOX.h / MOSAIC_BOX.w / 2;
+    } else {
+      // The sub-nav row wraps on a phone, so each heading is placed under
+      // its own sub-nav by measurement, and the mosaic takes the band left
+      // between the heading and the copy (read off the first card).
+      // ⚠️ offsetTop (layout), not rects: the reveal holds the heading and
+      // copy 44px low until the card lands, and a rect would read that.
+      let bandTop = 0, bandBottom = H;
+      cards.forEach((card, i) => {
+        const sub = card.querySelector(".bp-subnav");
+        const head = card.querySelector(".bp-heading");
+        const copy = card.querySelector(".bp-copy");
+        head.style.top = (sub.offsetTop + sub.offsetHeight + 25) + "px";
+        if (i === 0){
+          bandTop = head.offsetTop + head.offsetHeight + 25;
+          bandBottom = copy.offsetTop - 25;
+        }
+      });
+      const band = Math.max(160, bandBottom - bandTop);
+      mw = Math.min(contentW, band * MOSAIC_BOX.w / MOSAIC_BOX.h);
+      mx = (W - mw) / 2;
+      my = bandTop + (band - mw * MOSAIC_BOX.h / MOSAIC_BOX.w) / 2;
+    }
+    pin.style.setProperty("--mosaic-w", mw.toFixed(2) + "px");
+    pin.style.setProperty("--mosaic-left", mx.toFixed(2) + "px");
+    pin.style.setProperty("--mosaic-top", my.toFixed(2) + "px");
+
     const rect = mosaicCanvas.getBoundingClientRect();
     boxW = rect.width; boxH = rect.height;
-    scale = boxW / MOSAIC_BOX.w;
+    scale = mw / MOSAIC_BOX.w;
     fitCanvasBuffer();
+    morphDirty = true;
+  }
 
-    /* ⚠️ Derived from geometry, not read off the cards. A sticky card's
-       getBoundingClientRect() reports where it is STUCK, not where it sits
-       in the flow, so measuring the cards themselves while the page is
-       scrolled into the stack (e.g. on resize) returned the viewport top
-       for every fill point and the morph clock collapsed. The hero is in
-       normal flow, so its bottom is the Content card's flow position, and
-       each card's own box height (offsetHeight, a layout value) steps to
-       the next. */
-    const heroRect = heroEl.getBoundingClientRect();
-    contentFillY = heroRect.top + window.scrollY + heroRect.height;
-    insightFillY = contentFillY + contentEl.offsetHeight;
-    aeoFillY = insightFillY + insightEl.offsetHeight;
+  /* ------------------------------------------------------------------ *
+   * The morph — Mosaic 2 -> 3 -> 4
+   *
+   * Squares move in lockstep on a straight line between their two
+   * positions, the colour swaps hard per square (no cross-fade) at a
+   * moment set by where it starts the leg — lower squares swap earlier,
+   * so the colour change sweeps up the mosaic — and the rendered position
+   * is snapped to the grid every frame, so a square only ever sits on a
+   * whole cell and hops cell to cell instead of sliding. The zoom rides
+   * the same eased clock, about the base box's centre.
+   * ------------------------------------------------------------------ */
+  const N_STATES = 4;
+  const FIRST_STATE = 1;                    // index of Mosaic 2 in the rows
+
+  // The cells at morph progress t (0 = Mosaic 2, 1 = Mosaic 3, 2 = Mosaic
+  // 4), in the canvas's own pixel space — i.e. offset by the canvas's
+  // overhang around the base box. Returns cells plus the grid to snap to.
+  function cellsAt(t){
+    const leg = FIRST_STATE + Math.min(N_STATES - 1 - FIRST_STATE - 1, Math.floor(t));
+    const lt = t - (leg - FIRST_STATE);
+    const z = (isMobile ? 1 : ZOOM[leg + 1] + (ZOOM[leg + 2] - ZOOM[leg + 1]) * lt);
+    const ox = boxW * CANVAS_OVER / 1.4, oy = boxH * CANVAS_OVER / 1.4; // base box origin in the canvas
+    const cx = ox + MOSAIC_BOX.w / 2 * scale, cy = oy + MOSAIC_BOX.h / 2 * scale;
+    const s = MOSAIC_BOX.cell * scale * z;
+    const cells = MOSAIC_SQUARES.map(row => {
+      const ax = row[leg * 2], ay = row[leg * 2 + 1];
+      const bx = row[(leg + 1) * 2], by = row[(leg + 1) * 2 + 1];
+      const ac = row[N_STATES * 2 + leg], bc = row[N_STATES * 2 + leg + 1];
+      const swapAt = 1 - ay / MOSAIC_BOX.h;
+      const x = ax + (bx - ax) * lt, y = ay + (by - ay) * lt;
+      return {
+        x: cx + (x - MOSAIC_BOX.w / 2) * scale * z,
+        y: cy + (y - MOSAIC_BOX.h / 2) * scale * z,
+        side: s,
+        hex: lt < swapAt ? ac : bc,
+      };
+    });
+    // the zoomed grid's origin: the base box centre is a whole cell corner
+    // in every state, so snapping relative to it keeps the grid true
+    return { cells, step: s, gx0: cx, gy0: cy };
   }
 
   // Mouse gravity: hovering pulls nearby squares toward the cursor, eased
-  // back on release. Pulled squares settle on whole grid-cell offsets
-  // rather than arbitrary pixel positions (see snapToGrid() below).
+  // back on release; pulled squares settle on whole grid-cell offsets.
   const GRAVITY_EASE = reducedMotion.matches ? 1 : 0.18;
   const gravityState = { hovering: false, x: 0, y: 0 };
-
   const gravityItems = MOSAIC_SQUARES.map((_, i) => ({
     dx: 0, dy: 0,
     radiusJ: 0.6 + hashUnit(i, 55555) * 0.7,
     pullJ: 0.7 + hashUnit(i, 77771) * 0.6,
   }));
-  // All mosaicCanvases share the exact same fixed position/size, so
-  // whichever one is currently topmost is the one the browser actually
-  // hit-tests mouse events against. Attaching the same listeners to every
-  // twin, all writing into the one shared gravityState, is what makes
-  // hover work no matter which card's canvas is on top.
+  // The three canvases share one screen position (the counter-translate
+  // sees to that), so whichever is topmost gets the events; all write the
+  // one shared gravityState.
   if (!reducedMotion.matches){
     mosaicCanvases.forEach(c => {
       c.addEventListener("mouseenter", () => { gravityState.hovering = true; });
@@ -1419,72 +1394,14 @@
     });
   }
 
-  /* -------------------------------------------------------------------- *
-   * The morph
-   *
-   * Squares move in lockstep on a straight line between their two
-   * positions, the colour swaps hard at the midpoint rather than
-   * cross-fading, and the rendered position is snapped to the grid every
-   * frame — a square is only ever drawn on a whole cell, so it hops cell
-   * to cell instead of sliding, which is what gives it the blocky,
-   * mechanical read.
-   * -------------------------------------------------------------------- */
-
-  // Each row in MOSAIC_SQUARES is [x1,y1,x2,y2,x3,y3,x4,y4, c1,c2,c3,c4] —
-  // N_STATES positions then N_STATES colours. Mosaic 1 (state 1) belongs
-  // to the separate, non-fixed #bpMosaicOne section now (see the Mosaic 1
-  // script block below) — this fixed-canvas system only ever plays states
-  // 2, 3 and 4.
-  const N_STATES = 4;
-  const FIRST_STATE = 1;
-
-  // The cells at transform progress t, in the canvas's own local pixel
-  // space. t runs 0→(N_STATES-1-FIRST_STATE), i.e. 0→2 here: 0→1 is
-  // Mosaic 2 to Mosaic 3, 1→2 is Mosaic 3 to Mosaic 4. `t` arrives already
-  // eased — the whole leg moves together, so the easing belongs to the
-  // leg, not to individual squares.
-  //
-  // Colour still hard-swaps per square (no cross-fade) — but *when* each
-  // square swaps depends on where it starts the leg, not a single moment
-  // shared by all 90. A square nearer the bottom of the box swaps earlier
-  // in the leg, one nearer the top swaps later, so scrolling down reads as
-  // the colour change sweeping up from the bottom of the mosaic.
-  function cellsAt(t){
-    const s = MOSAIC_BOX.cell * scale;
-    const leg = FIRST_STATE + Math.min(N_STATES - 1 - FIRST_STATE - 1, Math.floor(t));
-    const lt = t - (leg - FIRST_STATE);
-    return MOSAIC_SQUARES.map(row => {
-      const ax = row[leg * 2], ay = row[leg * 2 + 1];
-      const bx = row[(leg + 1) * 2], by = row[(leg + 1) * 2 + 1];
-      const ac = row[N_STATES * 2 + leg], bc = row[N_STATES * 2 + leg + 1];
-      const rowFrac = ay / MOSAIC_BOX.h;
-      const swapAt = 1 - rowFrac;
-      return {
-        x: (ax + (bx - ax) * lt) * scale,
-        y: (ay + (by - ay) * lt) * scale,
-        side: s,
-        hex: lt < swapAt ? ac : bc,
-      };
-    });
-  }
-
-  // Snaps a pull target to the nearest whole grid-cell step, so a pulled
-  // square always comes to rest on a grid position rather than an
-  // arbitrary pixel offset.
-  function snapToGrid(v, step){ return step ? Math.round(v / step) * step : v; }
-
-  // Rounds a coordinate to the nearest whole *device* pixel — two squares
-  // whose shared edge sits at the same fractional position both round to
-  // that same device-pixel line, so they meet exactly with no
-  // anti-aliased gap and no overlap/fringing.
+  function snapTo(v, origin, step){ return step ? origin + Math.round((v - origin) / step) * step : v; }
   function snapToDevicePixel(v){ return Math.round(v * dpr) / dpr; }
 
-  function drawSquares(cells){
+  function drawSquares(frameCells){
+    const { cells, step, gx0, gy0 } = frameCells;
     mosaicCtxs.forEach(ctx => ctx.clearRect(0, 0, boxW, boxH));
-    const radius = Math.min(boxW, boxH) * 0.55;
-    const maxPull = Math.min(boxW, boxH) * 0.12;
-    const gridStep = cells.length ? cells[0].side : 0;
-
+    const radius = Math.min(boxW, boxH) * 0.4;
+    const maxPull = Math.min(boxW, boxH) * 0.085;
     cells.forEach((cell, i) => {
       const it = gravityItems[i];
       let tdx = 0, tdy = 0;
@@ -1499,19 +1416,14 @@
           tdx = dx * inv; tdy = dy * inv;
         }
       }
-      // Ease the RAW offset, then quantise it at render time — not the
-      // other way round. Easing toward an already-snapped target leaves
-      // the square sitting between cells for most of the ease; this way
-      // it is only ever drawn a whole number of cells from its rest
-      // position, so it steps rather than glides.
+      // Ease the RAW offset, then quantise at render time, so the square
+      // is only ever drawn a whole number of cells from rest.
       it.dx += (tdx - it.dx) * GRAVITY_EASE;
       it.dy += (tdy - it.dy) * GRAVITY_EASE;
-      const gx = snapToGrid(cell.x + it.dx - cell.side / 2, gridStep);
-      const gy = snapToGrid(cell.y + it.dy - cell.side / 2, gridStep);
-      const left = snapToDevicePixel(gx);
-      const top = snapToDevicePixel(gy);
-      const right = snapToDevicePixel(gx + cell.side);
-      const bottom = snapToDevicePixel(gy + cell.side);
+      const gx = snapTo(cell.x + it.dx - cell.side / 2, gx0, step);
+      const gy = snapTo(cell.y + it.dy - cell.side / 2, gy0, step);
+      const left = snapToDevicePixel(gx), top = snapToDevicePixel(gy);
+      const right = snapToDevicePixel(gx + cell.side), bottom = snapToDevicePixel(gy + cell.side);
       mosaicCtxs.forEach(ctx => {
         ctx.fillStyle = cell.hex;
         ctx.fillRect(left, top, right - left, bottom - top);
@@ -1519,217 +1431,123 @@
     });
   }
 
-  /* -------------------------------------------------------------------- *
-   * The pop-up cycle
+  /* ------------------------------------------------------------------ *
+   * The overlays
    *
-   * One pop-up on screen at a time, each held for POP_HOLD before the next
-   * takes over: 1 -> 2 -> 3 -> 1, forever. The box expands out of the
-   * corner facing the middle of the mosaic and its text fades up just
-   * behind the expansion (both in CSS, off .is-in — see .bp-pop), so this
-   * only has to decide *which* one is in and when.
-   *
-   * The clock is driven from paint() rather than left running: it starts
-   * when Mosaic 2 is the state on screen and stops when it isn't, so the
-   * cycle doesn't tick through while the reader is elsewhere on the page
-   * and the first pop-up they see is always Pop-up 1. Stopping also clears
-   * the timer, so nothing is scheduled against a section nobody's looking
-   * at.
-   * -------------------------------------------------------------------- */
+   * Card 1's three pop-ups cycle one at a time (POP_HOLD apart) while
+   * Mosaic 2 is the state on screen, as the first build had them. Cards
+   * 2 and 3 show their three cards together, staggered by --k, once the
+   * card has locked, and collapse the moment the state moves on.
+   * ------------------------------------------------------------------ */
   const POP_HOLD = 4000;
   const pops = (() => {
-    const els = overlay2 ? [...overlay2.querySelectorAll(".bp-pop")] : [];
+    const els = overlays[0] ? [...overlays[0].querySelectorAll(".bp-pop")] : [];
     let i = 0, timer = null, active = false;
-    function show(n){
-      els.forEach((el, k) => el.classList.toggle("is-in", k === n));
-    }
-    function tick(){
-      i = (i + 1) % els.length;
-      show(i);
-      timer = setTimeout(tick, POP_HOLD);
-    }
+    function show(n){ els.forEach((el, k) => el.classList.toggle("is-in", k === n)); }
+    function tick(){ i = (i + 1) % els.length; show(i); timer = setTimeout(tick, POP_HOLD); }
     return {
       setActive(on){
         if (!els.length || on === active) return;
         active = on;
-        if (on){
-          i = 0;
-          show(0);
-          timer = setTimeout(tick, POP_HOLD);
-        } else {
-          clearTimeout(timer); timer = null;
-          els.forEach(el => el.classList.remove("is-in"));
-        }
+        if (on){ i = 0; show(0); timer = setTimeout(tick, POP_HOLD); }
+        else { clearTimeout(timer); timer = null; els.forEach(el => el.classList.remove("is-in")); }
       },
     };
   })();
-
-  /* -------------------------------------------------------------------- *
-   * The scroll clock
-   *
-   * This fixed-canvas system plays Mosaics 2, 3 and 4 only — Mosaic 1 is
-   * the hero's own separate, non-fixed canvas (see the Mosaic 1 script
-   * block) and takes no part in this clock at all.
-   *
-   * Scroll position drives two things here, both in paint(): where the
-   * mosaic sits (riding up with the Content card, then holding centre),
-   * and `mt` (0→2), the morph's own clock — held on Mosaic 2 until the
-   * Content card has filled the screen and settled, then scrubbing 2→3 as
-   * the Insight card comes in, then 3→4 as the AEO card comes in. Two
-   * legs, each ending exactly as its card finishes covering the viewport.
-   * -------------------------------------------------------------------- */
-  const MORPH_HOLD = 0.35;
-
-  /* ---- the chase ----
-     Taken from index.html's scroll model: the value that is DRAWN chases
-     the value the scroll position ASKS for, `shown += (target - shown) *
-     EASE`, EASE_MAIN 0.10. Driven raw off scrollY (as the package had it)
-     the morph stepped with every wheel notch and momentum tick — the
-     mosaic looked like it was being scrubbed. With the chase, each notch
-     nudges the target and the artwork glides after it and settles, so
-     the squares hop cell to cell in a continuous motion instead of
-     jumping several cells per tick. Positions are still grid-snapped at
-     render (drawSquares), which is what keeps the hops blocky rather than
-     sliding. Reduced motion chases at 1 — instant, as the homepage does. */
-  const MORPH_EASE = reducedMotion.matches ? 1 : 0.10;
-  let morphTarget = 0, morphShown = 0, morphDirty = true;
-
-  function paint(){
-    const y = window.scrollY;
-
-    // Release: the AEO card has fully arrived, which is also the last
-    // moment anything here is ever on screen again. See .stack-released
-    // for why the cards themselves need the class toggled in sync with
-    // this rather than just being left to CSS. The three mosaic stages
-    // stay position:fixed regardless of their card's own position, so
-    // they need their own explicit hide here too: hidden (which also
-    // stops them swallowing hover/clicks meant for whatever comes next,
-    // same as visibility:hidden already does above), and an early return
-    // so the mosaic stops being redrawn every frame for a page that no
-    // longer shows it. Toggled both ways so scrolling back up into the
-    // group re-engages everything exactly as it was.
-    const released = y >= aeoFillY;
-    document.documentElement.classList.toggle("stack-released", released);
-    if (released){
-      stages.forEach(s => { if (s) s.style.visibility = "hidden"; });
-      if (popStage) popStage.style.visibility = "hidden";
-      pops.setActive(false);
-      return;
-    }
-
-    const FILL_POINTS = [insightFillY, aeoFillY];
-    let mt = FILL_POINTS.length;
-    let legStartY = contentFillY + MORPH_HOLD * Math.max(1, insightFillY - contentFillY);
-    for (let leg = 0; leg < FILL_POINTS.length; leg++){
-      const landY = FILL_POINTS[leg];
-      if (y < landY){
-        mt = leg + clamp01((y - legStartY) / Math.max(1, landY - legStartY));
-        break;
-      }
-      legStartY = landY + MORPH_HOLD * Math.max(1, (FILL_POINTS[leg + 1] ?? landY) - landY);
-    }
-
-    // The mosaic rides up inside the Content card, then holds centre.
-    //
-    // The canvas is fixed and viewport-centred, so on its own it could
-    // never travel with a section. Offsetting it by that card's own
-    // distance from the top of the screen puts it exactly where it would
-    // sit if it lived inside the card — already in position in the middle
-    // of the section as the section rises. The offset reaches 0 the moment
-    // the card's sticky top:0 catches, which is also the moment the mosaic
-    // reaches the middle of the screen: from there it simply stays there
-    // and the morph takes over.
-    const contentTop = contentEl.getBoundingClientRect().top;
-    const rise = Math.max(0, contentTop);
-    const riseTransform = `translate(-50%, -50%) translateY(${rise.toFixed(1)}px)`;
-    if (stages[0]) stages[0].style.transform = riseTransform;
-    if (popStage) popStage.style.transform = riseTransform;
-
-    // Hidden (see .bp-mosaic-stage) until the card it belongs to is on
-    // screen, so it never sits over the hero. The Insight/AEO twins only
-    // matter once the mosaic has locked to centre — showing them during
-    // the ride up would put a second, centred copy on screen beside this
-    // one.
-    const riding = contentTop <= window.innerHeight;
-    if (stages[0]) stages[0].style.visibility = riding ? "visible" : "hidden";
-    if (popStage) popStage.style.visibility = riding ? "visible" : "hidden";
-    const twinsVisible = contentTop <= 0;
-    for (let i = 1; i < stages.length; i++){
-      if (stages[i]) stages[i].style.visibility = twinsVisible ? "visible" : "hidden";
-    }
-    if (!riding){ pops.setActive(false); return; }
-
-    // Held on Mosaic 2 until the card has filled and settled, then each
-    // leg in turn. Every leg is eased on its own — the whole leg moves as
-    // one, which is also what keeps the pause on each intermediate state a
-    // real settle rather than a fast pass through one long ease. This only
-    // sets the TARGET; the draw happens in loop(), from the chased value.
-    morphTarget = reducedMotion.matches
-      ? Math.round(mt)
-      : Math.floor(mt) + smoothstep(mt - Math.floor(mt));
-    morphDirty = true;
+  const cardPops = overlays.slice(1).map(o => o ? [...o.querySelectorAll(".bp-pop")] : []);
+  const cardPopsOn = [false, false];
+  function setCardPops(idx, on){
+    if (cardPopsOn[idx] === on) return;
+    cardPopsOn[idx] = on;
+    cardPops[idx].forEach(el => el.classList.toggle("is-in", on));
   }
 
-  /* One draw per frame, from the chased value — never from a scroll event
-     (the package drew on every scroll event AND every frame, which is
-     twice the work for a canvas of ninety squares and is what made the
-     scrub visibly stutter under fast wheel input). Redraws only while the
-     chase is still moving or the cursor is over the artwork. */
+  /* ------------------------------------------------------------------ *
+   * The scroll model — the homepage's, on real scroll
+   *
+   *   vTarget  what the scroll position asks for: (scrollY − lockY) / STEP,
+   *            clamped 0..3. Read on every scroll event.
+   *   vShown   what is drawn; chases vTarget every frame at EASE_MAIN
+   *            (0.10 — the homepage's). That single lag is the glide.
+   *
+   * From vShown, each frame:
+   *   - card k sits (k − v) screens down, clamped 0..1 — so it rises over
+   *     the previous card as v runs k−1 → k;
+   *   - cards 2 and 3 counter-translate their mosaic stage by the same
+   *     amount, so the artwork holds its screen position while the card
+   *     wipes up under it (see .bp-mosaic-stage);
+   *   - the morph clock: held on Mosaic 2 while card 1 rises and for the
+   *     first MORPH_HOLD of each later leg, then eased to land exactly as
+   *     the card fills the screen;
+   *   - text reveals: a card is .in once it has locked (v ≥ k − 0.02),
+   *     and re-armed once it has slid most of the way back down.
+   * Reduced motion draws vTarget directly and rounds the morph to whole
+   * states, as the homepage does.
+   * ------------------------------------------------------------------ */
+  const EASE_MAIN = reducedMotion.matches ? 1 : 0.10;
+  const MORPH_HOLD = 0.35;
+  let vTarget = 0, vShown = 0, morphDirty = true;
+  let lastMorph = -1;
+
+  function readScroll(){
+    vTarget = clamp((window.scrollY - lockY) / STEP, 0, STATES);
+  }
+
   function frame(){
-    paint();
-    if (!document.documentElement.classList.contains("stack-released")){
-      const moving = Math.abs(morphTarget - morphShown) > 0.0005;
-      if (moving) morphShown += (morphTarget - morphShown) * MORPH_EASE;
-      else morphShown = morphTarget;
-      if (moving || gravityState.hovering || morphDirty){
-        drawSquares(cellsAt(morphShown));
-        morphDirty = false;
-      }
-      // The pop-ups belong to Mosaic 2 only: they cycle while it's the
-      // state on screen and animate off the moment the morph starts
-      // moving away from it — each box collapses back into the corner it
-      // grew out of (see .bp-pop). Judged on the SHOWN value, so they
-      // leave in step with what the reader sees, not ahead of it.
-      pops.setActive(morphShown < 0.02 && stages[0] && stages[0].style.visibility !== "hidden");
+    const moving = Math.abs(vTarget - vShown) > 0.0005;
+    if (moving) vShown += (vTarget - vShown) * EASE_MAIN;
+    else vShown = vTarget;
+    const v = vShown;
+
+    // The cards and their stages
+    for (let i = 0; i < cards.length; i++){
+      const k = i + 1;
+      const ty = clamp01(k - v) * H;
+      cards[i].style.transform = `translate3d(0,${ty.toFixed(2)}px,0)`;
+      if (i > 0 && stages[i]) stages[i].style.transform = `translate3d(0,${(-ty).toFixed(2)}px,0)`;
+      // text reveal, re-armed on the way back down
+      const landed = v >= k - 0.02;
+      if (landed && !cards[i].classList.contains("in")) cards[i].classList.add("in");
+      else if (v < k - 0.6 && cards[i].classList.contains("in")) cards[i].classList.remove("in");
     }
+
+    // The morph clock (0 = Mosaic 2, 1 = Mosaic 3, 2 = Mosaic 4)
+    let mt = 0;
+    if (v > 1){
+      const leg = Math.min(1, Math.floor(v - 1));
+      const frac = v - 1 - leg;
+      mt = leg + smoothstep(clamp01((frac - MORPH_HOLD) / (1 - MORPH_HOLD)));
+      if (reducedMotion.matches) mt = Math.round(v - 1);
+    }
+    const morphMoving = Math.abs(mt - lastMorph) > 0.00005;
+    if (morphMoving || gravityState.hovering || morphDirty){
+      drawSquares(cellsAt(mt));
+      lastMorph = mt; morphDirty = false;
+    }
+
+    // Overlays: card 1's cycle while Mosaic 2 is the state on screen and
+    // the card has locked; cards 2/3 while they are the settled state.
+    pops.setActive(v >= 0.98 && mt < 0.02);
+    setCardPops(0, Math.abs(v - 2) < 0.02 && mt > 0.98 && mt < 1.02);
+    setCardPops(1, v > 2.98 && mt > 1.98);
   }
   function loop(){ frame(); requestAnimationFrame(loop); }
 
-  /* -------------------------------------------------------------------- *
+  /* ------------------------------------------------------------------ *
    * Snap-to-state
    *
-   * Each 100vh card sits directly against the next in the flow, with no
-   * runway between them — so from the moment one card finishes filling
-   * the screen (its own fill point) to the moment the next one does, the
-   * next card is continuously sliding up from the bottom edge, covering a
-   * little more of the screen every pixel of scroll, the entire way
-   * across that distance. There's no "held" portion in the middle of
-   * that: a stop anywhere in it leaves the screen split between two
-   * cards' backgrounds (and two different mosaic states), not resting on
-   * either one. Same idea as the homepage intro's own "Snap-to-state"
-   * (see its comment there) applied to the actual card reveal rather than
-   * a virtual one.
-   *
-   * Once scroll actually stops (SNAP_DELAY of quiet) with the page
-   * resting anywhere in one of those two spans — Content-to-Insight or
-   * Insight-to-AEO — this glides the rest of the way to whichever end is
-   * nearer, so the reader always lands with exactly one card filling the
-   * screen, never a wipe caught partway.
-   * -------------------------------------------------------------------- */
-  const SNAP_DELAY = 160;                 // index.html's own quiet period
-  let snapTimer = null;
-
-  /* ⚠️ NOT scrollTo({behavior:"smooth"}). Native smooth scroll runs on
-     its own curve for its own duration and cannot be interrupted cleanly
-     — if the reader touched the wheel mid-snap the two fought for the
-     scroll position, which is the one thing a snap must never do. This
-     is the case study's glide (same curve as its --ease-fold, same rAF +
-     timer fallback), shortened to 600ms because a snap answers a stop
-     rather than unfolding content, and it CANCELS the instant the reader
-     scrolls, touches or presses a key — from then on the page is theirs
-     again. The homepage gets the same feel from its chase; this is the
-     equivalent for real scroll position. */
+   * Once scroll stops (SNAP_DELAY of quiet) with the page resting between
+   * two states, glide the rest of the way to the nearer one, so the
+   * reader always lands with exactly one screen filling the view. The
+   * glide is the site's own (cubic-bezier(.4,0,.2,1) solved in JS, rAF
+   * plus a timer fallback) — ⚠️ NOT scrollTo({behavior:"smooth"}), which
+   * runs on its own clock and fights the reader — and it CANCELS the
+   * instant they scroll, touch or press a key.
+   * ------------------------------------------------------------------ */
+  const SNAP_DELAY = 160;                  // index.html's own quiet period
   const SNAP_MS = 600;
-  const snapEase = t => {                 // cubic-bezier(.4,0,.2,1), solved
+  let snapTimer = null;
+  const snapEase = t => {
     const p1x=.4,p1y=0,p2x=.2,p2y=1;
     const cx=3*p1x, bx=3*(p2x-p1x)-cx, ax=1-cx-bx;
     const cy=3*p1y, by=3*(p2y-p1y)-cy, ay=1-cy-by;
@@ -1742,7 +1560,7 @@
     }
     return ((ay*u+by)*u+cy)*u;
   };
-  let glide = null;                        // the in-flight snap, if any
+  let glide = null;
   function cancelGlide(){ if (glide){ glide.cancelled = true; glide = null; } }
   function glideScrollTo(targetY){
     cancelGlide();
@@ -1756,76 +1574,74 @@
       window.scrollTo(0, startY + delta * snapEase(t));
       if (t < 1) requestAnimationFrame(step); else glide = null;
     };
-    g.step = step;
     requestAnimationFrame(step);
     setTimeout(() => { if (!g.cancelled && glide === g){ window.scrollTo(0, targetY); glide = null; } }, SNAP_MS + 80);
   }
-  // any real input takes the page back from a snap in flight
   ["wheel","touchstart","keydown","pointerdown"].forEach(ev =>
     addEventListener(ev, cancelGlide, { passive:true }));
 
-  function transitionZones(){
-    return [[contentFillY, insightFillY], [insightFillY, aeoFillY]];
-  }
-
   function snapNow(){
-    if (glide) return;                     // already gliding — leave it
-    const y = window.scrollY;
-    for (const [a, b] of transitionZones()){
-      if (y > a + 1 && y < b - 1){
-        glideScrollTo((y - a < b - y) ? a : b);
-        return;
-      }
-    }
+    if (glide) return;
+    const v = (window.scrollY - lockY) / STEP;
+    if (v <= 0.001 || v >= STATES - 0.001) return;     // outside the stage, or resting on an end
+    const near = Math.round(v);
+    if (Math.abs(v - near) < 0.005) return;
+    glideScrollTo(lockY + near * STEP);
   }
   function scheduleSnap(){
     clearTimeout(snapTimer);
     snapTimer = setTimeout(snapNow, SNAP_DELAY);
   }
 
-  // Reduced motion never renders a half-formed frame in the first place —
-  // et is rounded to a whole state every frame regardless of scroll
-  // position (see paint()) — so there's nothing here for it to fix, and
-  // an unrequested auto-scroll is the last thing a reduced-motion reader
-  // wants.
-  if (!reducedMotion.matches){
-    addEventListener("scroll", scheduleSnap, { passive: true });
-  }
+  // The sub-nav: glide straight to a state.
+  pin.querySelectorAll(".bp-subnav button[data-state]").forEach(b => {
+    b.addEventListener("click", () => {
+      clearTimeout(snapTimer);
+      glideScrollTo(lockY + (+b.dataset.state) * STEP);
+    });
+  });
 
-  // paint() on scroll only updates positions and the morph TARGET (the
-  // draw lives in loop()) — cheap, so the stage transform tracks the
-  // scrollbar exactly even if a host throttles rAF.
-  addEventListener("scroll", paint, { passive: true });
+  addEventListener("scroll", () => {
+    readScroll();
+    if (!reducedMotion.matches) scheduleSnap();
+  }, { passive:true });
+
   let resizeTimer = null;
   addEventListener("resize", () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { measure(); paint(); }, 150);
+    resizeTimer = setTimeout(() => { measure(); readScroll(); }, 150);
   });
-
-  // The buffer is sized from the canvas's rendered box, so it has to be
-  // re-measured when that box changes size — which a window `resize`
-  // event does not always announce (embedded viewers, and the box gaining
-  // its first real size after fonts/layout settle). ResizeObserver reports
-  // the box itself; the resize listener above stays as the fallback.
   if ("ResizeObserver" in window){
-    new ResizeObserver(() => { measure(); morphDirty = true; paint(); }).observe(mosaicCanvas);
+    new ResizeObserver(() => {
+      const r = mosaicCanvas.getBoundingClientRect();
+      if (Math.abs(r.width - boxW) > 0.5 || Math.abs(r.height - boxH) > 0.5){
+        boxW = r.width; boxH = r.height; fitCanvasBuffer(); morphDirty = true;
+      }
+    }).observe(mosaicCanvas);
   }
+  // Fonts settle the Context copy's height, which sets the pin's.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); readScroll(); });
 
-  /* Exposed so the scroll clock can be driven one frame at a time from
-     the console — the preview pane used to build this freezes rAF and
-     clamps timers to ~1s, so it is the only way to inspect the chase and
-     the snap. Same reason services.html exposes window.__tfIcons. Costs
-     nothing; touching it from page code would be a mistake. */
+  /* Exposed so the model can be driven one frame at a time from the
+     console — the preview pane used to build this freezes rAF and clamps
+     timers to ~1s, so it is the only way to inspect the chase and the
+     snap. Same reason services.html exposes window.__tfIcons. */
   window.__bp = {
-    frame, paint, snapNow, measure,
-    get shown(){ return morphShown; },
-    get target(){ return morphTarget; },
+    frame, measure, snapNow, readScroll, glideScrollTo,
+    get shown(){ return vShown; },
+    set shown(v){ vShown = v; },              // test hook only
+    get target(){ return vTarget; },
+    set target(v){ vTarget = v; },            // test hook only
     get glide(){ return glide; },
-    fills(){ return { content:contentFillY, insight:insightFillY, aeo:aeoFillY }; }
+    get step(){ return STEP; },
+    get lockY(){ return lockY; },
+    fills(){ return { lock:lockY, step:STEP, ctxH, states:[0,1,2,3].map(k => lockY + k * STEP) }; }
   };
 
   measure();
-  paint();
+  readScroll();
+  vShown = vTarget;                          // no glide on a restored scroll position
+  frame();
   requestAnimationFrame(loop);
 })();
 </script>

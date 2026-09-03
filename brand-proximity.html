@@ -296,14 +296,19 @@
     display:flex; flex-direction:column; justify-content:center;
     gap:clamp(40px,10vh,90px);
     /* 20 under the nav's box — 24 clear of the logo's ink — so the block
-       fits a 900 screen with the copy running a line or two longer than
-       the frame's (browser Geist wraps it at nine lines, Figma at seven). */
+       fits a 900 screen (the frame's 100 + 100 padding would not). */
     padding-top:calc(var(--nav-h) - 20px);
     padding-bottom:40px;
     color:var(--ink-footer);
+    align-items:center;
   }
+  /* ⚠️ The frame CENTRES this block (items-center on the section) and
+     holds it at 1021 — it starts ~211 in at 1440, not on the 100 margin.
+     Capped at the frame's own measure rather than a ratio of the content
+     area, so the lines never run longer than the design's on a wide
+     screen; the cap is what makes it read as the frame does. */
   .bp-context-copy{
-    width:82.3%;
+    width:min(82.3%, 1021px);
     font-weight:300;
     font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
   }
@@ -316,7 +321,7 @@
   /* Three stats on 82.7% of the content area, columns 283–287.5 wide with
      the slack between them (the frame's space-between). */
   .bp-stats{
-    width:82.7%;
+    width:min(82.7%, 1025px);
     display:grid;
     grid-template-columns:repeat(3, minmax(0, 287.5px));
     justify-content:space-between;
@@ -377,18 +382,20 @@
   .bp-card.is-insight{ background:var(--insight-blue); color:#fff; z-index:2; }
   .bp-card.is-aeo{ background:var(--red-base); color:#fff; z-index:3; }
   .bp-card .bp-inner{ position:relative; height:100%; pointer-events:none; }
-  .bp-card .bp-text,
-  .bp-card .bp-subnav{ pointer-events:auto; }
+  .bp-card .bp-text{ pointer-events:auto; }
 
   /* The text block: frame 3438:5569 — 100 from the top, 226 wide
      (18.2% of the content area, so it grows with the cap), H4 heading,
      30 down to the copy. The copy is the frame's own two-paragraph block:
-     a SemiBold lead line, an empty line, then the body — all Details. On
+     a SemiBold lead line, an empty line, then the body — all Details.
+     ⚠️ The 100 is measured from the LOGO'S INK, not the card's edge: the
+     frame's "100 from the top" put the heading 4px under the logo, which
+     read as touching. (nav-h + logo-h)/2 is the logo's bottom edge. On
      short windows the 100 eases so the block and the sub-nav can't meet. */
   .bp-text{
     position:absolute;
     left:var(--pad-x);
-    top:clamp(60px,11.1vh,100px);
+    top:calc((var(--nav-h) + var(--logo-h)) / 2 + clamp(50px,11.1vh,100px));
     width:calc(max(226px, (100% - 2 * var(--pad-x)) * .182));
   }
   .bp-heading{
@@ -403,48 +410,54 @@
   .bp-copy .bp-lead{ font-weight:600; }
   .bp-copy p + p{ margin-top:1.2em; }
 
-  /* The sub-nav: the homepage's sub-menu idea on this page's three
-     states. Frame 3438:5259 — three Details lines 15 apart, bottom-left,
-     ending 100 above the card's bottom edge. The current state is full
-     ink; the others sit at 50% on the sage card and 40% on the white-ink
-     cards, as the frame paints them. Click glides to that state. */
+  /* The sub-nav: the homepage's sub-menu, on this page's three states.
+     Frame 3438:5259 — three Details lines 15 apart, bottom-left, ending
+     100 above the screen's bottom edge. ONE element, a child of the pin
+     above all three cards (z-index 4), so like the mosaic it holds still
+     while the cards wipe under it: the script fades it in as card 1
+     rises, marks the nearest state current (100%, the rest 40%), and
+     flips its ink to white the moment a white-ink card's top edge passes
+     under it. Click jumps to that state on the same chase as the wheel.
+     ⚠️ It used to be one nav per card, revealed with the card's text —
+     it wiped away with the card and, on the white cards, the card-scoped
+     40% rule out-ranked the current state's 100%. */
   .bp-subnav{
     position:absolute;
-    left:var(--pad-x);
+    left:max(var(--pad-x), calc((100% - var(--page-max)) / 2 + var(--pad-x)));
     bottom:clamp(40px,11.1vh,100px);
+    z-index:4;
     display:flex; flex-direction:column; gap:15px; align-items:flex-start;
+    color:var(--ink-footer);
+    opacity:0; pointer-events:none;
+    transition:color .35s var(--ease-out-expo);
   }
+  .bp-subnav.is-white{ color:#fff; }
   .bp-subnav button{
     font:inherit; font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
     background:none; border:0; padding:0; margin:0;
-    color:currentColor; opacity:.5; cursor:pointer; text-align:left;
+    color:currentColor; opacity:.4; cursor:pointer; text-align:left;
     transition:opacity .5s var(--ease-out-expo);
   }
-  .bp-card.is-insight .bp-subnav button,
-  .bp-card.is-aeo .bp-subnav button{ opacity:.4; }
   .bp-subnav button:hover,
   .bp-subnav button[aria-current="true"]{ opacity:1; }
   .bp-subnav button:focus-visible{ outline:1px solid currentColor; outline-offset:4px; }
 
-  /* Reveal inside a card once it has locked: heading, copy, then sub-nav
-     on the site's stagger. Driven from the chased state by the script
-     (.in when the card lands, removed again once it has slid most of the
-     way back down, so a second visit reveals again). */
+  /* Reveal inside a card once it has locked: heading, then copy on the
+     site's stagger. Driven from the chased state by the script (.in when
+     the card lands, removed again once it has slid most of the way back
+     down, so a second visit reveals again). */
   .js .bp-card .bp-heading,
-  .js .bp-card .bp-copy,
-  .js .bp-card .bp-subnav{
+  .js .bp-card .bp-copy{
     opacity:0;
     transform:translate3d(0, var(--reveal-shift), 0);
     transition:opacity var(--reveal-dur) var(--ease-out-expo),
                transform var(--reveal-dur) var(--ease-out-expo);
   }
   .js .bp-card .bp-copy{ transition-delay:var(--reveal-stagger); }
-  .js .bp-card .bp-subnav{ transition-delay:calc(2 * var(--reveal-stagger)); }
   .js .bp-card.in .bp-heading,
-  .js .bp-card.in .bp-copy,
-  .js .bp-card.in .bp-subnav{ opacity:1; transform:none; }
+  .js .bp-card.in .bp-copy{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
-    .js .bp-card .bp-heading, .js .bp-card .bp-copy, .js .bp-card .bp-subnav,
+    .js .bp-card .bp-heading, .js .bp-card .bp-copy,
     .js .bp-context-copy, .js .bp-stat{ opacity:1; transform:none; transition:none; }
   }
 
@@ -735,9 +748,13 @@
     .bp-stats{ width:auto; grid-template-columns:1fr; row-gap:50px; }
     .bp-stat-fig{ margin-bottom:16px; }
 
+    /* ⚠️ Positioned from the SCREEN, not the pin: on a phone the pin is
+       taller than the screen and stuck with its bottom on the viewport's,
+       so "top of the pin" is off-screen. --screen-off (set by measure())
+       is the pin's height less the screen's. */
     .bp-subnav{
       left:0; right:0; bottom:auto;
-      top:calc(var(--nav-h) + 12px);
+      top:calc(var(--screen-off, 0px) + var(--nav-h) + 12px);
       flex-direction:row; flex-wrap:wrap;
       justify-content:center; align-items:center;
       padding:0 var(--pad-x);
@@ -959,11 +976,6 @@
               <p>We can help you understand the knowledge you already have in your content ecosystem, identify the subjects and ideas that matter, and use AI to group it into a connected, authoritative body of knowledge.</p>
             </div>
           </div>
-          <nav class="bp-subnav" aria-label="Brand Proximity">
-            <button type="button" data-state="1" aria-current="true">Establish the supply</button>
-            <button type="button" data-state="2" aria-current="false">Understand the demand</button>
-            <button type="button" data-state="3" aria-current="false">Create AI content</button>
-          </nav>
         </div>
       </section>
 
@@ -1004,11 +1016,6 @@
               <p>We build an interactive representation of the people, challenges and conversations that matter to your brand. This will help you understand their motivations and triggers and make more meaningful connections.</p>
             </div>
           </div>
-          <nav class="bp-subnav" aria-label="Brand Proximity">
-            <button type="button" data-state="1" aria-current="false">Establish the supply</button>
-            <button type="button" data-state="2" aria-current="true">Understand the demand</button>
-            <button type="button" data-state="3" aria-current="false">Create AI content</button>
-          </nav>
         </div>
       </section>
 
@@ -1040,13 +1047,17 @@
               <p>We bring together a precise understanding of what your audience is asking with smart ways to surface your expertise, automatically generating webpages that get AI&rsquo;s attention while connecting deeply with your customers.</p>
             </div>
           </div>
-          <nav class="bp-subnav" aria-label="Brand Proximity">
-            <button type="button" data-state="1" aria-current="false">Establish the supply</button>
-            <button type="button" data-state="2" aria-current="false">Understand the demand</button>
-            <button type="button" data-state="3" aria-current="true">Create AI content</button>
-          </nav>
         </div>
       </section>
+
+      <!-- The sub-nav — one element above all three cards, held still
+           while they wipe under it; the script drives its opacity, ink
+           and current state (see .bp-subnav). -->
+      <nav class="bp-subnav" id="bpSubnav" aria-label="Brand Proximity">
+        <button type="button" data-state="1" aria-current="true">Establish the supply</button>
+        <button type="button" data-state="2" aria-current="false">Understand the demand</button>
+        <button type="button" data-state="3" aria-current="false">Create AI content</button>
+      </nav>
 
     </div>
   </section>
@@ -1115,6 +1126,8 @@
   const pin     = document.getElementById("bpPin");
   const context = document.getElementById("bpContext");
   const cards   = [...pin.querySelectorAll(".bp-card")];
+  const subnav  = document.getElementById("bpSubnav");
+  const subBtns = [...subnav.querySelectorAll("button[data-state]")];
   const stages  = cards.map(c => c.querySelector(".bp-mosaic-stage"));
   const overlays = cards.map(c => c.querySelector(".bp-overlay"));
   const mosaicCanvases = cards.map(c => c.querySelector(".bp-mosaic"));
@@ -1278,6 +1291,7 @@
     ctxH = Math.max(H, Math.ceil(context.getBoundingClientRect().height));
     pin.style.height = ctxH + "px";
     pin.style.top = (H - ctxH) + "px";
+    pin.style.setProperty("--screen-off", (ctxH - H) + "px");
     cards.forEach(c => { c.style.height = H + "px"; });
     stage.style.height = (ctxH + STATES * STEP) + "px";
     lockY = stage.getBoundingClientRect().top + window.scrollY + (ctxH - H);
@@ -1298,16 +1312,18 @@
       my = H / 2 - mw * MOSAIC_BOX.h / MOSAIC_BOX.w / 2;
     } else {
       // The sub-nav row wraps on a phone, so each heading is placed under
-      // its own sub-nav by measurement, and the mosaic takes the band left
-      // between the heading and the copy (read off the first card).
+      // it by measurement, and the mosaic takes the band left between the
+      // heading and the copy (read off the first card).
       // ⚠️ offsetTop (layout), not rects: the reveal holds the heading and
       // copy 44px low until the card lands, and a rect would read that.
+      // ⚠️ The sub-nav is a child of the PIN and the heading of a CARD; the
+      // cards sit at the pin's bottom, (ctxH − H) below its top.
       let bandTop = 0, bandBottom = H;
+      const subBottom = subnav.offsetTop + subnav.offsetHeight - (ctxH - H);
       cards.forEach((card, i) => {
-        const sub = card.querySelector(".bp-subnav");
         const head = card.querySelector(".bp-heading");
         const copy = card.querySelector(".bp-copy");
-        head.style.top = (sub.offsetTop + sub.offsetHeight + 25) + "px";
+        head.style.top = (subBottom + 25) + "px";
         if (i === 0){
           bandTop = head.offsetTop + head.offsetHeight + 25;
           bandBottom = copy.offsetTop - 25;
@@ -1511,6 +1527,19 @@
       else if (v < k - 0.6 && cards[i].classList.contains("in")) cards[i].classList.remove("in");
     }
 
+    // The sub-nav: fades in as card 1 rises (the homepage's sub-menu
+    // arrives as its intro leaves), marks the nearest state, and goes
+    // white once a white-ink card's top edge has passed under it.
+    const subOp = smoothstep(clamp01((v - 0.45) / 0.45));
+    subnav.style.opacity = subOp.toFixed(3);
+    subnav.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
+    const nearest = clamp(Math.round(v), 1, STATES);
+    subBtns.forEach(b => b.setAttribute("aria-current", String(+b.dataset.state === nearest)));
+    const subTop = subnav.offsetTop - (ctxH - H);   // in card space
+    let under = 1;
+    for (let k = 2; k <= STATES; k++){ if (clamp01(k - v) * H < subTop + subnav.offsetHeight * 0.5) under = k; }
+    subnav.classList.toggle("is-white", under >= 2);
+
     // The morph clock (0 = Mosaic 2, 1 = Mosaic 3, 2 = Mosaic 4)
     let mt = 0;
     if (v > 1){
@@ -1580,24 +1609,35 @@
   ["wheel","touchstart","keydown","pointerdown"].forEach(ev =>
     addEventListener(ev, cancelGlide, { passive:true }));
 
+  /* ⚠️ The snap is the homepage's, not a scroll glide: the TARGET jumps to
+     the whole state and the chase glides the drawn state there. Inside
+     the stage the pin is stuck, so an instant scrollTo() moves nothing
+     the reader can see — only vTarget — and the landing has the
+     homepage's one clean ease instead of a 600ms scroll glide with the
+     chase lagging behind it, which read as mushy. glideScrollTo() stays
+     for entering the stage from outside it. */
   function snapNow(){
     if (glide) return;
     const v = (window.scrollY - lockY) / STEP;
     if (v <= 0.001 || v >= STATES - 0.001) return;     // outside the stage, or resting on an end
     const near = Math.round(v);
     if (Math.abs(v - near) < 0.005) return;
-    glideScrollTo(lockY + near * STEP);
+    window.scrollTo(0, lockY + near * STEP);
+    readScroll();
   }
   function scheduleSnap(){
     clearTimeout(snapTimer);
     snapTimer = setTimeout(snapNow, SNAP_DELAY);
   }
 
-  // The sub-nav: glide straight to a state.
-  pin.querySelectorAll(".bp-subnav button[data-state]").forEach(b => {
+  // The sub-nav: jump the target to that state; the chase does the rest
+  // (the homepage's sub-menu, exactly).
+  subBtns.forEach(b => {
     b.addEventListener("click", () => {
       clearTimeout(snapTimer);
-      glideScrollTo(lockY + (+b.dataset.state) * STEP);
+      cancelGlide();
+      window.scrollTo(0, lockY + (+b.dataset.state) * STEP);
+      readScroll();
     });
   });
 

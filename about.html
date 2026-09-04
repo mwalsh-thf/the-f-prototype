@@ -208,39 +208,8 @@
     color:#373636;
   }
 
-  /* ------------------------------------------------------------------ *
-   * Team grid — 4 columns of cards
-   * ------------------------------------------------------------------ */
-  .team{
-    display:grid; grid-template-columns:repeat(4,1fr);
-    column-gap:30px; row-gap:50px;
-    padding:50px var(--pad-x);
-  }
-  .tm{ display:flex; flex-direction:column; gap:20px; }
-  .tm-photo{
-    width:100%; aspect-ratio:1/1;
-    background:var(--ph);
-    overflow:hidden; position:relative;
-  }
-  .tm-face{
-    position:absolute; inset:0;
-    width:100%; height:100%;
-    /* Sources are square; cover keeps the crop honest if one ever isn't. */
-    object-fit:cover; display:block;
-    background:var(--ph);          /* holds the grey while the JPEG loads */
-    transition:transform .6s var(--ease-out-expo), filter .6s ease;
-  }
-  .tm:hover .tm-face{ transform:scale(1.05); filter:brightness(.94); }
-  .tm-name{
-    font-size:var(--fs-body); line-height:1.3; letter-spacing:-.02em;
-    color:var(--ink-footer);
-  }
-  .tm-name span{ display:block; }
-  .tm-ask{
-    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
-  }
-  .tm-ask .q{ color:var(--mid-grey); margin-bottom:5px; }
-  .tm-ask p{ color:var(--ink-footer); }
+  /* (The team grid — 21 headshot cards on four columns — was removed on
+     4 Sep 2026 with the frame; see the markup note by the strip.) */
 
   /* ------------------------------------------------------------------ *
    * Proudly employee owned
@@ -448,7 +417,6 @@
    * Tablet
    * ================================================================== */
   @media (max-width:1100px){
-    .team{ grid-template-columns:repeat(2,1fr); }
     .masthead-intro{ display:block; }
     .masthead-intro p{ max-width:560px; }
     .owned, .hq{ display:block; }
@@ -627,41 +595,10 @@
     <p>We’re a team of creative and strategic experts who value imagination and innovation in equal measure, because we know this is the magic combination that will get you closer to your customers – faster.</p>
   </div>
 
-  <!-- ⚠️ Headshots are placeholder grey until real photography arrives.
-       Note: the Figma frame's Terry Brissenden card reads "Challenge Ross
-       to…" — corrected to Terry here; flag if that was deliberate. -->
-  <section class="team" aria-label="The team">
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/mayuri-premdjee.jpg" alt="" width="293" height="293" loading="eager" fetchpriority="high" decoding="async"></div><p class="tm-name"><span>Mayuri Premdjee</span><span>Account Director</span></p><div class="tm-ask"><p class="q">Challenge Mayuri to…</p><p>Navigate your challenges with ease.<br>Give you the ultimate introduction to crafting.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/terry-brissenden.jpg" alt="" width="640" height="640" loading="eager" fetchpriority="high" decoding="async"></div><p class="tm-name"><span>Terry Brissenden</span><span>Founder</span></p><div class="tm-ask"><p class="q">Challenge Terry to…</p><p>Make you see things differently.<br>A game of poker.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/ross-sweetmore.jpg" alt="" width="293" height="293" loading="eager" fetchpriority="high" decoding="async"></div><p class="tm-name"><span>Ross Sweetmore</span><span>Design Director</span></p><div class="tm-ask"><p class="q">Challenge Ross to…</p><p>Suggest your next holiday destination.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/ben-bush.jpg" alt="" width="585" height="585" loading="eager" fetchpriority="high" decoding="async"></div><p class="tm-name"><span>Ben Bush</span><span>Partner and Head of Strategy</span></p><div class="tm-ask"><p class="q">Challenge Ben to…</p><p>Come up with your next big idea.<br>Set you a cryptic crossword.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/louise-sheeran.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Louise Sheeran</span><span>Content Director</span></p><div class="tm-ask"><p class="q">Challenge Louise to…</p><p>Design your brand voice.<br>Recommend a great music documentary.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/sharon-booth.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Sharon Booth</span><span>Partner, Finance</span></p><div class="tm-ask"><p class="q">Challenge Sharon to…</p><p>Crunch the numbers.<br>Teach you how to ride a horse.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/nick-caruana.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Nick Caruana</span><span>Technical Account Director</span></p><div class="tm-ask"><p class="q">Challenge Nick to…</p><p>Make your technical project flow.<br>Show you his volleyball jump serve.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/sheri-brissenden.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Sheri Brissenden</span><span>Partner, HR</span></p><div class="tm-ask"><p class="q">Challenge Sheri to…</p><p>Suggest your next read.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/chris-beavis.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Chris Beavis</span><span>Partner, BD and Digital</span></p><div class="tm-ask"><p class="q">Challenge Chris to…</p><p>Navigate his way out of an escape room.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/sergio-agosti.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Sergio Agosti</span><span>Lead Developer</span></p><div class="tm-ask"><p class="q">Challenge Sergio to…</p><p>Code more efficiently with AI.<br>Teach you the Karate basics.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/ellie-hennessey.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Ellie Hennessey</span><span>Strategist and Insights Lead</span></p><div class="tm-ask"><p class="q">Challenge Ellie to…</p><p>Change your perspective on your business.<br>Create your next running route.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/myles-walsh.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Myles Walsh</span><span>Middleweight Designer</span></p><div class="tm-ask"><p class="q">Challenge Myles to…</p><p>Get you Glasto tickets.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/james-trowman.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>James Trowman</span><span>Partner and General Manager</span></p><div class="tm-ask"><p class="q">Challenge James to…</p><p>Take a run at a black slope.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/sophie-meadows.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Sophie Meadows</span><span>Creative Strategist</span></p><div class="tm-ask"><p class="q">Challenge Sophie to…</p><p>Recommend your next culture hit.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/clive-stevens.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Clive Stevens</span><span>Chairman</span></p><div class="tm-ask"><p class="q">Challenge Clive to…</p><p>Offer invaluable business advice.<br>Give you a crash course in stamps.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/daisy-lockheart.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Daisy Lockheart</span><span>Senior Account Director</span></p><div class="tm-ask"><p class="q">Challenge Daisy to…</p><p>Get your brand noticed.<br>Show you her crow pose.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/charlotte-irwin.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Charlotte Irwin</span><span>Senior Writer and Editor</span></p><div class="tm-ask"><p class="q">Challenge Charlotte to…</p><p>Tell your brand’s story with heart.<br>Complete a word game in record time.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/rose-stewart.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Rose Stewart</span><span>Design Director</span></p><div class="tm-ask"><p class="q">Challenge Rose to…</p><p>Design a campaign with heart.<br>Name the films you need to catch on the big screen.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/david-alexander.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>David Alexander</span><span>Creative Director and Head of Studio</span></p><div class="tm-ask"><p class="q">Challenge David to…</p><p>Show you how AI can supercharge design.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/janelle-blasdel.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Janelle Blasdel</span><span>Senior Writer and Editor</span></p><div class="tm-ask"><p class="q">Challenge Janelle to…</p><p>Craft your brand narrative.<br>Hop onstage for an improv set.</p></div></div>
-    <div class="tm reveal"><div class="tm-photo"><img class="tm-face" src="assets/team/don-hoyt-gorman.jpg" alt="" width="585" height="585" loading="lazy" decoding="async"></div><p class="tm-name"><span>Don Hoyt Gorman</span><span>Strategy Director</span></p><div class="tm-ask"><p class="q">Challenge Don to…</p><p>Reinvent your strategy.<br>Give you the low-down on all things sailing.</p></div></div>
-  </section>
-
-  <section class="owned">
-    <h2 class="statement reveal">Proudly employee owned</h2>
-    <div class="owned-body reveal">
-      <p class="lines">Creative. Curious. Challenging.<br>Big thinking. Idea-shaping. Award-winning.<span class="gap" aria-hidden="true"></span>We don’t just love what we do – we own it: we’re one of a growing number of businesses in the UK who are employee owned.</p>
-      <img src="assets/logo-eoa.svg" alt="Proudly employee owned — Employee Ownership Association" width="182" height="77">
-    </div>
-  </section>
-
+  <!-- ⚠️ The team grid is GONE (frame 2896:11715, 4 Sep 2026): the 21
+       headshot cards came out and the B&W strip moved up to sit straight
+       under the intro. The photographs are still in assets/team/ in case
+       it returns. -->
   <!-- The B&W strip. 13 slides in the frame's own order and widths; the
        script duplicates the set once for the seamless wrap. Widths live on
        the slide, not the img, so scrollWidth measures right before the
@@ -681,6 +618,15 @@
       <div class="strip-slide w-md"><img src="assets/strip/11-img6384.jpg" alt="" loading="lazy" decoding="async"></div>
       <div class="strip-slide w-sq"><img src="assets/strip/12-photo2023.jpg" alt="" loading="lazy" decoding="async"></div>
       <div class="strip-slide w-lg"><img src="assets/strip/13-image81.jpg" alt="" loading="lazy" decoding="async"></div>
+    </div>
+  </section>
+
+
+  <section class="owned">
+    <h2 class="statement reveal">Proudly employee owned</h2>
+    <div class="owned-body reveal">
+      <p class="lines">Creative. Curious. Challenging.<br>Big thinking. Idea-shaping. Award-winning.<span class="gap" aria-hidden="true"></span>We don’t just love what we do – we own it: we’re one of a growing number of businesses in the UK who are employee owned.</p>
+      <img src="assets/logo-eoa.svg" alt="Proudly employee owned — Employee Ownership Association" width="182" height="77">
     </div>
   </section>
 

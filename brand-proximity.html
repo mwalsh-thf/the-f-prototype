@@ -488,11 +488,15 @@
     right:max(var(--pad-x), calc((100% - var(--page-max)) / 2 + var(--pad-x)));
     bottom:clamp(40px,11.1vh,100px);
     font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
-    color:var(--ink-footer); text-decoration:none; white-space:nowrap;
+    /* 40% ink resting, full on hover — the sub-nav's own treatment (Myles,
+       4 Sep 2026; it went red before). Done as ink alpha rather than
+       opacity because the script already drives this element's opacity
+       to fade it in with the sub-nav. */
+    color:rgba(31,31,31,.4); text-decoration:none; white-space:nowrap;
     opacity:0; pointer-events:none;
-    transition:color .35s var(--ease-out-expo);
+    transition:color .5s var(--ease-out-expo);
   }
-  .bp-cta:hover{ color:var(--f-red); }
+  .bp-cta:hover{ color:var(--ink-footer); }
   .bp-cta:focus-visible{ outline:1px solid currentColor; outline-offset:4px; }
   .bp-cta-arrow{
     display:inline-block; width:.6em; height:.6em; margin-left:.3em;
@@ -716,12 +720,23 @@
    * the reader has scrolled past the hero. Reduced motion gets the
    * controls and no autoplay.
    * ------------------------------------------------------------------ */
+  /* Desktop is the frame's own layout: the title beside the copy column,
+     the video under both. ⚠️ The MARKUP order is title, video, copy —
+     that is the mobile stack (Myles: "title first then the video then
+     the body copy") and the grid places the three explicitly here, so
+     both breakpoints read as designed from one source. */
   .challenge{
     position:relative; z-index:20;
     background:var(--bg);
     padding:100px var(--pad-x);
-    display:flex; flex-direction:column; gap:100px;
+    display:grid;
+    grid-template-columns:minmax(0,601px) minmax(0,498px);
+    justify-content:space-between; align-items:start;
+    column-gap:30px; row-gap:100px;
   }
+  .challenge-title{ grid-column:1; grid-row:1; }
+  .challenge-copy{ grid-column:2; grid-row:1; }
+  .challenge-video{ grid-column:1 / -1; grid-row:2; }
   .challenge-title{
     font-weight:300;
     font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
@@ -738,7 +753,6 @@
   .challenge-video video{ display:block; width:100%; height:100%; object-fit:cover; }
   .challenge-copy{
     display:flex; flex-direction:column; gap:50px;
-    max-width:498px; margin-left:auto;
   }
   .challenge-lead{
     font-weight:300;
@@ -988,8 +1002,8 @@
        scrolling. */
     .bp-snap{ scroll-snap-align:start; }
 
-    .challenge{ padding:75px var(--pad-x); gap:50px; }
-    .challenge-copy{ max-width:none; margin-left:0; gap:25px; }
+    .challenge{ display:flex; flex-direction:column; gap:50px; padding:75px var(--pad-x); }
+    .challenge-copy{ gap:25px; }
 
     .related{ padding:75px var(--pad-x); }
     .related h2{ margin-bottom:50px; }
@@ -1892,6 +1906,7 @@
     const v = vShown;
 
     // The cards and their stages
+    let textOpMax = 0;                 // the brightest text layer this frame
     for (let i = 0; i < cards.length; i++){
       const k = i + 1;
       const ty = clamp01(k - v) * H;
@@ -1904,6 +1919,7 @@
         const op = smoothstep(clamp01(1 - Math.abs(d) / (d < 0 ? TEXT_IN : TEXT_OUT)));
         t.style.opacity = op.toFixed(3);
         t.style.visibility = op > 0.01 ? "visible" : "hidden";
+        if (op > textOpMax) textOpMax = op;
         // ⚠️ the DISTANCE only — the transform lives on the heading and the
         // copy, never on this box (see its CSS note)
         t.style.setProperty("--tp", (-d * TEXT_PARALLAX).toFixed(1) + "px");
@@ -1916,8 +1932,12 @@
     const subOp = smoothstep(clamp01((v - 0.45) / 0.45));
     subnav.style.opacity = subOp.toFixed(3);
     subnav.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
-    cta.style.opacity = subOp.toFixed(3);            // the CTA arrives with it
-    cta.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
+    // The CTA arrives with the sub-nav. ⚠️ On mobile it sits under the copy,
+    // so it also fades WITH the copy between states (Myles, 4 Sep 2026) —
+    // otherwise the next card's text slid up across it.
+    const ctaOp = isMobile ? subOp * textOpMax : subOp;
+    cta.style.opacity = ctaOp.toFixed(3);
+    cta.style.pointerEvents = ctaOp > 0.85 ? "auto" : "none";
     const nearest = clamp(Math.round(v), 1, STATES);
     subBtns.forEach(b => b.setAttribute("aria-current", String(+b.dataset.state === nearest)));
 
@@ -2059,7 +2079,7 @@
     const y = window.scrollY;
     // off while the finger model owns the stage (it lands exactly on its
     // own) and while a glide is in flight (a programmatic scroll re-snaps)
-    const want = (isMobile && !engaged && !glide && y > lockY - STEP && y < lockY + STATES * STEP + STEP)
+    const want = (isMobile && !engaged && !glide && y > lockY - STEP && y < lockY + STATES * STEP + H)
       ? "y mandatory" : "";
     if (want === snapMode) return;
     snapMode = want;
@@ -2094,8 +2114,13 @@
   let engaged = false;
   function syncEngaged(){
     const y = window.scrollY;
+    // ⚠️ A screen EARLY on the way in and half a screen late on the way
+    // out (4 Sep 2026): engaging only at lockY let a native fling from the
+    // Context copy carry straight through every state, and a flick at the
+    // last card ran on past the section. Inside this zone every gesture is
+    // the model's — no momentum — and a lift near either end snaps IN.
     const want = isMobile && !document.body.classList.contains("menu-open")
-      && y >= lockY - 1 && y <= lockY + STATES * STEP + 1;
+      && y >= lockY - H && y <= lockY + STATES * STEP + H * 0.5;
     if (want === engaged) return;
     engaged = want;
     document.documentElement.style.touchAction = want ? "none" : "";
@@ -2130,17 +2155,31 @@
     touching = false;
     if (!tOwn){ scheduleSnap(); return; }
     tOwn = false; tY = null;
+    const moving = e.timeStamp - tLast < FLICK_STALE_MS;
+    const flick = moving && Math.abs(tVel) > FLICK_VELOCITY;
     if (tV < 0 || tV > STATES){
-      engaged = false; document.documentElement.style.touchAction = "";   // handed back
+      // Outside the states. A flick TOWARD the stage, or a lift within a
+      // third of a state of it, snaps in; anything else is handed back to
+      // the page where it is (no momentum — the model owns this zone).
+      const towardIn = flick && ((tV < 0 && tVel > 0) || (tV > STATES && tVel < 0));
+      const nearIn = tV > -0.35 && tV < STATES + 0.35;
+      if (towardIn || nearIn){
+        window.scrollTo(0, lockY + (tV < 0 ? 0 : STATES) * STEP);
+        readScroll();
+        return;
+      }
+      engaged = false; document.documentElement.style.touchAction = "";
       return;
     }
     let dest = Math.round(tV);
-    const moving = e.timeStamp - tLast < FLICK_STALE_MS;
-    if (moving && Math.abs(tVel) > FLICK_VELOCITY){
+    if (flick){
       const dir = tVel > 0 ? 1 : -1;
       const atLeast = Math.round(tV0) + dir;
       dest = dir > 0 ? Math.max(dest, atLeast) : Math.min(dest, atLeast);
     }
+    // ⚠️ ONE state per gesture, however long the drag: "flick, stick, flick,
+    // stick" — a long fast swipe should not skip a card.
+    dest = clamp(dest, Math.round(tV0) - 1, Math.round(tV0) + 1);
     dest = clamp(dest, 0, STATES);
     window.scrollTo(0, lockY + dest * STEP);
     readScroll();

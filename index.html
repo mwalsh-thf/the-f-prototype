@@ -1479,10 +1479,12 @@
       if (g.cancelled) return;
       const t = Math.min(1, (now - t0) / RELEASE_SNAP_MS);
       window.scrollTo(0, startY + delta * releaseEase(t));
-      if (t < 1) requestAnimationFrame(step); else releaseGlide = null;
+      if (t < 1) requestAnimationFrame(step); else { releaseGlide = null; syncScenePast(); }
     };
     requestAnimationFrame(step);
-    setTimeout(() => { if (!g.cancelled && releaseGlide === g){ window.scrollTo(0, targetY); releaseGlide = null; } }, RELEASE_SNAP_MS + 80);
+    // the hard landing, and the scene's visibility re-read from it — a
+    // programmatic scroll's own event can arrive a frame later
+    setTimeout(() => { if (!g.cancelled && releaseGlide === g){ window.scrollTo(0, targetY); releaseGlide = null; syncScenePast(); } }, RELEASE_SNAP_MS + 80);
   }
   ["wheel","touchstart","keydown","pointerdown"].forEach(ev =>
     addEventListener(ev, cancelReleaseGlide, { passive:true }));
@@ -2039,6 +2041,16 @@
   /* A reload would otherwise come back at whatever scroll position it left
      off at, dropping the visitor into the middle of the page with the
      experience still parked at the intro behind it. */
+  /* Test hook, like brand-proximity.html's window.__bp: the preview pane
+     freezes rAF, so this is the only way to drive the release snap and read
+     the experience's state from the console. Costs nothing. */
+  window.__home = {
+    releaseSnapNow, glideScrollTo, atExperienceEnd, setTarget, render,
+    get target(){ return scrollTarget; },
+    get display(){ return scrollDisplay; },
+    get glide(){ return releaseGlide; }
+  };
+
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   addEventListener("pageshow", () => { if (!atExperienceEnd()) window.scrollTo(0, 0); });
 

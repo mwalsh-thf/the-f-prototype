@@ -2181,7 +2181,9 @@
       return;
     }
     let dest = Math.round(tV);
-    if (flick){
+    if (tV0 < 0) dest = 0;                 // entered from above: the Context screen, never past it
+    else if (tV0 > STATES) dest = STATES;  // entered from below: the last card
+    else if (flick){
       const dir = tVel > 0 ? 1 : -1;
       const atLeast = Math.round(tV0) + dir;
       dest = dir > 0 ? Math.max(dest, atLeast) : Math.min(dest, atLeast);

@@ -625,9 +625,12 @@
     display:flex; justify-content:space-between; align-items:center;
     font-weight:300; font-size:max(9px, calc(19.6 * var(--u))); line-height:1.33;
   }
+  /* the frame's own right-pointing triangle, not a diamond */
   .bp-pop.is-strip .hd .mk{
-    display:inline-block; width:.42em; height:.42em; margin-right:.55em;
-    background:currentColor; transform:rotate(45deg);
+    display:inline-block; width:0; height:0; margin-right:.5em;
+    border-left:.42em solid currentColor;
+    border-top:.26em solid transparent;
+    border-bottom:.26em solid transparent;
   }
   .bp-pop.is-strip .nm{ font-weight:300; font-size:max(12px, calc(31.3 * var(--u))); line-height:1.1; }
   .bp-pop.is-strip .nm .sub{ color:#737380; }
@@ -829,7 +832,14 @@
     /* 50 from the logo's ink to the title's cap — the mobile block unit,
        against the desktop's 100 (which measured 165 from the page top
        here and left the mosaic sitting too low). */
-    .bp-hero{ padding:calc(var(--logo-bottom) + 50px) 0 0; }
+    /* ⚠️ A full screen tall, so the Context section is BELOW THE FOLD
+       while the header is in view (Myles, 4 Sep 2026: "you should not be
+       able to see the context paragraph on mobile while viewing the
+       header"). 100vh is the large viewport on a phone — the height with
+       the URL bar hidden — so the Context stays off-screen in both bar
+       states; svh would let it creep in the moment the bar collapsed.
+       The content stays top-aligned and the slack falls under the mosaic. */
+    .bp-hero{ padding:calc(var(--logo-bottom) + 50px) 0 0; min-height:100vh; }
     .bp-hero-band{ display:block; }
     .bp-hero-headline{
       position:static;
@@ -865,16 +875,24 @@
        states are already legible from the grounds and the headings. */
     .bp-subnav{ display:none; }
 
-    /* The text block dissolves into two bands, both positioned off the
-       CARD (which fills the screen) rather than off the block: the
-       heading 50 below the logo's ink, the copy 50 up from the bottom.
-       ⚠️ The transform that carries the parallax must stay on these two,
-       never on .bp-text — a transformed .bp-text becomes their containing
-       block and they land 25px in from the margin (see its own note). */
-    .bp-text{ position:static; width:auto; }
-    .bp-card .bp-heading{
+    /* The card is two things now (Myles, 4 Sep 2026): the text block
+       anchored to the foot — title, 25, body — and the mosaic centred in
+       the whole space above it. The heading used to sit at the top with
+       the mosaic squeezed between it and the copy, which left the artwork
+       small and the screen top-heavy.
+       ⚠️ `bottom` clears the URL bar: --vh-gap is lvh − svh (see
+       viewportH()), so the copy stays on screen whether the bar is up or
+       down, given the card is a full lvh tall.
+       ⚠️ The parallax transform must stay on the heading and the copy,
+       never on .bp-text — a transformed .bp-text becomes the containing
+       block for anything absolute inside it (see its own note). */
+    .bp-text{
       position:absolute; left:var(--pad-x); right:var(--pad-x);
-      top:calc(var(--logo-bottom) + 50px); margin-bottom:0;
+      top:auto; bottom:calc(50px + var(--vh-gap, 0px));
+      width:auto;
+    }
+    .bp-card .bp-heading{
+      position:static; margin-bottom:25px;
       /* ⚠️ Holds the full 27, not --fs-h4's mobile 21.6. This heading is
          the screen's own title with the sub-nav gone, and at 21.6 against
          18px body copy there was no hierarchy left — "balanced with the
@@ -884,19 +902,16 @@
          three still set on one line at 325px. Flagged as a call. */
       font-size:27px;
     }
-    .bp-card .bp-copy{
-      position:absolute; left:var(--pad-x); right:var(--pad-x);
-      bottom:50px;
-    }
+    .bp-card .bp-copy{ position:static; }
     .bp-overlay{ display:none; }
 
-    /* ⚠️ Native scroll snapping, mobile only. `proximity` rather than
-       `mandatory`: the snap targets are four 1px markers inside the stage
-       and nothing else on the page has one, so mandatory would be free to
-       drag the reader out of the hero and into the stage the moment they
-       started scrolling. See the markers' own comment and "Snap-to-state"
-       in the script for why the JS snap stays as a backstop. */
-    html{ scroll-snap-type:y proximity; }
+    /* ⚠️ Native scroll snapping, mobile only — and the strictness is set
+       by the SCRIPT, not here: `y mandatory` while the reader is inside
+       the stage, off everywhere else (see syncSnap()). Mandatory is what
+       makes a fling land on a state instead of parking between two, and
+       proximity was too loose to do it; scoping it to the stage is what
+       stops it dragging the reader out of the hero the moment they start
+       scrolling. */
     .bp-snap{ scroll-snap-align:start; }
 
     .contact-head, .contact-cta{ font-size:clamp(34px,10.2vw,44px); }
@@ -1125,13 +1140,11 @@
               <p class="hd"><span><span class="mk"></span>Buyer profile</span><span>1/19</span></p>
               <p class="nm">Chief technology officer<br><span class="sub">Financial services</span></p>
             </div>
+            <!-- Real copy as of 4 Sep 2026 — this card held the frame's
+                 "xxxxxx / xxxxx 142 …" placeholder rows until Myles wrote
+                 it. Same box, one paragraph. -->
             <div class="bp-pop" data-origin="tl" data-cell="7,10,4,3.75" style="--k:2; background:#20325F;">
-              <p class="bp-pop-title">xxxxxx</p>
-              <div class="bp-pop-rows">
-                <div class="bp-pop-row"><span class="l">xxxxx</span><span class="v">142</span></div>
-                <div class="bp-pop-row"><span class="l">xxxxxx</span><span class="v">92</span></div>
-                <div class="bp-pop-row"><span class="l">xxxx</span><span class="v">13</span></div>
-              </div>
+              <p>Challenges, triggers, the proof they need, objections and alternatives &ndash; all checked against third-party evidence.</p>
             </div>
           </div>
         </div>
@@ -1153,13 +1166,14 @@
           <!-- The frame's three overlay cards. "XX%" and its lorem are the
                frame's PLACEHOLDER copy, reproduced as drawn. -->
           <div class="bp-overlay" aria-hidden="true">
-            <div class="bp-pop" data-origin="bl" data-cell="9,3.25,4,3.75" style="--k:0; background:#511E17; --fig:57;">
+            <div class="bp-pop" data-origin="bl" data-cell="8,3.25,5,3.75" style="--k:0; background:#511E17; --fig:57;">
               <p class="bp-pop-fig">92</p>
               <p>AEO pages generated</p>
             </div>
-            <div class="bp-pop ink-dark" data-origin="tr" data-cell="1,5,4,3" style="--k:1; background:#F89082; --fig:38.5;">
-              <p class="bp-pop-fig">XX%</p>
-              <p>Et id sem faucibus fringilla felis elementum tortor ornare venenatis.</p>
+            <!-- Real copy as of 4 Sep 2026 — the frame's "XX% / Et id sem
+                 faucibus …" placeholder is gone, figure and all. -->
+            <div class="bp-pop ink-dark" data-origin="tr" data-cell="1,5,5,3" style="--k:1; background:#F89082;">
+              <p>Content in your style, built with your evidence, case studies and stats.</p>
             </div>
             <div class="bp-pop ink-dark to-end" data-origin="tr" data-cell="0,9,4,3" style="--k:2; background:#F9ACA1;">
               <p>Buyer questions meet your evidence in a ~150 word direct answer.</p>
@@ -1261,6 +1275,8 @@
   const MOBILE = 767;
   const STATES = 3;                         // cards; Context is state 0
 
+  const logoEl  = document.querySelector(".logo");
+  const heroMosaicEl = document.querySelector(".bp-hero-mosaic");
   const stage   = document.getElementById("bpStage");
   const pin     = document.getElementById("bpPin");
   const context = document.getElementById("bpContext");
@@ -1376,6 +1392,16 @@
   const ZOOM_MAX = 1.34;
   const OVER_CELLS = 3;                     // the canvas's overhang, in cells
 
+  /* ⚠️ How far down the hero mosaic's box the WORDMARK reaches, as a
+     fraction of its height — 0.826, measured across all three of Mosaic
+     1's configurations (1C puts "proximity" deepest). The mosaic is
+     capped so that point stays above the fold, because the service's own
+     name is drawn in the artwork and nowhere else on the page: at the
+     frame's own size it fell to y=910 on a 900-tall window, so the name
+     was cut in half four seconds after load, when the mosaic first
+     reconfigured. WORDMARK_FOOT is the air left under it. */
+  const WORDMARK_DEEP = 0.826, WORDMARK_FOOT = 30;
+
   function clamp01(v){ return v < 0 ? 0 : v > 1 ? 1 : v; }
   function clamp(v, a, b){ return v < a ? a : v > b ? b : v; }
   function smoothstep(t){ return t * t * (3 - 2 * t); }
@@ -1427,9 +1453,33 @@
     });
   }
 
+  /* ⚠️ ONE height for the whole stage, and on a phone it is 100lvh — the
+     height with the URL bar HIDDEN. innerHeight changes as that bar
+     collapses and expands, and everything here is built on it: the card
+     height, the pin, the step, the lock point. Rebuilding all of that
+     mid-scroll is what made the stage feel unmoored on a phone — the
+     states move under the reader's finger. lvh is the height a card must
+     fill to cover the screen at any moment; the copy is then held clear
+     of the bar by --vh-gap (lvh − svh), which is where the mobile text
+     block takes its bottom offset from. Falls back to innerHeight where
+     the units aren't supported. */
+  function viewportH(){
+    if (!isMobile) return innerHeight;
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:absolute;top:0;left:0;width:1px;visibility:hidden;pointer-events:none;height:100lvh";
+    document.body.appendChild(probe);
+    const lv = probe.offsetHeight;
+    probe.style.height = "100svh";
+    const sv = probe.offsetHeight;
+    probe.remove();
+    if (!lv || !sv) return innerHeight;
+    document.documentElement.style.setProperty("--vh-gap", (lv - sv) + "px");
+    return lv;
+  }
+
   function measure(){
-    H = innerHeight;
     isMobile = innerWidth <= MOBILE;
+    H = viewportH();
     const sbw = Math.max(0, innerWidth - document.documentElement.clientWidth);
     const W = innerWidth - sbw;
     /* ⚠️ A state is 0.7 of the screen on a phone against the desktop's
@@ -1463,31 +1513,40 @@
     const contentW = innerW - 2 * padX;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     let want, mx, my;
+    /* The hero mosaic, capped so the wordmark clears the fold — see
+       WORDMARK_DEEP. Measured with its own width cleared, because its top
+       depends on the headline above it and not on its own size. */
+    if (heroMosaicEl){
+      heroMosaicEl.style.width = "";
+      const top = heroMosaicEl.getBoundingClientRect().top + window.scrollY;
+      const capped = (innerHeight - top - WORDMARK_FOOT) / WORDMARK_DEEP;
+      const natural = heroMosaicEl.offsetWidth;
+      if (capped < natural) heroMosaicEl.style.width = Math.max(240, capped).toFixed(1) + "px";
+    }
+
     if (!isMobile){
-      cards.forEach(card => { card.querySelector(".bp-heading").style.top = ""; });
       want = Math.min(contentW * 0.4748, H * 0.7475 * MOSAIC_BOX.w / MOSAIC_BOX.h);
       mx = (W - innerW) / 2 + padX + contentW * 0.4005;
       my = 0;                                  // centred below, once the height is known
     } else {
-      /* Mobile: the heading and the copy are placed by CSS now (the
-         sub-nav is gone, so there is nothing to measure them against),
-         and the mosaic is centred in the SCREEN — scaled down to 72% of
-         the column so the air around it is designed rather than left
-         over. It is clamped to keep 25 clear of the heading above and the
-         copy below, which is what a 700-tall phone needs; on anything
-         taller the clamp never bites and it sits dead centre.
-         ⚠️ offsetTop / offsetHeight (layout), never rects: the text layer
-         holds the heading and the copy up to 24px off their place, and a
-         rect would read that. */
-      const head = cards[0].querySelector(".bp-heading");
-      const copy = cards[0].querySelector(".bp-copy");
-      const headBottom = head.offsetTop + head.offsetHeight;
-      const copyTop = copy.offsetTop;
-      want = Math.min(contentW * 0.72,
-                      Math.max(160, copyTop - headBottom - 50) * 0.8 * MOSAIC_BOX.w / MOSAIC_BOX.h);
-      mx = 0;
-      my = 0;                                  // clamped below, once the height is known
-      mobileBand = [headBottom + 25, copyTop - 25];
+      /* Mobile (re-organised 4 Sep 2026): the text block — title, 25,
+         body — is anchored to the foot, and the mosaic takes the whole
+         space above it, centred, at 92% of it. It used to sit between a
+         heading at the top and the copy at the bottom, which left the
+         artwork small and squeezed; this gives it about a third more area
+         and reads as one composition rather than three stacked things.
+         ⚠️ offsetTop (layout), never rects: the text layer holds the block
+         up to 24px off its place, and a rect would read that. */
+      const text = cards[0].querySelector(".bp-text");
+      // 25 clear of the logo's ink above and of the title below — the
+      // mobile tight unit at both ends, so centring in the band leaves the
+      // same air on each side of the artwork (measured 38.5 / 38.5).
+      const bandTop = logoEl.getBoundingClientRect().bottom + 25;
+      const bandBottom = text.offsetTop - 25;
+      const band = Math.max(160, bandBottom - bandTop);
+      want = Math.min(contentW, band * 0.92 * MOSAIC_BOX.w / MOSAIC_BOX.h);
+      mx = 0; my = 0;
+      mobileBand = [bandTop, bandBottom];
     }
 
     /* ⚠️ The box is derived from the CELL, not the other way round: one
@@ -1501,13 +1560,9 @@
     const mh = cell1 * (MOSAIC_BOX.h / MOSAIC_BOX.cell);
     over = OVER_CELLS * Math.max(1, Math.round(cell1 * ZOOM_MAX * dpr)) / dpr;
     cx = over + mw / 2; cy = over + mh / 2;
-    // Desktop centres the art on the screen. Mobile centres it in the band
-    // between the heading and the copy — which, with the heading 50 below
-    // the logo and the copy 50 up from the foot, sits within ~30px of the
-    // screen's own centre, so it reads as centred AND leaves equal air
-    // above and below (the mosaic is 80% of the band, so that air is 10%
-    // of it each side). Centring on the screen instead put 87 above and
-    // the bare 25 minimum below on a 700-tall phone.
+    // Desktop centres the art on the screen; mobile centres it in its own
+    // band above the text block, which is where the eye reads it as
+    // centred now that nothing sits above it but the bar.
     my = H / 2 - mh / 2;
     if (isMobile){
       mx = (W - mw) / 2;
@@ -1869,15 +1924,43 @@
     });
   });
 
+  /* ⚠️ Mandatory snapping, scoped to the stage. A phone's momentum cannot
+     be cancelled from script, so the platform has to do the landing — but
+     `mandatory` left on the document would be entitled to pull the reader
+     off the hero or the footer toward a marker as soon as they moved.
+     Switching it on only while they are within a state of the stage gives
+     the crisp landing where it is wanted and normal scrolling everywhere
+     else. Desktop never turns it on: it has the chase and the wheel snap. */
+  let snapMode = "";
+  function syncSnap(){
+    const y = window.scrollY;
+    const want = (isMobile && y > lockY - STEP && y < lockY + STATES * STEP + STEP)
+      ? "y mandatory" : "";
+    if (want === snapMode) return;
+    snapMode = want;
+    document.documentElement.style.scrollSnapType = want;
+  }
+
   addEventListener("scroll", () => {
     readScroll();
+    syncSnap();
     if (!reducedMotion.matches) scheduleSnap();
   }, { passive:true });
 
-  let resizeTimer = null;
+  /* ⚠️ A phone fires `resize` every time the URL bar collapses or
+     expands — a 60–120px height change and nothing else — and
+     re-measuring on that re-lays the entire stage under the reader's
+     finger. Height-only changes are ignored on a coarse pointer unless
+     they are big enough to be an orientation change. (H itself is lvh, so
+     it would not move; this is about the layout work and the reflow.) */
+  let resizeTimer = null, lastW = innerWidth, lastH = innerHeight;
   addEventListener("resize", () => {
+    const w = innerWidth, h = innerHeight;
+    const coarse = matchMedia("(pointer:coarse)").matches;
+    if (coarse && w === lastW && Math.abs(h - lastH) < h * 0.25) return;
+    lastW = w; lastH = h;
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { measure(); readScroll(); }, 150);
+    resizeTimer = setTimeout(() => { measure(); readScroll(); syncSnap(); }, 150);
   });
   if ("ResizeObserver" in window){
     new ResizeObserver(() => {
@@ -1908,6 +1991,7 @@
 
   measure();
   readScroll();
+  syncSnap();
   vShown = vTarget;                          // no glide on a restored scroll position
   frame();
   requestAnimationFrame(loop);

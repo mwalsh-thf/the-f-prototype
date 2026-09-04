@@ -475,6 +475,33 @@
   .bp-subnav button[aria-current="true"]{ opacity:1; }
   .bp-subnav button:focus-visible{ outline:1px solid currentColor; outline-offset:4px; }
 
+  /* The stage's CTA (frame 3557:2959, added 4 Sep 2026): "Request a free
+     sample report ↓", Details, right-aligned to the content edge and
+     bottom-aligned with the sub-nav's last line — the frame draws it on
+     every card at the same spot, so like the sub-nav it is ONE element in
+     the pin, faded in with it. It links down the page to the report
+     section; the arrow is drawn (as the site's ↗ is) rather than the ↓
+     glyph, whose head sits wrong against Geist. On mobile it moves under
+     the body copy — see the mobile block. */
+  .bp-cta{
+    position:absolute; z-index:4;
+    right:max(var(--pad-x), calc((100% - var(--page-max)) / 2 + var(--pad-x)));
+    bottom:clamp(40px,11.1vh,100px);
+    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink-footer); text-decoration:none; white-space:nowrap;
+    opacity:0; pointer-events:none;
+    transition:color .35s var(--ease-out-expo);
+  }
+  .bp-cta:hover{ color:var(--f-red); }
+  .bp-cta:focus-visible{ outline:1px solid currentColor; outline-offset:4px; }
+  .bp-cta-arrow{
+    display:inline-block; width:.6em; height:.6em; margin-left:.3em;
+    vertical-align:-.04em;
+    fill:none; stroke:currentColor; stroke-width:2;
+    transition:transform .35s var(--ease-out-expo);
+  }
+  .bp-cta:hover .bp-cta-arrow{ transform:translateY(.16em); }
+
   /* ---- The card's text is a SCROLL LAYER, not a one-shot reveal ----
    *
    * ⚠️ It used to arrive on the site's 2.2s reveal and then simply stay
@@ -670,40 +697,73 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * 3. Contact — the frame now sets this in the site's own H2 with the
-   * CTA in F Red (3438:6370: 200 top and bottom, 60 Light, red link).
+   * 3. The report — "See what Brand Proximity could do for your business
+   * today" (frame 3438:6370, redesigned 4 Sep 2026)
+   *
+   * The frame draws the title (H3, 601 wide) beside a right-hand column
+   * (498 wide: the 27px lead, 50 down, the red 20px link) with the video
+   * below both. ⚠️ Myles asked for the ORDER changed — title, then the
+   * video, then the copy — so it stacks: the title on the left, the video
+   * on the full content width, then the copy block in the frame's own
+   * right column so its placement survives the re-order. 100 between
+   * each, the frame's rhythm.
+   *
+   * The video is Myles' own screen recording of the report (assets/video,
+   * H.264 at 1080 and 720, 19MB / 13MB — a screen recording, so the
+   * 720 is for phones). Ambient: muted, looping, inline, no controls —
+   * and ⚠️ LAZY: it has no src until it is within 300px of the viewport
+   * (see the observer in the script), or the page would pull 19MB before
+   * the reader has scrolled past the hero. Reduced motion gets the
+   * controls and no autoplay.
    * ------------------------------------------------------------------ */
-  .contact{
+  .challenge{
     position:relative; z-index:20;
     background:var(--bg);
-    padding:clamp(100px,13.9vw,200px) var(--pad-x);
+    padding:100px var(--pad-x);
+    display:flex; flex-direction:column; gap:100px;
   }
-  .contact-head, .contact-cta{
-    display:block;
-    font-size:var(--fs-h2);
+  .challenge-title{
     font-weight:300;
-    line-height:1.15;
-    letter-spacing:-.02em;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    color:var(--ink-footer);
+    max-width:601px;
   }
-  .contact-head{ color:var(--ink-footer); }
-  .contact-cta{
+  @supports (text-box: trim-both cap alphabetic){
+    .challenge-title{ text-box:trim-both cap alphabetic; }
+  }
+  .challenge-video{
+    width:100%; aspect-ratio:1241/718;
+    background:#DCDCDC; overflow:hidden;
+  }
+  .challenge-video video{ display:block; width:100%; height:100%; object-fit:cover; }
+  .challenge-copy{
+    display:flex; flex-direction:column; gap:50px;
+    max-width:498px; margin-left:auto;
+  }
+  .challenge-lead{
+    font-weight:300;
+    font-size:var(--fs-h4); line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink-footer);
+  }
+  .challenge-cta{
+    font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
     color:var(--f-red); text-decoration:none;
     width:max-content; max-width:100%;
   }
-  .contact-cta:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px; }
+  .challenge-cta:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px; }
   /* Drawn arrow, as index.html's — the ↗ glyph's solid head doesn't sit
      right against Geist's metrics. */
   .contact-arrow{
     display:inline-block;
     width:.53em; height:.53em;
     margin-left:.12em;
-    vertical-align:.22em;
+    vertical-align:.1em;
     fill:none; stroke:currentColor; stroke-width:2;
     transition:transform .35s var(--ease-out-expo);
   }
-  .contact-cta:hover .contact-arrow,
-  .contact-cta:focus-visible .contact-arrow{ transform:translateX(.16em); }
-  @media (prefers-reduced-motion: reduce){ .contact-arrow{ transition:none; } }
+  .challenge-cta:hover .contact-arrow,
+  .challenge-cta:focus-visible .contact-arrow{ transform:translateX(.16em); }
+  @media (prefers-reduced-motion: reduce){ .contact-arrow, .bp-cta-arrow{ transition:none; } }
 
   /* ------------------------------------------------------------------ *
    * 4. Related — frame 3438:6396: H3 title, 100 down, two 605 tiles 30
@@ -844,7 +904,7 @@
     .bp-hero-headline{
       position:static;
       width:auto; max-width:none;
-      margin-bottom:50px;
+      margin-bottom:75px;           /* the mobile section unit (was 50) */
     }
     /* ⚠️ The title RUNS THE FULL WIDTH here: the frame's three hard lines
        are a desktop shape, and at 48px on a 325 column they cost ~85px of
@@ -855,7 +915,16 @@
        ("Show up <br>and stand <br>out") or the words collide into
        "Show upand stand". Same trap as About's headline. */
     .bp-hero-headline br{ display:none; }
-    .bp-hero-mosaic{ width:100%; }
+    /* Full-bleed — the mosaic runs edge to edge of the screen (Myles,
+       4 Sep 2026: "as big as possible"), on the site's standard --sbw
+       breakout; the 50% here is the inner column's content box, which
+       exactly cancels its 25px inset. measure() leaves this alone: the
+       wordmark cap is desktop-only, since at a phone's proportions the
+       name is always well above the fold. */
+    .bp-hero-mosaic{
+      width:calc(100vw - var(--sbw));
+      margin-inline:calc(50% - 50vw + var(--sbw) / 2);
+    }
 
     /* The copy no longer fits a screen, so the pin grows to hold it (see
        measure()) and the reader scrolls it; the 25px grid throughout. */
@@ -888,9 +957,14 @@
        block for anything absolute inside it (see its own note). */
     .bp-text{
       position:absolute; left:var(--pad-x); right:var(--pad-x);
-      top:auto; bottom:calc(50px + var(--vh-gap, 0px));
+      /* above the CTA (one 18px line) with 25 between — see .bp-cta */
+      top:auto; bottom:calc(50px + var(--vh-gap, 0px) + 18px + 25px);
       width:auto;
     }
+    /* The CTA sits under the body copy on mobile (Myles, 4 Sep 2026): same
+       element, moved to the foot's left, with the text block raised over
+       it. */
+    .bp-cta{ right:auto; left:var(--pad-x); bottom:calc(50px + var(--vh-gap, 0px)); }
     .bp-card .bp-heading{
       position:static; margin-bottom:25px;
       /* ⚠️ Holds the full 27, not --fs-h4's mobile 21.6. This heading is
@@ -914,7 +988,8 @@
        scrolling. */
     .bp-snap{ scroll-snap-align:start; }
 
-    .contact-head, .contact-cta{ font-size:clamp(34px,10.2vw,44px); }
+    .challenge{ padding:75px var(--pad-x); gap:50px; }
+    .challenge-copy{ max-width:none; margin-left:0; gap:25px; }
 
     .related{ padding:75px var(--pad-x); }
     .related h2{ margin-bottom:50px; }
@@ -1067,7 +1142,7 @@
       <!-- State 0: Context (frame 3437:2923) -->
       <div class="bp-context bp-inner" id="bpContext">
         <div class="bp-context-copy">
-          <p>Most B2B buyers use AI to assess their options and guide their decisions. Visibility in these searches can make or break your brand. So why not turn the tools to your advantage</p>
+          <p>Most B2B buyers use AI to assess their options and guide their decisions. Visibility in these searches can make or break your brand. So why not turn the tools to your advantage.</p>
           <p>We help B2B brands embrace the new world of AI discovery with Brand Proximity, an AI-powered managed service. We&rsquo;ll show you exactly how you show up in AI search &ndash; then improve it, so you can get closer to your audience with answers that speak to real human needs.</p>
         </div>
         <div class="bp-stats">
@@ -1206,6 +1281,7 @@
       <!-- The sub-nav — one element above all three cards, held still
            while they wipe under it; the script drives its opacity and
            current state (see .bp-subnav). Hidden on mobile. -->
+      <a class="bp-cta" id="bpCta" href="#challenge">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5v16"/><path d="M4.6 12.2 12 19.6l7.4-7.4"/></svg></a>
       <nav class="bp-subnav" id="bpSubnav" aria-label="Brand Proximity">
         <button type="button" data-state="1" aria-current="true">Establish the supply</button>
         <button type="button" data-state="2" aria-current="false">Understand the demand</button>
@@ -1216,9 +1292,20 @@
   </section>
 
   <!-- ---------- 3. Contact ---------- -->
-  <section class="contact" aria-label="Contact">
-    <h2 class="contact-head reveal">Want to know how your brand shows up?</h2>
-    <a class="contact-cta reveal" href="contact.html">Request a free sample report<svg class="contact-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
+  <section class="challenge" id="challenge" aria-label="Request a free sample report">
+    <h2 class="challenge-title reveal">See what Brand Proximity could do for your business today</h2>
+    <div class="challenge-video reveal">
+      <!-- src is set by the script once this is near the viewport; the two
+           files are the same recording at 1080 and 720. -->
+      <video id="bpVideo" muted loop playsinline preload="none"
+             aria-label="A Brand Proximity sample report"
+             data-src="assets/video/brand-proximity-report-1080.mp4"
+             data-src-mobile="assets/video/brand-proximity-report-720.mp4"></video>
+    </div>
+    <div class="challenge-copy reveal">
+      <p class="challenge-lead">Request a free sample report digging into who your buyers are, what they&rsquo;re looking for, and how your brand shows up with the content they need.</p>
+      <a class="challenge-cta" href="contact.html">Request a free sample report<svg class="contact-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
+    </div>
   </section>
 
   <!-- ---------- 4. Related ---------- -->
@@ -1282,6 +1369,7 @@
   const context = document.getElementById("bpContext");
   const cards   = [...pin.querySelectorAll(".bp-card")];
   const subnav  = document.getElementById("bpSubnav");
+  const cta     = document.getElementById("bpCta");
   const snaps   = [...stage.querySelectorAll(".bp-snap")];
   const subBtns = [...subnav.querySelectorAll("button[data-state]")];
   const stages  = cards.map(c => c.querySelector(".bp-mosaic-stage"));
@@ -1304,6 +1392,30 @@
     }
   }, { rootMargin: "0px 0px -12% 0px", threshold: 0.15 });
   contextObserver.observe(context);
+
+  // The report video: no src until it is near the viewport, then it plays
+  // muted and looping. 720 on a phone, 1080 otherwise. Reduced motion gets
+  // controls instead of autoplay.
+  const video = document.getElementById("bpVideo");
+  if (video){
+    const vo = new IntersectionObserver((entries, obs) => {
+      for (const entry of entries){
+        if (!entry.isIntersecting) continue;
+        obs.unobserve(video);
+        // autoplay BEFORE src, so the element plays itself when it is ready;
+        // play() is only a nudge, and its AbortError (a new load interrupting
+        // it) is benign — only a NotAllowedError means autoplay is blocked.
+        if (reducedMotion.matches){ video.controls = true; }
+        else video.autoplay = true;
+        video.src = innerWidth <= MOBILE ? video.dataset.srcMobile : video.dataset.src;
+        if (!reducedMotion.matches){
+          const p = video.play();
+          if (p && p.catch) p.catch(err => { if (err && err.name === "NotAllowedError") video.controls = true; });
+        }
+      }
+    }, { rootMargin: "300px 0px" });
+    vo.observe(video);
+  }
 
   // Contact and Related — the site's standard one-shot reveal.
   const revealObserver = new IntersectionObserver((entries, obs) => {
@@ -1516,8 +1628,8 @@
     /* The hero mosaic, capped so the wordmark clears the fold — see
        WORDMARK_DEEP. Measured with its own width cleared, because its top
        depends on the headline above it and not on its own size. */
-    if (heroMosaicEl){
-      heroMosaicEl.style.width = "";
+    if (heroMosaicEl) heroMosaicEl.style.width = "";
+    if (heroMosaicEl && !isMobile){
       const top = heroMosaicEl.getBoundingClientRect().top + window.scrollY;
       const capped = (innerHeight - top - WORDMARK_FOOT) / WORDMARK_DEEP;
       const natural = heroMosaicEl.offsetWidth;
@@ -1804,6 +1916,8 @@
     const subOp = smoothstep(clamp01((v - 0.45) / 0.45));
     subnav.style.opacity = subOp.toFixed(3);
     subnav.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
+    cta.style.opacity = subOp.toFixed(3);            // the CTA arrives with it
+    cta.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
     const nearest = clamp(Math.round(v), 1, STATES);
     subBtns.forEach(b => b.setAttribute("aria-current", String(+b.dataset.state === nearest)));
 
@@ -1854,9 +1968,6 @@
   const SNAP_DELAY = 160;                  // index.html's own quiet period
   const SNAP_DELAY_TOUCH = 420;            // after the fling, not during it
   let touching = false;
-  addEventListener("touchstart", () => { touching = true; }, { passive:true });
-  addEventListener("touchend", () => { touching = false; scheduleSnap(); }, { passive:true });
-  addEventListener("touchcancel", () => { touching = false; }, { passive:true });
   const SNAP_MS = 600;
   let snapTimer = null;
   const snapEase = t => {
@@ -1874,7 +1985,8 @@
   };
   let glide = null;
   function cancelGlide(){ if (glide){ glide.cancelled = true; glide = null; } }
-  function glideScrollTo(targetY){
+  function glideScrollTo(targetY, ms){
+    ms = ms || SNAP_MS;
     cancelGlide();
     const startY = window.scrollY, delta = targetY - startY;
     if (Math.abs(delta) < 1) return;
@@ -1882,13 +1994,24 @@
     const t0 = performance.now();
     const step = now => {
       if (g.cancelled) return;
-      const t = Math.min(1, (now - t0) / SNAP_MS);
+      const t = Math.min(1, (now - t0) / ms);
       window.scrollTo(0, startY + delta * snapEase(t));
       if (t < 1) requestAnimationFrame(step); else glide = null;
     };
     requestAnimationFrame(step);
-    setTimeout(() => { if (!g.cancelled && glide === g){ window.scrollTo(0, targetY); glide = null; } }, SNAP_MS + 80);
+    setTimeout(() => { if (!g.cancelled && glide === g){ window.scrollTo(0, targetY); glide = null; } }, ms + 80);
   }
+
+  // The stage's CTA glides down the page to the report section. Longer
+  // than a snap — it is a page-length move — and it cancels on input like
+  // every glide here.
+  cta.addEventListener("click", e => {
+    e.preventDefault();
+    const target = document.getElementById("challenge");
+    if (!target) return;
+    clearTimeout(snapTimer);
+    glideScrollTo(target.getBoundingClientRect().top + window.scrollY, 900);
+  });
   ["wheel","touchstart","keydown","pointerdown"].forEach(ev =>
     addEventListener(ev, cancelGlide, { passive:true }));
 
@@ -1934,15 +2057,100 @@
   let snapMode = "";
   function syncSnap(){
     const y = window.scrollY;
-    const want = (isMobile && y > lockY - STEP && y < lockY + STATES * STEP + STEP)
+    // off while the finger model owns the stage (it lands exactly on its
+    // own) and while a glide is in flight (a programmatic scroll re-snaps)
+    const want = (isMobile && !engaged && !glide && y > lockY - STEP && y < lockY + STATES * STEP + STEP)
       ? "y mandatory" : "";
     if (want === snapMode) return;
     snapMode = want;
     document.documentElement.style.scrollSnapType = want;
   }
 
+  /* ------------------------------------------------------------------ *
+   * The homepage's touch model, inside the stage (mobile, 4 Sep 2026)
+   *
+   * Native flinging never felt like the homepage, whatever the snapping
+   * did: momentum belongs to the platform and lands where it lands. So
+   * while the reader is INSIDE the stage the page takes the finger the
+   * way index.html does — `touch-action:none` on the document (set from
+   * the scroll handler, so it is in place before the next touch starts),
+   * a 1:1 drag at TOUCH_SENSITIVITY px per state, a flick that commits
+   * the next state on velocity alone, and a landing on the whole state
+   * the moment the finger lifts, which the chase then glides to. No
+   * momentum to fight; a quick flick sends you one state on and it
+   * sticks. All three constants are the homepage's own.
+   *
+   * The hand-off at the ends is the homepage's `pageOwnsScroll`: past
+   * state 0 or 3 the finger moves the page 1:1 instead, and on lift the
+   * document is handed back at once so the next gesture is native.
+   * Entering from outside is native too (with the mandatory snap doing
+   * the landing) — the model only ever takes a gesture that STARTS in the
+   * stage. ⚠️ The menu overlay must be able to scroll, so it is never
+   * engaged while the menu is open.
+   * ------------------------------------------------------------------ */
+  const TOUCH_SENSITIVITY = 260;  // px of drag per full state
+  const FLICK_VELOCITY    = 0.25; // px/ms — above this, a flick advances a state
+  const FLICK_STALE_MS    = 120;  // finger paused this long before lifting = not a flick
+  let engaged = false;
+  function syncEngaged(){
+    const y = window.scrollY;
+    const want = isMobile && !document.body.classList.contains("menu-open")
+      && y >= lockY - 1 && y <= lockY + STATES * STEP + 1;
+    if (want === engaged) return;
+    engaged = want;
+    document.documentElement.style.touchAction = want ? "none" : "";
+  }
+  let tY = null, tV0 = 0, tV = 0, tVel = 0, tLast = 0, tOwn = false;
+  addEventListener("touchstart", e => {
+    touching = true;
+    tOwn = engaged;
+    if (!tOwn) return;
+    tY = e.touches[0].clientY;
+    tV0 = (window.scrollY - lockY) / STEP; tV = tV0;
+    tVel = 0; tLast = e.timeStamp;
+    clearTimeout(snapTimer); cancelGlide();
+  }, { passive:true });
+  addEventListener("touchmove", e => {
+    if (!tOwn || tY === null) return;
+    if (e.cancelable) e.preventDefault();
+    const cur = e.touches[0].clientY;
+    const d = tY - cur;                             // + = scrolling down
+    const dt = Math.max(1, e.timeStamp - tLast);
+    tVel = tVel * 0.7 + (d / dt) * 0.3;             // smoothed, as index.html
+    tY = cur; tLast = e.timeStamp;
+    tV += d / TOUCH_SENSITIVITY;
+    let y;
+    if (tV < 0)           y = lockY + tV * TOUCH_SENSITIVITY;                              // 1:1 above
+    else if (tV > STATES) y = lockY + STATES * STEP + (tV - STATES) * TOUCH_SENSITIVITY;   // 1:1 below
+    else                  y = lockY + tV * STEP;
+    window.scrollTo(0, y);
+    readScroll();
+  }, { passive:false });
+  function touchDone(e){
+    touching = false;
+    if (!tOwn){ scheduleSnap(); return; }
+    tOwn = false; tY = null;
+    if (tV < 0 || tV > STATES){
+      engaged = false; document.documentElement.style.touchAction = "";   // handed back
+      return;
+    }
+    let dest = Math.round(tV);
+    const moving = e.timeStamp - tLast < FLICK_STALE_MS;
+    if (moving && Math.abs(tVel) > FLICK_VELOCITY){
+      const dir = tVel > 0 ? 1 : -1;
+      const atLeast = Math.round(tV0) + dir;
+      dest = dir > 0 ? Math.max(dest, atLeast) : Math.min(dest, atLeast);
+    }
+    dest = clamp(dest, 0, STATES);
+    window.scrollTo(0, lockY + dest * STEP);
+    readScroll();
+  }
+  addEventListener("touchend", touchDone, { passive:true });
+  addEventListener("touchcancel", touchDone, { passive:true });
+
   addEventListener("scroll", () => {
     readScroll();
+    syncEngaged();
     syncSnap();
     if (!reducedMotion.matches) scheduleSnap();
   }, { passive:true });
@@ -1960,7 +2168,7 @@
     if (coarse && w === lastW && Math.abs(h - lastH) < h * 0.25) return;
     lastW = w; lastH = h;
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { measure(); readScroll(); syncSnap(); }, 150);
+    resizeTimer = setTimeout(() => { measure(); readScroll(); syncEngaged(); syncSnap(); }, 150);
   });
   if ("ResizeObserver" in window){
     new ResizeObserver(() => {
@@ -1991,6 +2199,7 @@
 
   measure();
   readScroll();
+  syncEngaged();
   syncSnap();
   vShown = vTarget;                          // no glide on a restored scroll position
   frame();

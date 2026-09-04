@@ -311,18 +311,13 @@
      corners got cut mid-spin. The build-in keyframe still animates
      clip-path; it uses `backwards` fill, so once it finishes the property
      reverts to none and nothing clips. */
+  /* ⚠️ No entrance of its own any more (Myles, 4 Sep 2026): the mark
+     used to build out of a small centred square (a clip-path keyframe,
+     `icon-build`) while the card rose in beneath it. It now simply rides
+     the card's own .reveal — fading and rising into place like every
+     other object on the site. The keyframe is gone; nothing else
+     referenced it. */
   .s-mark{ }
-  @keyframes icon-build{
-    0%  { opacity:0; clip-path:inset(45% 45% 45% 45%); }
-    100%{ opacity:1; clip-path:inset(0 0 0 0); }
-  }
-  @media (prefers-reduced-motion: no-preference){
-    .js .service:not(.in) .s-mark{ opacity:0; }
-    .service.in .s-mark{
-      animation:icon-build var(--reveal-dur) var(--ease-out-expo) backwards;
-      animation-delay:var(--d, 0ms);
-    }
-  }
 
   /* ------------------------------------------------------------------ *
    * Client logos
@@ -794,6 +789,10 @@
   </footer>
 </main>
 
+<!-- Flubber 0.4.2, vendored (52KB) rather than pulled from a CDN so the
+     page still works offline. ⚠️ Back on the site as of 4 Sep 2026: it
+     drives icons 4, 7 and 10 exactly as Myles' own icon file does. -->
+<script src="assets/vendor/flubber.min.js"></script>
 <script>
 (() => {
   "use strict";
@@ -863,13 +862,16 @@
    *                 v=0.5, the curve's peak velocity, so the cut hides
    *   10 xform      one slides, three stretch, a fifth grows in
    *
-   * ⚠️ There is NO third-party library here any more. Icons 4, 7 and 10
-   * used Flubber; even with its multi-ring bug fixed the interpolation
-   * read wrong against the rest of the set — it resamples each edge into
-   * many points and eases them independently, so straight edges bow and
-   * corners round off mid-move. They are rebuilt as slides and anchored
-   * scales in the set's own hard-edged language, landing exactly on their
-   * drawn state-2 geometry, and the vendored library is gone with them.
+   * ⚠️ Icons 4, 7 and 10 are FLUBBER again (Myles, 4 Sep 2026: "make sure
+   * the animations are intact from the original") — the whole combined
+   * shape interpolated with `flubber.interpolate(state1, state2,
+   * {maxSegmentLength: 2})`, the exact call his file makes, and the
+   * library vendored at assets/vendor/. They had been rebuilt as slides
+   * and anchored scales (kept below as `ICON_DATA.slides`, and used as the
+   * fallback if the library ever fails to load) because Flubber bows
+   * straight edges and rounds corners mid-move; that was a judgement
+   * call against the author's own work, and it has been reversed. The
+   * other seven icons were never in question — same builders, same data.
    *
    * ⚠️ The marks are decorative (they carry no label the copy doesn't
    * already give) so they are aria-hidden and deliberately NOT focusable.
@@ -879,6 +881,8 @@
    * ================================================================== */
   (function(){
     const ICON_DATA = {"layers":{"1allrotate":{"type":"allRotate","pieces":[{"d":"M60.000,30.000 L90.000,60.000 L60.000,90.000 L30.000,60.000 Z","cx1":60,"cy1":60,"dx":0,"dy":0,"scaleFrom":1,"scaleTo":1.414213562373095,"rotate":45},{"d":"M120.000,90.000 L150.000,120.000 L120.000,150.000 L90.000,120.000 Z","cx1":120,"cy1":120,"dx":0,"dy":0,"scaleFrom":1,"scaleTo":1.414213562373095,"rotate":45},{"d":"M120.000,30.000 L150.000,60.000 L120.000,90.000 L90.000,60.000 Z","cx1":120,"cy1":60,"dx":15,"dy":-15,"scaleFrom":1,"scaleTo":0.7071067811865475,"rotate":45},{"d":"M60.000,90.000 L90.000,120.000 L60.000,150.000 L30.000,120.000 Z","cx1":60,"cy1":120,"dx":-15,"dy":15,"scaleFrom":1,"scaleTo":0.7071067811865475,"rotate":45}]},"2alt":{"type":"slide","pieces":[{"d":"M60.000,60.000 L150.000,60.000 L150.000,30.000 L60.000,30.000 Z","dx":-30,"dy":0},{"d":"M30.000,150.000 L120.000,150.000 L120.000,120.000 L30.000,120.000 Z","dx":30,"dy":0},{"d":"M30.000,90.000 L60.000,90.000 L60.000,60.000 L30.000,60.000 Z","dx":0,"dy":30},{"d":"M120.000,120.000 L150.000,120.000 L150.000,90.000 L120.000,90.000 Z","dx":0,"dy":-30}]},"5":{"type":"slide","pieces":[{"d":"M89.400,29.400 L150.600,29.400 L150.600,150.600 L89.400,150.600 Z","dx":-60,"dy":0},{"d":"M29.400,29.400 L60.600,29.400 L60.600,60.600 L29.400,60.600 Z","dx":90,"dy":90},{"d":"M29.400,89.400 L90.600,89.400 L90.600,150.600 L29.400,150.600 Z","dx":60,"dy":-60}]},"6":{"type":"anchorScale","pieces":[{"d":"M150.000,30.000 L60.000,30.000 L60.000,120.000 L150.000,120.000 Z","ax":150,"ay":30,"scaleTo":0.3333333333333333},{"d":"M60.000,120.000 L30.000,120.000 L30.000,150.000 L60.000,150.000 Z","ax":30,"ay":150,"scaleTo":3.0}]},"8":{"type":"composite8","static":["M29.400,29.400 L60.600,29.400 L60.600,120.600 L29.400,120.600 Z","M150.000,30.000 L90.000,30.000 L150.000,90.000 Z","M59.400,119.400 L90.600,119.400 L90.600,150.600 L59.400,150.600 Z"],"hero":{"d":"M59.400,29.400 L90.600,29.400 L90.600,60.600 L59.400,60.600 Z","dx":0,"dy":60},"triFrom":[[150,150],[150,90],[90,150]],"triTo":[[150,150],[150,90],[90,90]]},"9":{"type":"composite9v3","static":"M119.400,89.400 L150.600,89.400 L150.600,120.600 L119.400,120.600 Z","hero":{"d":"M120.000,30.000 L150.000,30.000 L150.000,60.000 L120.000,60.000 Z","dx":0,"dy":60},"restFrom":"M30.000,30.000 L60.000,30.000 L60.000,60.000 L30.000,60.000 Z M60.000,60.000 L90.000,60.000 L90.000,90.000 L60.000,90.000 Z M60.000,90.000 L90.000,90.000 L90.000,120.000 L60.000,120.000 Z M30.000,90.000 L60.000,90.000 L60.000,120.000 L30.000,120.000 Z M60.000,120.000 L90.000,120.000 L90.000,150.000 L60.000,150.000 Z M119.400,119.400 L150.600,119.400 L150.600,150.600 L119.400,150.600 Z M60.000,60.000 L90.000,60.000 L60.000,30.000 L60.000,60.000 Z","restTo":"M89.932,30.000 L59.989,30.000 L30.000,59.989 L30.000,89.978 L59.989,89.978 L30.000,119.989 L30.000,150.000 L59.989,150.000 L59.989,120.011 L90.000,120.011 L90.000,90.000 L59.967,90.000 L59.967,59.989 L89.932,59.989 L89.932,30.000 Z"}}};
+    /* the author's own Flubber states for 4, 7 and 10, verbatim */
+    ICON_DATA.flubber = {"4":{"state1":"M120.000,60.000 L150.000,60.000 L150.000,90.000 L120.000,90.000 Z M90.000,90.000 L120.000,90.000 L120.000,120.000 L90.000,120.000 Z M90.000,30.000 L120.000,30.000 L120.000,60.000 L90.000,60.000 Z M60.000,60.000 L90.000,60.000 L90.000,90.000 L60.000,90.000 Z M30.000,90.000 L60.000,90.000 L60.000,150.000 L30.000,150.000 Z","state2":"M60.000,60.000 L30.000,60.000 L30.000,90.000 L60.000,90.000 Z M90.000,90.000 L60.000,90.000 L60.000,120.000 L90.000,120.000 Z M90.000,30.000 L60.000,30.000 L60.000,60.000 L90.000,60.000 Z M120.000,60.000 L90.000,60.000 L90.000,90.000 L120.000,90.000 Z M150.000,90.000 L120.000,90.000 L120.000,150.000 L150.000,150.000 Z"},"7":{"state1":"M120.000,120.000 L150.000,120.000 L150.000,150.000 L120.000,150.000 Z M90.000,90.000 L120.000,90.000 L120.000,120.000 L90.000,120.000 Z M60.000,30.000 L90.000,30.000 L90.000,90.000 L60.000,90.000 Z M30.000,120.000 L90.000,120.000 L90.000,150.000 L30.000,150.000 Z M120.000,30.000 L150.000,30.000 L150.000,60.000 L120.000,60.000 Z","state2":"M60.000,120.000 L90.000,120.000 L90.000,150.000 L60.000,150.000 Z M120.000,120.000 L90.000,120.000 L90.000,90.000 L120.000,90.000 Z M90.000,90.000 L30.000,90.000 L30.000,30.000 L90.000,30.000 Z M150.000,90.000 L120.000,90.000 L120.000,30.000 L150.000,30.000 Z"},"10":{"state1":"M30.000,30.000 L60.000,30.000 L60.000,60.000 L30.000,60.000 Z M90.000,90.000 L150.000,90.000 L150.000,120.000 L90.000,120.000 Z M30.000,60.000 L90.000,60.000 L90.000,150.000 L30.000,150.000 Z M90.000,120.000 L150.000,120.000 L150.000,150.000 L90.000,150.000 Z","state2":"M120.000,30.000 L90.000,30.000 L90.000,60.000 L120.000,60.000 Z M90.000,60.000 L60.000,60.000 L60.000,120.000 L90.000,120.000 Z M120.000,60.000 L90.000,60.000 L90.000,150.000 L120.000,150.000 Z M90.000,120.000 L30.000,120.000 L30.000,150.000 L90.000,150.000 Z M150.000,90.000 L120.000,90.000 L120.000,150.000 L150.000,150.000 Z"}};
     ICON_DATA.layers['3alt'] = {
   band: { d: "M60.000,90.000 L90.000,90.000 L90.000,120.000 L60.000,120.000 Z M90.000,60.000 L120.000,60.000 L120.000,90.000 L90.000,90.000 Z M90.000,90.000 L90.000,60.000 L60.000,90.000 L90.000,90.000 Z M120.000,60.000 L120.000,30.000 L90.000,60.000 L120.000,60.000 Z M90.000,90.000 L90.000,120.000 L120.000,90.000 L90.000,90.000 Z M120.000,60.000 L120.000,90.000 L150.000,60.000 L120.000,60.000 Z M120.000,60.000 L150.000,60.000 L120.000,30.000 L120.000,60.000 Z" },
   square: { d: "M30.000,120.000 L60.000,120.000 L60.000,150.000 L30.000,150.000 Z" },
@@ -893,15 +897,9 @@
 };
 
 
-    /* ⚠️ Icons 4, 7 and 10 no longer morph. They were the three Flubber
-       icons, and even once the multi-ring bug was fixed the interpolation
-       read wrong against the rest of the set: Flubber resamples every edge
-       into many points and eases them independently, so straight edges bow
-       and corners round off mid-move. The set's language is hard-edged —
-       a square slides, or grows from an anchor — so these are rebuilt in
-       that language, and every piece still lands exactly on its drawn
-       state-2 geometry. Dropping them also removed the only third-party
-       library on the site. */
+    /* The slide/scale rebuild of 4, 7 and 10 — the FALLBACK only, used if
+       Flubber isn't available (see ICONS below). Kept because it lands on
+       the drawn geometry exactly and needs no library. */
     ICON_DATA.slides = {
       /* 4 — the two states are mirror images about x=90, so every piece is
          a pure horizontal slide. */
@@ -1016,6 +1014,13 @@
          piece out of its anchor point (icon 10 gains a shape between
          states); a piece whose target lands exactly on a static one melts
          into it, as icon 3's traveler does. */
+      /* Icons 4, 7 and 10 — the author's own: one path, the whole shape
+         interpolated by Flubber, the endpoints pinned to the drawn states. */
+      flubber(svg, cfg){
+        const p = path(cfg.state1); svg.appendChild(p);
+        const forward = window.flubber.interpolate(cfg.state1, cfg.state2, { maxSegmentLength: 2 });
+        return v => p.setAttribute('d', v <= 0 ? cfg.state1 : v >= 1 ? cfg.state2 : forward(v));
+      },
       xform(svg, cfg){
         const wraps = cfg.pieces.map(pc => { const g = group(svg); g.appendChild(path(pc.d)); return g; });
         return v => cfg.pieces.forEach((pc,i) => {
@@ -1031,18 +1036,20 @@
     };
 
     /* icon number -> [builder, config] */
-    const L = ICON_DATA.layers, L4 = ICON_DATA.slides;
+    const L = ICON_DATA.layers, L4 = ICON_DATA.slides, F = ICON_DATA.flubber;
+    const hasFlubber = !!(window.flubber && window.flubber.interpolate);
+    const blob = n => hasFlubber ? ['flubber', F[n]] : ['xform', L4[n]];
     const ICONS = {
       1:  ['allRotate',    L['1allrotate']],
       2:  ['slide',        L['2alt']],
       3:  ['diagonal',     L['3alt']],
-      4:  ['xform',        L4['4']],
+      4:  blob('4'),
       5:  ['slide',        L['5']],
       6:  ['anchorScale',  L['6']],
-      7:  ['xform',        L4['7']],
+      7:  blob('7'),
       8:  ['composite8',   L['8']],
       9:  ['composite9v3', L['9']],
-      10: ['xform',        L4['10']]
+      10: blob('10')
     };
 
     /* Toggle: rolls to state 2 and stays; the next rollover returns it.

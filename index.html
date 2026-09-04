@@ -147,11 +147,18 @@
      100vh block at the top of the document and scrolls up and out, with
      the work grid following it down the page rather than sliding over
      the top of it. .page-spacer is what reserves its place in flow. */
-  body.released .scene{
-    position:absolute; top:0; left:50%; width:100%; max-width:var(--page-max);
-    bottom:auto; transform:translateX(-50%);
-    height:100vh;
-  }
+  /* ⚠️ Released, the scene now STAYS FIXED (4 Sep 2026) and the page slides
+     up over it — the Brand Proximity teaser (.bpt, the first thing after
+     the spacer) rises over the Momentum screen and fills it, the way that
+     page's own cards deal over each other. It used to switch to
+     position:absolute and scroll away with the page; that was a deliberate
+     earlier choice ("the work grid following it down the page rather than
+     sliding over the top") and it is reversed by this brief. Once the
+     first viewport has scrolled past, the scene is hidden (scene-past,
+     toggled by the scroll handler) so nothing shows through the sections'
+     grounds; it comes back the moment the reader scrolls up into the
+     first viewport again. */
+  body.released.scene-past .scene{ visibility:hidden; }
   .hero-stage{
     position:absolute; left:0; right:0; top:var(--hero-top); bottom:var(--bottom-band);
   }
@@ -420,6 +427,78 @@
      takes them back. */
   .page{ position:relative; z-index:5; pointer-events:none; }
   .page-spacer{ height:100vh; }
+
+  /* ------------------------------------------------------------------ *
+   * Brand Proximity teaser — frame 2895:8393 (4 Sep 2026)
+   *
+   * A full screen on the pale teal, straight after the spacer, so it is
+   * what rises over the Momentum screen as the reader scrolls out of the
+   * experience — and it SNAPS: resting anywhere between the experience and
+   * this screen glides to whichever is nearer (see the release snap in the
+   * script). Left: Brand Proximity's own Mosaic 1 — the same canvas, data,
+   * wordmark and script as that page's hero — flush to the left edge and
+   * as tall as the screen (the frame draws it 845 in an 845 section).
+   * Right: the "brand proximity" mark, the H3, Details copy and a link,
+   * revealing one after another once the screen has filled.
+   * ------------------------------------------------------------------ */
+  .page > section.bpt{
+    position:relative; z-index:6;
+    height:100vh; min-height:560px;
+    background:#C5D6D6; color:#1F1F1F;
+    overflow:hidden;
+    /* full-bleed on the standard --sbw breakout */
+    width:calc(100vw - var(--sbw, 0px));
+    margin-inline:calc(50% - 50vw + var(--sbw, 0px) / 2);
+  }
+  /* Square, as tall as the screen, at the left edge — but never into the
+     text column: 393 of copy + the edge inset + 40 of air is what it must
+     leave on the right. */
+  .bpt-mosaic{
+    position:absolute; left:0; top:50%; transform:translateY(-50%);
+    width:min(100vh, calc(100% - 393px - var(--edge-x) - 40px));
+    aspect-ratio:1;
+  }
+  .bpt-mosaic canvas, .bpt-mosaic svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .bpt-mosaic .bp-mosaic-text{ pointer-events:none; }
+  .bpt-text{
+    position:absolute; right:var(--edge-x); top:clamp(60px,11.1vh,100px);
+    width:min(393px, 42%);
+    display:flex; flex-direction:column; gap:40px;
+  }
+  /* the stacked "brand / proximity" mark, as the frame sets it */
+  .bpt-mark{ font-size:22px; line-height:.95; letter-spacing:-.02em; font-weight:400; }
+  .bpt-text h2{
+    font-weight:300;
+    font-size:clamp(28px,2.78vw,40px); line-height:1.15; letter-spacing:-.02em;
+    margin:0;
+  }
+  .bpt-text p{ font-size:15px; line-height:1.2; letter-spacing:-.02em; margin:0; }
+  .bpt-link{
+    margin-top:-12px;                 /* the frame's 28 rather than the 40 */
+    font-size:15px; line-height:1.2; letter-spacing:-.02em;
+    color:#1F1F1F; text-decoration:none; width:max-content;
+    transition:color .35s var(--ease-out-expo);
+  }
+  .bpt-link:hover{ color:var(--f-red); }
+  .bpt-arrow{
+    display:inline-block; width:.6em; height:.6em; margin-left:.3em; vertical-align:-.04em;
+    fill:none; stroke:currentColor; stroke-width:2;
+    transition:transform .35s var(--ease-out-expo);
+  }
+  .bpt-link:hover .bpt-arrow{ transform:translateX(.16em); }
+  /* the site's reveal, one item after another, once the screen has filled */
+  .js .bpt-text > *{
+    opacity:0; transform:translate3d(0, var(--reveal-shift, 44px), 0);
+    transition:opacity var(--reveal-dur) var(--ease-out-expo), transform var(--reveal-dur) var(--ease-out-expo);
+  }
+  .js .bpt-text > :nth-child(2){ transition-delay:calc(1 * var(--reveal-stagger, .26s)); }
+  .js .bpt-text > :nth-child(3){ transition-delay:calc(2 * var(--reveal-stagger, .26s)); }
+  .js .bpt-text > :nth-child(4){ transition-delay:calc(3 * var(--reveal-stagger, .26s)); }
+  .js .bpt.in .bpt-text > *{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .js .bpt-text > *{ opacity:1; transform:none; transition:none; }
+    .bpt-arrow{ transition:none; }
+  }
   .page > section, .page > footer{
     background:var(--bg); position:relative; pointer-events:auto;
   }
@@ -687,6 +766,14 @@
    * branch to match.
    * ------------------------------------------------------------------ */
   @media (max-width: 767px){
+    /* The teaser stacks: the mosaic full-bleed and square at the top, the
+       copy under it on the 25px grid. Still at least a screen tall, so it
+       still fills the view and still snaps. */
+    .page > section.bpt{ height:auto; min-height:100vh; padding-bottom:50px; }
+    .bpt-mosaic{ position:relative; top:auto; transform:none; width:100%; }
+    .bpt-text{ position:static; width:auto; padding:50px var(--edge-x) 0; gap:25px; }
+    .bpt-text h2{ font-size:32px; }
+    .bpt-link{ margin-top:0; }
     :root{
       --nav-h:clamp(72px,11vh,92px);
       --edge-x:clamp(16px,5.5vw,24px);
@@ -985,6 +1072,44 @@
 <main class="page" id="page">
   <!-- stands in for the fixed .scene above; see .page-spacer -->
   <div class="page-spacer" aria-hidden="true"></div>
+
+  <!-- ---------- Brand Proximity teaser — see .bpt ---------- -->
+  <!-- The mosaic is brand-proximity.html's own Mosaic 1: same canvas id,
+       wordmark and script (the last <script> in this file), so a change to
+       that mosaic is a change in two files. -->
+  <section class="bpt" id="bpt" aria-label="Brand Proximity">
+    <div class="bpt-mosaic">
+      <canvas id="bpMosaicOne" aria-hidden="true"></canvas>
+      <svg class="bp-mosaic-text" id="bpMosaicText" viewBox="0 0 966 966" aria-hidden="true">
+        <g id="bpWordBrand" fill="#FFFFFF">
+          <path d="M536.568 634.678C533.647 634.678 531.107 633.959 528.948 632.519C526.831 631.080 525.201 629.048 524.058 626.423C522.915 623.799 522.344 620.687 522.344 617.089C522.344 613.491 522.915 610.379 524.058 607.755C525.201 605.130 526.831 603.098 528.948 601.659C531.107 600.220 533.647 599.500 536.568 599.500C538.811 599.500 540.864 599.987 542.727 600.960C544.590 601.892 545.987 603.225 546.918 604.961V588.832H552.252V633.916H547.426L547.235 628.836C546.304 630.657 544.886 632.096 542.981 633.154C541.076 634.170 538.938 634.678 536.568 634.678ZM537.647 629.598C539.637 629.598 541.309 629.090 542.664 628.074C544.060 627.058 545.119 625.619 545.838 623.756C546.558 621.851 546.918 619.629 546.918 617.089C546.918 614.464 546.558 612.221 545.838 610.358C545.119 608.496 544.060 607.077 542.664 606.104C541.309 605.088 539.637 604.580 537.647 604.580C534.684 604.580 532.313 605.702 530.535 607.945C528.799 610.146 527.932 613.194 527.932 617.089C527.932 620.941 528.799 623.989 530.535 626.233C532.313 628.477 534.684 629.598 537.647 629.598Z"/>
+          <path d="M492.938 633.916V600.262H497.827L498.017 608.834L497.382 608.263C497.806 606.273 498.547 604.643 499.605 603.373C500.663 602.061 501.933 601.087 503.415 600.452C504.939 599.817 506.569 599.500 508.304 599.500C510.887 599.500 513.003 600.071 514.654 601.214C516.348 602.357 517.596 603.903 518.401 605.850C519.247 607.755 519.671 609.893 519.671 612.263V633.916H514.337V613.787C514.337 611.713 514.083 609.977 513.575 608.580C513.109 607.141 512.347 606.062 511.289 605.342C510.230 604.580 508.855 604.199 507.161 604.199C504.579 604.199 502.441 605.024 500.748 606.675C499.097 608.284 498.271 610.655 498.271 613.787V633.916H492.938Z"/>
+          <path d="M471.718 634.678C468.247 634.678 465.474 633.874 463.400 632.265C461.368 630.657 460.352 628.413 460.352 625.535C460.352 622.656 461.198 620.391 462.892 618.740C464.585 617.089 467.273 615.925 470.956 615.248L482.894 613.025C482.894 610.189 482.216 608.072 480.862 606.675C479.550 605.278 477.560 604.580 474.893 604.580C472.565 604.580 470.723 605.109 469.368 606.167C468.014 607.183 467.082 608.665 466.574 610.612L460.923 610.168C461.558 606.993 463.082 604.432 465.495 602.484C467.950 600.495 471.083 599.500 474.893 599.500C479.211 599.500 482.513 600.728 484.799 603.183C487.085 605.596 488.228 608.940 488.228 613.216V627.122C488.228 627.884 488.355 628.434 488.609 628.773C488.905 629.069 489.371 629.218 490.006 629.218H491.339V633.916C491.170 633.959 490.895 633.980 490.514 633.980C490.133 634.022 489.731 634.043 489.307 634.043C487.783 634.043 486.534 633.811 485.561 633.345C484.629 632.837 483.952 632.075 483.529 631.059C483.105 630.001 482.894 628.625 482.894 626.932L483.529 627.059C483.232 628.498 482.513 629.810 481.370 630.995C480.227 632.138 478.809 633.049 477.115 633.726C475.422 634.361 473.623 634.678 471.718 634.678ZM472.226 629.979C474.470 629.979 476.375 629.556 477.941 628.710C479.550 627.821 480.777 626.635 481.624 625.154C482.470 623.630 482.894 621.936 482.894 620.074V617.661L471.972 619.693C469.686 620.116 468.098 620.772 467.209 621.661C466.363 622.508 465.939 623.630 465.939 625.027C465.939 626.593 466.490 627.821 467.590 628.710C468.733 629.556 470.279 629.979 472.226 629.979Z"/>
+          <path d="M445.562 633.918V600.264H450.261L450.515 608.773L450.007 608.582C450.431 605.703 451.341 603.608 452.738 602.296C454.177 600.941 456.082 600.264 458.453 600.264H461.755V605.344H458.516C456.823 605.344 455.405 605.661 454.262 606.296C453.161 606.889 452.315 607.799 451.722 609.027C451.172 610.212 450.896 611.736 450.896 613.598V633.918H445.562Z"/>
+          <path d="M428.298 634.678C425.969 634.678 423.895 634.170 422.075 633.154C420.254 632.096 418.857 630.657 417.884 628.836L417.693 633.916H412.867V588.832H418.201V604.961C419.048 603.564 420.360 602.315 422.138 601.214C423.916 600.071 425.969 599.500 428.298 599.500C431.261 599.500 433.822 600.220 435.981 601.659C438.140 603.098 439.812 605.130 440.997 607.755C442.183 610.379 442.775 613.491 442.775 617.089C442.775 620.687 442.183 623.799 440.997 626.423C439.812 629.048 438.140 631.080 435.981 632.519C433.822 633.959 431.261 634.678 428.298 634.678ZM427.980 629.598C430.816 629.598 433.060 628.477 434.711 626.233C436.362 623.989 437.187 620.941 437.187 617.089C437.187 613.194 436.362 610.146 434.711 607.945C433.060 605.702 430.859 604.580 428.107 604.580C426.033 604.580 424.255 605.088 422.773 606.104C421.291 607.077 420.148 608.496 419.344 610.358C418.582 612.221 418.201 614.464 418.201 617.089C418.201 619.629 418.582 621.851 419.344 623.756C420.148 625.619 421.270 627.058 422.710 628.074C424.191 629.090 425.948 629.598 427.980 629.598Z"/>
+        </g>
+        <g id="bpWordProximity">
+          <g id="bpWordProximityPos" fill="#000000">
+          <path d="M637.414 275.149L632.715 275.149L632.715 271.275C632.715 270.090 632.524 269.222 632.143 268.672C631.805 268.079 631.233 267.635 630.429 267.338L627.254 266.132L627.254 267.973L594.234 280.292L594.234 274.450L622.301 264.417L594.234 254.829L594.234 248.987L632.143 262.639C633.964 263.274 635.297 264.227 636.144 265.497C636.991 266.767 637.414 268.524 637.414 270.767L637.414 275.149Z"/>
+          <path d="M627.872 284.090C627.872 287.138 627.174 289.403 625.777 290.884C624.380 292.324 622.200 293.043 619.236 293.043L586.344 293.043L586.344 287.709L619.109 287.709C620.633 287.709 621.692 287.371 622.284 286.693C622.877 286.016 623.173 284.979 623.173 283.582L623.173 278.756L627.872 278.756L627.872 284.090ZM598.917 297.996L594.218 297.996L594.218 278.756L598.917 278.756L598.917 297.996Z"/>
+          <path d="M627.889 307.238L594.234 307.238L594.234 301.904L627.889 301.904L627.889 307.238Z"/>
+          <path d="M627.870 356.674L594.215 356.674L594.215 351.784L602.724 351.594L602.470 352.356C600.607 351.975 599.020 351.319 597.708 350.387C596.353 349.414 595.316 348.228 594.596 346.831C593.834 345.435 593.453 343.889 593.453 342.196C593.453 339.275 594.257 336.905 595.866 335.084C597.475 333.222 599.718 332.057 602.597 331.592L602.534 332.608C600.586 332.269 598.956 331.655 597.644 330.766C596.289 329.835 595.252 328.650 594.533 327.210C593.813 325.771 593.453 324.120 593.453 322.257C593.453 319.844 593.961 317.812 594.977 316.162C595.951 314.511 597.390 313.262 599.295 312.415C601.200 311.568 603.507 311.145 606.216 311.145L627.870 311.145L627.870 316.479L607.359 316.479C604.312 316.479 602.026 317.072 600.502 318.257C598.935 319.442 598.152 321.199 598.152 323.527C598.152 325.094 598.533 326.470 599.295 327.655C600.057 328.798 601.158 329.687 602.597 330.322C603.994 330.957 605.708 331.274 607.740 331.274L627.870 331.274L627.870 336.608L607.740 336.608C604.735 336.608 602.385 337.137 600.692 338.196C598.999 339.254 598.152 341.032 598.152 343.530C598.152 345.096 598.533 346.472 599.295 347.657C600.057 348.800 601.158 349.710 602.597 350.387C604.036 351.022 605.751 351.340 607.740 351.340L627.870 351.340L627.870 356.674Z"/>
+          <path d="M627.889 366.409L594.234 366.409L594.234 361.075L627.889 361.075L627.889 366.409Z"/>
+          <path d="M627.889 399.985L610.617 387.603L594.234 399.350L594.234 393.127L606.934 384.301L594.234 375.729L594.234 369.379L610.744 380.999L627.889 368.807L627.889 375.030L614.300 384.301L627.889 393.635L627.889 399.985Z"/>
+          <path d="M628.632 413.539C628.632 416.630 627.912 419.339 626.473 421.667C625.033 423.996 623.001 425.795 620.377 427.065C617.710 428.335 614.598 428.970 611.042 428.970C607.444 428.970 604.333 428.335 601.708 427.065C599.083 425.795 597.051 423.996 595.612 421.667C594.173 419.339 593.453 416.630 593.453 413.539C593.453 410.449 594.173 407.761 595.612 405.475C597.051 403.147 599.083 401.348 601.708 400.078C604.333 398.808 607.444 398.173 611.042 398.173C614.598 398.173 617.710 398.808 620.377 400.078C623.001 401.348 625.033 403.147 626.473 405.475C627.912 407.761 628.632 410.449 628.632 413.539ZM623.552 413.539C623.552 410.449 622.451 408.057 620.250 406.364C618.006 404.628 614.937 403.761 611.042 403.761C607.148 403.761 604.100 404.628 601.899 406.364C599.655 408.057 598.533 410.449 598.533 413.539C598.533 416.630 599.655 419.043 601.899 420.778C604.100 422.514 607.148 423.382 611.042 423.382C614.937 423.382 618.006 422.514 620.250 420.778C622.451 419.043 623.552 416.630 623.552 413.539Z"/>
+          <path d="M627.889 443.756L594.234 443.756L594.234 439.057L602.743 438.803L602.553 439.311C599.674 438.888 597.579 437.977 596.266 436.580C594.912 435.141 594.234 433.236 594.234 430.866L594.234 427.564L599.314 427.564L599.314 430.802C599.314 432.495 599.632 433.914 600.267 435.057C600.859 436.157 601.770 437.004 602.997 437.596C604.183 438.147 605.707 438.422 607.569 438.422L627.889 438.422L627.889 443.756Z"/>
+          <path d="M637.395 475.863L594.215 475.863L594.215 470.910L601.454 470.783L601.073 471.545C598.575 470.699 596.692 469.302 595.422 467.354C594.109 465.365 593.453 463.079 593.453 460.497C593.453 457.152 594.279 454.422 595.930 452.305C597.581 450.146 599.740 448.559 602.407 447.543C605.073 446.484 607.952 445.955 611.042 445.955C614.133 445.955 617.011 446.484 619.678 447.543C622.345 448.559 624.504 450.146 626.155 452.305C627.806 454.422 628.632 457.152 628.632 460.497C628.632 462.232 628.335 463.862 627.743 465.386C627.150 466.868 626.325 468.138 625.266 469.196C624.208 470.212 622.959 470.910 621.520 471.291L620.631 470.529L637.395 470.529L637.395 475.863ZM623.552 461.005C623.552 458.084 622.451 455.776 620.250 454.083C618.049 452.390 614.979 451.543 611.042 451.543C607.105 451.543 604.036 452.390 601.835 454.083C599.634 455.776 598.533 458.084 598.533 461.005C598.533 462.952 598.999 464.645 599.930 466.084C600.861 467.481 602.258 468.582 604.121 469.386C605.984 470.148 608.291 470.529 611.042 470.529C613.794 470.529 616.101 470.148 617.964 469.386C619.826 468.624 621.223 467.524 622.155 466.084C623.086 464.645 623.552 462.952 623.552 461.005Z"/>
+          </g>
+        </g>
+          </svg>
+    </div>
+    <div class="bpt-text">
+      <p class="bpt-mark">brand<br>proximity</p>
+      <h2>Show up and stand out in AI search</h2>
+      <p>If you want buyers to choose you, you have to show up when they need you &ndash; and demonstrate what you&rsquo;re capable of. Discover a managed service that gets you closer to the people who matter.</p>
+      <a class="bpt-link" href="brand-proximity.html">Explore Brand Proximity<svg class="bpt-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 12h16"/><path d="M12.2 4.6 19.6 12l-7.4 7.4"/></svg></a>
+    </div>
+  </section>
 
   <section class="work">
     <h2 class="work-head">Selected work and thinking</h2>
@@ -1308,7 +1433,75 @@
     navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
     lastNavY = y;
   }
-  addEventListener("scroll", () => { syncRelease(); syncNav(); }, {passive:true});
+  /* ⚠️ Past the first viewport the fixed scene is hidden (see
+     body.released.scene-past .scene) — it is fully covered by then, and
+     hiding it stops it showing through anything translucent further down. */
+  function syncScenePast(){
+    document.body.classList.toggle("scene-past", (window.scrollY || 0) >= innerHeight - 1);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * The release snap — the teaser fills the screen or the experience does
+   *
+   * Between the experience (scrollY 0) and the teaser filled (scrollY =
+   * one viewport) the page is a wipe: the teaser rising over the Momentum
+   * screen. A stop anywhere in it leaves the screen split, so once the
+   * scroll goes quiet it glides to whichever end is nearer — the site's
+   * own glide (cubic-bezier(.4,0,.2,1) solved in JS, rAF + timer), ⚠️
+   * never scrollTo({behavior:"smooth"}), and it cancels on any input.
+   * Real scroll has to be glided here rather than jumped, because the
+   * teaser IS the scroll position — unlike Brand Proximity's stuck pin,
+   * an instant jump would show. Touch waits longer (420ms, reset by every
+   * scroll event) so it sits after a fling rather than inside it.
+   * ------------------------------------------------------------------ */
+  const RELEASE_SNAP_MS = 520;
+  const releaseEase = t => {
+    const p1x=.4,p1y=0,p2x=.2,p2y=1;
+    const cx=3*p1x, bx=3*(p2x-p1x)-cx, ax=1-cx-bx;
+    const cy=3*p1y, by=3*(p2y-p1y)-cy, ay=1-cy-by;
+    let u=t;
+    for (let i=0;i<8;i++){
+      const x=((ax*u+bx)*u+cx)*u - t, d=(3*ax*u+2*bx)*u+cx;
+      if (Math.abs(x)<1e-5) break;
+      u -= x/(d||1e-6);
+    }
+    return ((ay*u+by)*u+cy)*u;
+  };
+  let releaseGlide = null, releaseSnapTimer = null;
+  function cancelReleaseGlide(){ if (releaseGlide){ releaseGlide.cancelled = true; releaseGlide = null; } }
+  function glideScrollTo(targetY){
+    cancelReleaseGlide();
+    const startY = window.scrollY, delta = targetY - startY;
+    if (Math.abs(delta) < 1) return;
+    const g = { cancelled:false }; releaseGlide = g;
+    const t0 = performance.now();
+    const step = now => {
+      if (g.cancelled) return;
+      const t = Math.min(1, (now - t0) / RELEASE_SNAP_MS);
+      window.scrollTo(0, startY + delta * releaseEase(t));
+      if (t < 1) requestAnimationFrame(step); else releaseGlide = null;
+    };
+    requestAnimationFrame(step);
+    setTimeout(() => { if (!g.cancelled && releaseGlide === g){ window.scrollTo(0, targetY); releaseGlide = null; } }, RELEASE_SNAP_MS + 80);
+  }
+  ["wheel","touchstart","keydown","pointerdown"].forEach(ev =>
+    addEventListener(ev, cancelReleaseGlide, { passive:true }));
+  function releaseSnapNow(){
+    if (releaseGlide || !atExperienceEnd()) return;
+    const y = window.scrollY || 0, h = innerHeight;
+    if (y <= 1 || y >= h - 1) return;
+    glideScrollTo(y < h / 2 ? 0 : h);
+  }
+  function scheduleReleaseSnap(){
+    clearTimeout(releaseSnapTimer);
+    const touch = matchMedia("(pointer:coarse)").matches;
+    releaseSnapTimer = setTimeout(releaseSnapNow, touch ? 420 : 160);
+  }
+
+  addEventListener("scroll", () => {
+    syncRelease(); syncNav(); syncScenePast();
+    if (atExperienceEnd() && !REDUCE) scheduleReleaseSnap();
+  }, {passive:true});
 
   function fit(){
     const mobile = isMobile = innerWidth <= MOBILE;
@@ -1756,6 +1949,15 @@
   }, { rootMargin: "0px 0px -12% 0px", threshold: 0.1 });
   document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
 
+  // The teaser's copy reveals one item after another once the screen has
+  // (mostly) filled — a plain one-shot observer, the CSS carries the stagger.
+  const bptEl = document.getElementById("bpt");
+  if (bptEl){
+    new IntersectionObserver((entries, obs) => {
+      for (const e of entries){ if (e.isIntersecting){ bptEl.classList.add("in"); obs.disconnect(); } }
+    }, { threshold: 0.55 }).observe(bptEl);
+  }
+
   /* ------------------------------------------------------------------ *
    * Logo wall — a continuous tick you can grab
    * ------------------------------------------------------------------
@@ -1894,6 +2096,458 @@
       setTimeout(() => { location.href = a.href; }, 350);
     });
   });
+})();
+</script>
+<script>
+/* ------------------------------------------------------------------ *
+ * Mosaic 1 — the hero's own mosaic
+ *
+ * Unlike #bpMosaic/Insight/Aeo above (fixed, and scroll-driven through
+ * Mosaics 2→3→4), this one is a plain in-flow element: it draws its own
+ * static layout, responds to the same mouse-gravity hover, and otherwise
+ * just scrolls away with the hero like any other section. Wholly
+ * self-contained — its own canvas, its own copy of Mosaic 1's square
+ * data, its own gravity state — so it shares nothing with the
+ * fixed-canvas script beyond the general mechanic.
+ * ------------------------------------------------------------------ */
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("bpMosaicOne");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+  /* -------------------------------------------------------------------- *
+   * The three configurations
+   *
+   * Mosaic 1 has three layouts — 1A, 1B and 1C — and the hero cycles
+   * through them on a loop, one new configuration every CONFIG_PERIOD. All
+   * three are the same artwork rearranged: the same palette, the same
+   * 12x12 grid, a different number of squares in different places (83 / 65
+   * / 72), with "brand" always landing on a black cluster and "proximity"
+   * always on a light run.
+   *
+   * Squares are stored as grid cells rather than pixel coordinates — the
+   * source SVGs are drawn on a clean 80px grid and the data reads as the
+   * layout it is, instead of a column of floats. `statics` is the black
+   * cluster "brand" sits on (never moved by the hover — see the gravity
+   * code) and `word` the three squares under "proximity", which are pulled
+   * as one rigid group so the word stays a solid block. `brand`/`prox` are
+   * where each half of the wordmark goes for this configuration, as a
+   * transform on the paths' own 1A placement.
+   * -------------------------------------------------------------------- */
+  const GRID = 12;
+  const BOX_W = 966, BOX_H = 966;
+  const CELL = BOX_W / GRID;
+  const STATES = [
+    { // Mosaic 1A — 83 squares
+      brand:"translate(0,0)",
+      prox:"translate(0,0)",
+      statics:[[5,5],[5,6],[5,7],[6,6],[6,7]], word:[[7,3],[7,4],[7,5]],
+      squares:[
+        [5,0,'#0F4B4B'],[9,0,'#81C1C0'],[3,1,'#368F8E'],[4,1,'#58ACAB'],[5,1,'#F45944'],[6,1,'#F67563'],
+        [10,1,'#368F8E'],[2,2,'#5B82E3'],[3,2,'#58ACAB'],[4,2,'#58ACAB'],[5,2,'#167170'],[7,2,'#CB4A39'],
+        [3,3,'#167170'],[4,3,'#81C1C0'],[5,3,'#81C1C0'],[6,3,'#58ACAB'],[7,3,'#58ACAB'],[8,3,'#0B3938'],
+        [2,4,'#167170'],[3,4,'#58ACAB'],[4,4,'#167170'],[5,4,'#81C1C0'],[6,4,'#81C1C0'],[7,4,'#58ACAB'],
+        [8,4,'#167170'],[9,4,'#81C1C0'],[10,4,'#125E5D'],[1,5,'#81C1C0'],[2,5,'#314B8E'],[3,5,'#167170'],
+        [4,5,'#CB4A39'],[5,5,'#000000'],[6,5,'#A33B2D'],[7,5,'#58ACAB'],[8,5,'#314B8E'],[9,5,'#20325F'],
+        [1,6,'#F45944'],[2,6,'#167170'],[3,6,'#81C1C0'],[4,6,'#58ACAB'],[5,6,'#000000'],[6,6,'#000000'],
+        [7,6,'#125E5D'],[8,6,'#93B2FF'],[9,6,'#167170'],[10,6,'#58ACAB'],[11,6,'#167170'],[0,7,'#167170'],
+        [2,7,'#58ACAB'],[3,7,'#167170'],[4,7,'#368F8E'],[5,7,'#000000'],[6,7,'#000000'],[7,7,'#81C1C0'],
+        [8,7,'#F89082'],[9,7,'#368F8E'],[10,7,'#F67563'],[2,8,'#0B3938'],[3,8,'#167170'],[4,8,'#F89082'],
+        [5,8,'#368F8E'],[6,8,'#58ACAB'],[7,8,'#167170'],[8,8,'#20325F'],[9,8,'#167170'],[10,8,'#A33B2D'],
+        [1,9,'#125E5D'],[2,9,'#167170'],[3,9,'#81C1C0'],[4,9,'#368F8E'],[5,9,'#5B82E3'],[6,9,'#A33B2D'],
+        [7,9,'#368F8E'],[9,9,'#58ACAB'],[11,9,'#0F4B4B'],[4,10,'#167170'],[5,10,'#314B8E'],[6,10,'#20325F'],
+        [7,10,'#CB4A39'],[8,10,'#81C1C0'],[5,11,'#58ACAB'],[6,11,'#CDE6E6'],[8,11,'#F89082'],
+      ],
+    },
+    { // Mosaic 1B — 65 squares
+      brand:"translate(161.44,79.8)",
+      prox:"translate(726.96,-242.08) rotate(90)",
+      statics:[[7,7],[7,8],[8,7],[8,8]], word:[[3,4],[4,4],[5,4]],
+      squares:[
+        [4,0,'#167170'],[2,1,'#125E5D'],[5,1,'#F45944'],[6,1,'#81C1C0'],[2,2,'#167170'],[3,2,'#0B3938'],
+        [4,2,'#58ACAB'],[5,2,'#167170'],[6,2,'#314B8E'],[7,2,'#167170'],[2,3,'#81C1C0'],[3,3,'#167170'],
+        [4,3,'#167170'],[5,3,'#81C1C0'],[6,3,'#167170'],[7,3,'#58ACAB'],[8,3,'#167170'],[1,4,'#167170'],
+        [2,4,'#368F8E'],[3,4,'#F89082'],[4,4,'#F89082'],[5,4,'#F89082'],[6,4,'#CB4A39'],[7,4,'#167170'],
+        [8,4,'#81C1C0'],[0,5,'#58ACAB'],[1,5,'#314B8E'],[3,5,'#368F8E'],[4,5,'#58ACAB'],[5,5,'#58ACAB'],
+        [6,5,'#314B8E'],[7,5,'#81C1C0'],[8,5,'#81C1C0'],[9,5,'#167170'],[10,5,'#F45944'],[11,5,'#0F4B4B'],
+        [0,6,'#CDE6E6'],[2,6,'#A33B2D'],[5,6,'#20325F'],[6,6,'#A33B2D'],[7,6,'#81C1C0'],[8,6,'#58ACAB'],
+        [10,6,'#F67563'],[5,7,'#125E5D'],[6,7,'#58ACAB'],[7,7,'#000000'],[8,7,'#000000'],[9,7,'#CB4A39'],
+        [11,7,'#368F8E'],[4,8,'#F89082'],[5,8,'#93B2FF'],[6,8,'#314B8E'],[7,8,'#000000'],[8,8,'#000000'],
+        [9,8,'#CB4A39'],[3,9,'#167170'],[4,9,'#368F8E'],[5,9,'#167170'],[7,9,'#81C1C0'],[8,9,'#0F4B4B'],
+        [9,9,'#F89082'],[11,9,'#81C1C0'],[4,10,'#F67563'],[7,10,'#125E5D'],[5,11,'#167170'],
+      ],
+    },
+    { // Mosaic 1C — 72 squares
+      brand:"translate(-160.56,-242.37)",
+      prox:"translate(-330.13,321.83)",
+      statics:[[3,4],[4,4]], word:[[3,7],[3,8],[3,9]],
+      squares:[
+        [4,0,'#81C1C0'],[6,0,'#58ACAB'],[3,1,'#81C1C0'],[5,1,'#20325F'],[6,1,'#314B8E'],[4,2,'#368F8E'],
+        [5,2,'#A33B2D'],[6,2,'#5B82E3'],[9,2,'#167170'],[10,2,'#125E5D'],[1,3,'#A33B2D'],[3,3,'#167170'],
+        [4,3,'#20325F'],[5,3,'#58ACAB'],[1,4,'#F67563'],[2,4,'#368F8E'],[3,4,'#000000'],[4,4,'#000000'],
+        [5,4,'#58ACAB'],[6,4,'#167170'],[8,4,'#167170'],[9,4,'#58ACAB'],[11,4,'#167170'],[0,5,'#167170'],
+        [2,5,'#167170'],[3,5,'#368F8E'],[4,5,'#125E5D'],[5,5,'#20325F'],[6,5,'#58ACAB'],[7,5,'#0B3938'],
+        [8,5,'#81C1C0'],[9,5,'#167170'],[10,5,'#F45944'],[2,6,'#58ACAB'],[3,6,'#58ACAB'],[4,6,'#314B8E'],
+        [5,6,'#A33B2D'],[6,6,'#314B8E'],[7,6,'#314B8E'],[8,6,'#167170'],[9,6,'#314B8E'],[1,7,'#125E5D'],
+        [2,7,'#58ACAB'],[3,7,'#5B82E3'],[4,7,'#167170'],[5,7,'#167170'],[6,7,'#58ACAB'],[7,7,'#167170'],
+        [8,7,'#CDE6E6'],[11,7,'#58ACAB'],[2,8,'#0F4B4B'],[3,8,'#5B82E3'],[6,8,'#0B3938'],[7,8,'#0B3938'],
+        [8,8,'#167170'],[10,8,'#167170'],[2,9,'#F89082'],[3,9,'#5B82E3'],[4,9,'#CB4A39'],[6,9,'#167170'],
+        [8,9,'#58ACAB'],[9,9,'#5B82E3'],[3,10,'#F89082'],[4,10,'#167170'],[5,10,'#F67563'],[6,10,'#F45944'],
+        [7,10,'#58ACAB'],[8,10,'#368F8E'],[4,11,'#58ACAB'],[6,11,'#0F4B4B'],[10,11,'#58ACAB'],[11,11,'#167170'],
+      ],
+    },
+  ];
+
+  function hashUnit(i, seed){
+    let h = (i * 374761393 + seed * 668265263) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967295;
+  }
+  function clamp01(v){ return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function smoothstep(t){ return t * t * (3 - 2 * t); }
+  function snapToGrid(v, step){ return step ? Math.round(v / step) * step : v; }
+
+  /* -------------------------------------------------------------------- *
+   * Pairing one configuration to the next
+   *
+   * Nothing in the data says which square in 1A becomes which square in
+   * 1B, so the correspondence is worked out once, at load, for each of the
+   * three legs (A→B, B→C, C→A). Colour first, then distance: every square
+   * in the target is claimed by the nearest unclaimed square of the same
+   * colour, and only what's left over is matched across colours. That's
+   * what makes the reconfiguration read as the mosaic rearranging itself —
+   * a teal square travels to where a teal square is needed, so the palette
+   * holds still while the shape changes, rather than every square changing
+   * colour mid-flight.
+   *
+   * The configurations don't hold the same number of squares, so the
+   * surplus can't travel anywhere: those squares scale away in place
+   * ("out"), and where the target has more than the source, the extras
+   * scale up in place ("in"). Everything else is a "move".
+   * -------------------------------------------------------------------- */
+  function pairStates(a, b){
+    const claimed = new Array(a.length).fill(false);
+    const legs = [];
+    const pick = (t, sameColour) => {
+      let best = -1, bestD = Infinity;
+      for (let i = 0; i < a.length; i++){
+        if (claimed[i]) continue;
+        if (sameColour && a[i][2] !== t[2]) continue;
+        const d = (a[i][0] - t[0]) ** 2 + (a[i][1] - t[1]) ** 2;
+        if (d < bestD){ bestD = d; best = i; }
+      }
+      return best;
+    };
+    const pending = [];
+    b.forEach(t => {
+      const i = pick(t, true);
+      if (i >= 0){ claimed[i] = true; legs.push({ from: a[i], to: t }); }
+      else pending.push(t);
+    });
+    pending.forEach(t => {
+      const i = pick(t, false);
+      if (i >= 0){ claimed[i] = true; legs.push({ from: a[i], to: t }); }
+      else legs.push({ to: t });
+    });
+    a.forEach((sq, i) => { if (!claimed[i]) legs.push({ from: sq }); });
+    return legs;
+  }
+  const CONFIG_PERIOD = 4000;
+  const CONFIG_MORPH = 900;
+  const CONFIG_STAGGER = 0.45;
+
+  /* ⚠️ The squares UNDER THE WORDMARK are timed, not hashed (4 Sep 2026:
+     "make sure there is always colour squares behind the text"). A leg
+     that arrives on the next configuration's statics or word cells goes
+     FIRST (d = 0, landed by u = 0.55); one that leaves the current
+     configuration's goes LAST (d = the full stagger, so it doesn't move
+     until u = 0.45); a leg that does both takes 0.15. With the word out by
+     u = 0.15 and back in from 0.72 (below), every letter is over a square
+     whenever it is visible. Before this the word faded in from 0.55 while
+     its cluster was still hashed anywhere in the stagger — text on bare
+     teal for a few hundred milliseconds every four seconds. */
+  const LEGS = STATES.map((st, i) => {
+    const nx = STATES[(i + 1) % STATES.length];
+    const key = (c, r) => c + "," + r;
+    const fromKeys = new Set([...st.statics, ...st.word].map(([c, r]) => key(c, r)));
+    const toKeys = new Set([...nx.statics, ...nx.word].map(([c, r]) => key(c, r)));
+    const legs = pairStates(st.squares, nx.squares);
+    legs.forEach((leg, k) => {
+      const isFrom = leg.from && fromKeys.has(key(leg.from[0], leg.from[1]));
+      const isTo = leg.to && toKeys.has(key(leg.to[0], leg.to[1]));
+      leg.d = isTo && isFrom ? 0.15 : isTo ? 0 : isFrom ? CONFIG_STAGGER : CONFIG_STAGGER * hashUnit(k, 31337);
+    });
+    return legs;
+  });
+
+  /* -------------------------------------------------------------------- *
+   * The clock
+   *
+   * One new configuration every CONFIG_PERIOD: it holds still for most of
+   * that and reconfigures over the last CONFIG_MORPH. Squares don't all
+   * hop at once — each one starts at its own moment inside that window
+   * (CONFIG_STAGGER, from the same per-square hash the hover jitter uses),
+   * so the mosaic reassembles square by square rather than switching as
+   * one block. Positions are snapped to the grid every frame, exactly as
+   * the scroll-driven Mosaics 2–4 are, so a square is only ever drawn on a
+   * whole cell and hops cell to cell instead of sliding.
+   *
+   * Reduced motion holds a single configuration and never cycles.
+   * -------------------------------------------------------------------- */
+  // (CONFIG_PERIOD / CONFIG_MORPH / CONFIG_STAGGER are declared above the
+  // pairing now — the legs' timing reads the stagger.)
+
+  let scale = 1, boxW = 0, boxH = 0, dpr = 1;
+  let stateIndex = 0, morphU = 0;
+
+  // Gravity state is per grid slot rather than per square: which square
+  // occupies a slot changes with the configuration, but the jitter only
+  // needs to differ from its neighbours' to stop the pulled-in cluster
+  // looking mechanical, so it can stay attached to the slot.
+  const MAX_SQUARES = Math.max(...STATES.map(s => s.squares.length));
+  const gravityItems = Array.from({ length: MAX_SQUARES }, (_, i) => ({
+    dx: 0, dy: 0,
+    radiusJ: 0.6 + hashUnit(i, 55555) * 0.7,
+    pullJ: 0.7 + hashUnit(i, 77771) * 0.6,
+  }));
+
+  const GRAVITY_EASE = reducedMotion.matches ? 1 : 0.18;
+  const gravityState = { hovering: false, x: 0, y: 0 };
+  if (!reducedMotion.matches){
+    canvas.addEventListener("mouseenter", () => { gravityState.hovering = true; });
+    canvas.addEventListener("mousemove", e => {
+      const r = canvas.getBoundingClientRect();
+      gravityState.x = e.clientX - r.left; gravityState.y = e.clientY - r.top;
+    });
+    canvas.addEventListener("mouseleave", () => { gravityState.hovering = false; });
+  }
+
+  const textEl = document.getElementById("bpMosaicText");
+  const brandEl = document.getElementById("bpWordBrand");
+  const proximityEl = document.getElementById("bpWordProximity");
+  const proximityPosEl = document.getElementById("bpWordProximityPos");
+
+  function measure(){
+    const rect = canvas.getBoundingClientRect();
+    boxW = rect.width; boxH = rect.height;
+    scale = boxW / BOX_W;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(boxW * dpr);
+    canvas.height = Math.round(boxH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  // Grid cell -> the square's centre in the canvas's own pixel space.
+  function cx(col){ return (col + 0.5) * CELL * scale; }
+  function cy(row){ return (row + 0.5) * CELL * scale; }
+
+  function fillCell(x, y, side, hex, k){
+    ctx.fillStyle = hex;
+    if (k >= 0.999){
+      const left = Math.round(x * dpr) / dpr;
+      const top = Math.round(y * dpr) / dpr;
+      const right = Math.round((x + side) * dpr) / dpr;
+      const bottom = Math.round((y + side) * dpr) / dpr;
+      ctx.fillRect(left, top, right - left, bottom - top);
+      return;
+    }
+    // Scaling in or out, about the cell's own centre — grid snapping is
+    // meaningless for a square that isn't a whole cell, so these are drawn
+    // unsnapped for the moment they're in flight.
+    const s2 = side * k, off = (side - s2) / 2;
+    ctx.fillRect(x + off, y + off, s2, s2);
+  }
+
+  /* -------------------------------------------------------------------- *
+   * The wordmark
+   *
+   * It can't travel with the squares — its two halves land in unrelated
+   * places from one configuration to the next, and in 1B "proximity" turns
+   * through 90 degrees — so it crosses over instead: out over the first
+   * part of the reconfiguration, its placement swapped at the midpoint
+   * while nothing is visible, and back in over the rest. Nothing is
+   * readable mid-reconfiguration anyway, and it keeps each word landing
+   * squarely on the squares that make it legible rather than sliding
+   * across the ones that don't.
+   * -------------------------------------------------------------------- */
+  const WORD_OUT = 0.15, WORD_IN = 0.72;   // see LEGS: out before its squares leave, in after they land
+  function paintWordmark(){
+    if (!textEl) return;
+    const half = morphU >= 0.5;
+    const st = STATES[half ? (stateIndex + 1) % STATES.length : stateIndex];
+    if (brandEl) brandEl.setAttribute("transform", st.brand);
+    if (proximityPosEl) proximityPosEl.setAttribute("transform", st.prox);
+    const o = morphU <= 0 ? 1
+      : morphU < WORD_OUT ? 1 - morphU / WORD_OUT
+      : morphU < WORD_IN ? 0
+      : (morphU - WORD_IN) / (1 - WORD_IN);
+    textEl.style.opacity = o.toFixed(3);
+  }
+
+  /* -------------------------------------------------------------------- *
+   * Hover gravity
+   *
+   * Unchanged in kind from before: squares near the cursor are pulled
+   * towards it, snapped to the grid, with the black cluster under "brand"
+   * pinned and the three squares under "proximity" moved as one rigid
+   * group. It runs only while a configuration is holding — see draw()'s
+   * reconfiguration branch, which eases the offsets back to zero instead,
+   * so the two effects never fight over the same square and the mosaic
+   * that reassembles is the layout as designed rather than the layout as
+   * the cursor last left it.
+   * -------------------------------------------------------------------- */
+  function applyGravity(cells, st){
+    const s = CELL * scale;
+    const radius = Math.min(boxW, boxH) * 0.55;
+    const maxPull = Math.min(boxW, boxH) * 0.12;
+    const active = gravityState.hovering && morphU <= 0;
+
+    const key = (c, r) => c + "," + r;
+    const staticKeys = new Set(st.statics.map(([c, r]) => key(c, r)));
+    const wordKeys = new Set(st.word.map(([c, r]) => key(c, r)));
+    const staticPos = st.statics.map(([c, r]) => [cx(c), cy(r)]);
+    const overlapsStatic = (x, y) => staticPos.some(([sx, sy]) =>
+      Math.abs(x - sx) < s * 0.5 && Math.abs(y - sy) < s * 0.5);
+
+    // One shared pull for the whole "proximity" run, measured from its
+    // centre, so the three squares stay locked together under the word.
+    let wordTdx = 0, wordTdy = 0;
+    const wordCells = cells.filter(c => wordKeys.has(key(c.col, c.row)));
+    if (active && wordCells.length){
+      let mx = 0, my = 0;
+      wordCells.forEach(c => { mx += c.x; my += c.y; });
+      mx /= wordCells.length; my /= wordCells.length;
+      const dx = gravityState.x - mx, dy = gravityState.y - my;
+      const dist = Math.hypot(dx, dy);
+      if (dist < radius){
+        const pull = smoothstep(1 - dist / radius) * maxPull;
+        const inv = dist < 0.001 ? 0 : pull / dist;
+        wordTdx = dx * inv; wordTdy = dy * inv;
+      }
+    }
+
+    let wordSnappedDx = 0, wordSnappedDy = 0, wordSeen = false;
+    cells.forEach((cell, i) => {
+      const it = gravityItems[i % gravityItems.length];
+      const isStatic = staticKeys.has(key(cell.col, cell.row));
+      const isWord = wordKeys.has(key(cell.col, cell.row));
+      let tdx = 0, tdy = 0;
+      if (isStatic){
+        tdx = 0; tdy = 0;
+      } else if (isWord){
+        tdx = wordTdx; tdy = wordTdy;
+      } else if (active){
+        const dx = gravityState.x - cell.x, dy = gravityState.y - cell.y;
+        const dist = Math.hypot(dx, dy);
+        const r = radius * it.radiusJ;
+        if (dist < r){
+          const pull = smoothstep(1 - dist / r) * maxPull * it.pullJ;
+          const inv = dist < 0.001 ? 0 : pull / dist;
+          const sdx = snapToGrid(dx * inv, s), sdy = snapToGrid(dy * inv, s);
+          if (!overlapsStatic(cell.x + sdx, cell.y + sdy)){ tdx = dx * inv; tdy = dy * inv; }
+        }
+      }
+      it.dx += (tdx - it.dx) * GRAVITY_EASE;
+      it.dy += (tdy - it.dy) * GRAVITY_EASE;
+      cell.x += it.dx; cell.y += it.dy;
+      if (isWord && !wordSeen){
+        wordSeen = true;
+        wordSnappedDx = snapToGrid(it.dx, s);
+        wordSnappedDy = snapToGrid(it.dy, s);
+      }
+    });
+
+    if (proximityEl && scale > 0){
+      proximityEl.setAttribute("transform",
+        `translate(${(wordSnappedDx / scale).toFixed(2)},${(wordSnappedDy / scale).toFixed(2)})`);
+    }
+  }
+
+  function draw(now){
+    // The clock. Reduced motion holds 1A and never advances.
+    if (reducedMotion.matches){
+      stateIndex = 0; morphU = 0;
+    } else {
+      const span = CONFIG_PERIOD * STATES.length;
+      const t = (now || 0) % span;
+      stateIndex = Math.floor(t / CONFIG_PERIOD);
+      const local = t - stateIndex * CONFIG_PERIOD;
+      const held = CONFIG_PERIOD - CONFIG_MORPH;
+      morphU = local <= held ? 0 : (local - held) / CONFIG_MORPH;
+    }
+
+    ctx.clearRect(0, 0, boxW, boxH);
+    const s = CELL * scale;
+    const st = STATES[stateIndex];
+    paintWordmark();
+
+    if (morphU <= 0){
+      // Holding: the configuration as designed, plus the hover.
+      const cells = st.squares.map(([col, row, hex]) =>
+        ({ col, row, x: cx(col), y: cy(row), hex }));
+      applyGravity(cells, st);
+      cells.forEach(cell => {
+        fillCell(snapToGrid(cell.x - s / 2, s), snapToGrid(cell.y - s / 2, s), s, cell.hex, 1);
+      });
+      return;
+    }
+
+    // Reconfiguring. The hover takes no part in this — the squares are
+    // travelling to designed positions, so any pull left over from the
+    // cursor is eased away rather than carried into the next layout, and
+    // the wordmark's own gravity shift is dropped outright (it's invisible
+    // through this whole window, so there's nothing to see go).
+    gravityItems.forEach(it => {
+      it.dx += (0 - it.dx) * GRAVITY_EASE;
+      it.dy += (0 - it.dy) * GRAVITY_EASE;
+    });
+    if (proximityEl) proximityEl.setAttribute("transform", "translate(0,0)");
+
+    // Each square on its own leg, on its own stagger.
+    LEGS[stateIndex].forEach((leg, i) => {
+      const d = leg.d;
+      const e = smoothstep(clamp01((morphU - d) / (1 - CONFIG_STAGGER)));
+      if (!leg.to){
+        fillCell(snapToGrid(cx(leg.from[0]) - s / 2, s), snapToGrid(cy(leg.from[1]) - s / 2, s),
+                 s, leg.from[2], 1 - e);
+        return;
+      }
+      if (!leg.from){
+        fillCell(snapToGrid(cx(leg.to[0]) - s / 2, s), snapToGrid(cy(leg.to[1]) - s / 2, s),
+                 s, leg.to[2], e);
+        return;
+      }
+      const x = cx(leg.from[0]) + (cx(leg.to[0]) - cx(leg.from[0])) * e;
+      const y = cy(leg.from[1]) + (cy(leg.to[1]) - cy(leg.from[1])) * e;
+      fillCell(snapToGrid(x - s / 2, s), snapToGrid(y - s / 2, s), s,
+               e < 0.5 ? leg.from[2] : leg.to[2], 1);
+    });
+  }
+
+  // rAF's own timestamp is the clock — no separate timer, so the cycle
+  // pauses with the tab and resumes in step rather than jumping.
+  let lastNow = 0;
+  function loop(now){ lastNow = now; draw(now); requestAnimationFrame(loop); }
+
+  let resizeTimer = null;
+  addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { measure(); draw(lastNow); }, 150);
+  });
+
+  // Same hardening as the stage mosaic: the box, not the window, is what
+  // the buffer is sized from.
+  if ("ResizeObserver" in window){
+    new ResizeObserver(() => { measure(); draw(lastNow); }).observe(canvas);
+  }
+
+  measure();
+  draw(0);
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>

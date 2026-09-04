@@ -746,11 +746,15 @@
   @supports (text-box: trim-both cap alphabetic){
     .challenge-title{ text-box:trim-both cap alphabetic; }
   }
+  /* ⚠️ No ground behind the video and the frame cropped in by ~1%: the
+     recording is 1920 x 1112 (1.7266) against the frame's 1241:718
+     (1.7284), so cover left a hairline of the box showing along one edge —
+     "a faint line around the video". */
   .challenge-video{
     width:100%; aspect-ratio:1241/718;
-    background:#DCDCDC; overflow:hidden;
+    overflow:hidden;
   }
-  .challenge-video video{ display:block; width:100%; height:100%; object-fit:cover; }
+  .challenge-video video{ display:block; width:100%; height:100%; object-fit:cover; transform:scale(1.012); }
   .challenge-copy{
     display:flex; flex-direction:column; gap:50px;
   }
@@ -2403,8 +2407,33 @@
     a.forEach((sq, i) => { if (!claimed[i]) legs.push({ from: sq }); });
     return legs;
   }
-  const LEGS = STATES.map((st, i) =>
-    pairStates(st.squares, STATES[(i + 1) % STATES.length].squares));
+  const CONFIG_PERIOD = 4000;
+  const CONFIG_MORPH = 900;
+  const CONFIG_STAGGER = 0.45;
+
+  /* ⚠️ The squares UNDER THE WORDMARK are timed, not hashed (4 Sep 2026:
+     "make sure there is always colour squares behind the text"). A leg
+     that arrives on the next configuration's statics or word cells goes
+     FIRST (d = 0, landed by u = 0.55); one that leaves the current
+     configuration's goes LAST (d = the full stagger, so it doesn't move
+     until u = 0.45); a leg that does both takes 0.15. With the word out by
+     u = 0.15 and back in from 0.72 (below), every letter is over a square
+     whenever it is visible. Before this the word faded in from 0.55 while
+     its cluster was still hashed anywhere in the stagger — text on bare
+     teal for a few hundred milliseconds every four seconds. */
+  const LEGS = STATES.map((st, i) => {
+    const nx = STATES[(i + 1) % STATES.length];
+    const key = (c, r) => c + "," + r;
+    const fromKeys = new Set([...st.statics, ...st.word].map(([c, r]) => key(c, r)));
+    const toKeys = new Set([...nx.statics, ...nx.word].map(([c, r]) => key(c, r)));
+    const legs = pairStates(st.squares, nx.squares);
+    legs.forEach((leg, k) => {
+      const isFrom = leg.from && fromKeys.has(key(leg.from[0], leg.from[1]));
+      const isTo = leg.to && toKeys.has(key(leg.to[0], leg.to[1]));
+      leg.d = isTo && isFrom ? 0.15 : isTo ? 0 : isFrom ? CONFIG_STAGGER : CONFIG_STAGGER * hashUnit(k, 31337);
+    });
+    return legs;
+  });
 
   /* -------------------------------------------------------------------- *
    * The clock
@@ -2420,9 +2449,8 @@
    *
    * Reduced motion holds a single configuration and never cycles.
    * -------------------------------------------------------------------- */
-  const CONFIG_PERIOD = 4000;
-  const CONFIG_MORPH = 900;
-  const CONFIG_STAGGER = 0.45;
+  // (CONFIG_PERIOD / CONFIG_MORPH / CONFIG_STAGGER are declared above the
+  // pairing now — the legs' timing reads the stagger.)
 
   let scale = 1, boxW = 0, boxH = 0, dpr = 1;
   let stateIndex = 0, morphU = 0;
@@ -2497,7 +2525,7 @@
    * squarely on the squares that make it legible rather than sliding
    * across the ones that don't.
    * -------------------------------------------------------------------- */
-  const WORD_OUT = 0.4, WORD_IN = 0.55;
+  const WORD_OUT = 0.15, WORD_IN = 0.72;   // see LEGS: out before its squares leave, in after they land
   function paintWordmark(){
     if (!textEl) return;
     const half = morphU >= 0.5;
@@ -2632,7 +2660,7 @@
 
     // Each square on its own leg, on its own stagger.
     LEGS[stateIndex].forEach((leg, i) => {
-      const d = CONFIG_STAGGER * hashUnit(i, 31337);
+      const d = leg.d;
       const e = smoothstep(clamp01((morphU - d) / (1 - CONFIG_STAGGER)));
       if (!leg.to){
         fillCell(snapToGrid(cx(leg.from[0]) - s / 2, s), snapToGrid(cy(leg.from[1]) - s / 2, s),

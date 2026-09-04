@@ -444,7 +444,10 @@
   .page > section.bpt{
     position:relative; z-index:6;
     height:100vh; min-height:560px;
-    background:#C5D6D6; color:#1F1F1F;
+    /* ⚠️ #81C1C0 — the Brand Proximity hero's own teal, not the paler
+       #C5D6D6 the frame's render showed (Myles, 4 Sep 2026: "the right
+       colour green"). The two pages read as one that way. */
+    background:#81C1C0; color:#1F1F1F;
     overflow:hidden;
     /* full-bleed on the standard --sbw breakout */
     width:calc(100vw - var(--sbw, 0px));
@@ -2347,7 +2350,10 @@
     const rect = canvas.getBoundingClientRect();
     boxW = rect.width; boxH = rect.height;
     scale = boxW / BOX_W;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // 1.5x on a phone rather than the full 2–3x: the squares are flat
+    // fills, the difference is invisible, and it halves the pixels this
+    // repaints every frame while the reconfiguration runs.
+    dpr = Math.min(window.devicePixelRatio || 1, matchMedia("(pointer:coarse)").matches ? 1.5 : 2);
     canvas.width = Math.round(boxW * dpr);
     canvas.height = Math.round(boxH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

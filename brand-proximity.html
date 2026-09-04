@@ -1641,7 +1641,7 @@
     const innerW = Math.min(W, PAGE_MAX);
     const padX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pad-x")) || 100;
     const contentW = innerW - 2 * padX;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = Math.min(window.devicePixelRatio || 1, matchMedia("(pointer:coarse)").matches ? 1.5 : 2);  // 1.5x on a phone — flat squares, half the pixels per frame
     let want, mx, my;
     /* The hero mosaic, capped so the wordmark clears the fold — see
        WORDMARK_DEEP. Measured with its own width cleared, because its top
@@ -2123,8 +2123,13 @@
     // Context copy carry straight through every state, and a flick at the
     // last card ran on past the section. Inside this zone every gesture is
     // the model's — no momentum — and a lift near either end snaps IN.
+    // (It was a full screen either side for a day; that made the last screen
+    // of the Context copy drag without momentum, which read as sticky. A
+    // third early and a quarter late still catch a fling that lands near the
+    // stage, and the mandatory snap in syncSnap() catches one that lands
+    // further out.)
     const want = isMobile && !document.body.classList.contains("menu-open")
-      && y >= lockY - H && y <= lockY + STATES * STEP + H * 0.5;
+      && y >= lockY - H * 0.35 && y <= lockY + STATES * STEP + H * 0.25;
     if (want === engaged) return;
     engaged = want;
     document.documentElement.style.touchAction = want ? "none" : "";
@@ -2486,7 +2491,10 @@
     const rect = canvas.getBoundingClientRect();
     boxW = rect.width; boxH = rect.height;
     scale = boxW / BOX_W;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // 1.5x on a phone rather than the full 2–3x: the squares are flat
+    // fills, the difference is invisible, and it halves the pixels this
+    // repaints every frame while the reconfiguration runs.
+    dpr = Math.min(window.devicePixelRatio || 1, matchMedia("(pointer:coarse)").matches ? 1.5 : 2);
     canvas.width = Math.round(boxW * dpr);
     canvas.height = Math.round(boxH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

@@ -481,31 +481,33 @@
   .bp-subnav button[aria-current="true"]{ opacity:1; }
   .bp-subnav button:focus-visible{ outline:1px solid currentColor; outline-offset:4px; }
 
-  /* The stage's CTA (frame 3557:2959, added 4 Sep 2026): "Request a free
-     sample report ↓", Details, right-aligned to the content edge and
-     bottom-aligned with the sub-nav's last line — the frame draws it on
-     every card at the same spot, so like the sub-nav it is ONE element in
-     the pin, faded in with it. It links down the page to the report
-     section; the arrow is drawn (as the site's ↗ is) rather than the ↓
-     glyph, whose head sits wrong against Geist. On mobile it moves under
-     the body copy — see the mobile block. */
+  /* The stage's CTA — "Request a free sample report ↓" — is a BOX now,
+     flush to the card's bottom-right corner (frame 3655:3221, 7 Sep 2026,
+     after feedback that the old 40%-ink link "wasn't visible enough"):
+     30px of padding, Geist SemiBold 18 at 1.3, Off Black, on a tint of the
+     card's own ground (--cta-bg, set inline per card: #82C1C0 / #7EA3FF /
+     #F67260). ⚠️ One per CARD, not one in the pin — it is part of the card
+     so it travels with it: as the next card swipes up it covers this one,
+     and its own box waits below its bottom edge (translateY(100%)) until
+     the card has settled (`is-settled`, set by the script when the drawn
+     state is within 0.03 of the card), then slides up onto the new
+     ground. Scrolling back down takes it away with the card. The Context
+     screen has no box, as in the frame. */
   .bp-cta{
     position:absolute; z-index:4;
-    right:max(var(--pad-x), calc((100% - var(--page-max)) / 2 + var(--pad-x)));
-    bottom:clamp(40px,11.1vh,100px);
-    /* Medium at 20px (Myles, 7 Sep 2026 — feedback that the CTA "isn't
-       visible enough"; Details Regular before). The ink stays 40%. */
-    font-size:20px; font-weight:500; line-height:1.2; letter-spacing:-.02em;
-    /* 40% ink resting, full on hover — the sub-nav's own treatment (Myles,
-       4 Sep 2026; it went red before). Done as ink alpha rather than
-       opacity because the script already drives this element's opacity
-       to fade it in with the sub-nav. */
-    color:rgba(31,31,31,.4); text-decoration:none; white-space:nowrap;
-    opacity:0; pointer-events:none;
-    transition:color .5s var(--ease-out-expo);
+    right:0; bottom:0;
+    padding:30px;
+    background:var(--cta-bg, #82C1C0);
+    font-size:18px; font-weight:600; line-height:1.3; letter-spacing:-.02em;
+    color:var(--ink-footer); text-decoration:none; white-space:nowrap;
+    transform:translateY(100%);
+    transition:transform .6s var(--ease-out-expo);
   }
-  .bp-cta:hover{ color:var(--ink-footer); }
-  .bp-cta:focus-visible{ outline:1px solid currentColor; outline-offset:4px; }
+  @supports (text-box: trim-both cap alphabetic){
+    .bp-cta{ text-box:trim-both cap alphabetic; padding:30px; }
+  }
+  .bp-card.is-settled .bp-cta{ transform:none; }
+  .bp-cta:focus-visible{ outline:1px solid currentColor; outline-offset:-6px; }
   .bp-cta-arrow{
     display:inline-block; width:.6em; height:.6em; margin-left:.3em;
     vertical-align:-.04em;
@@ -513,6 +515,7 @@
     transition:transform .35s var(--ease-out-expo);
   }
   .bp-cta:hover .bp-cta-arrow{ transform:translateY(.16em); }
+  @media (prefers-reduced-motion: reduce){ .bp-cta{ transition:none; } }
 
   /* ---- The card's text is a SCROLL LAYER, not a one-shot reveal ----
    *
@@ -849,12 +852,46 @@
     font-size:var(--fs-h4); line-height:1.2; letter-spacing:-.02em;
     color:var(--ink-footer);
   }
-  .challenge-cta{
+  /* The email entry (frame 3655:3221, 7 Sep 2026 — it replaced the red
+     "Request a free sample report ↗" link): the contact page's field,
+     adapted — a 20px Regular line on a hairline, the prompt in mid grey,
+     20 down to "Submit →", which is grey until the field holds a valid
+     address and red from then (the script sets `ready`); the arrow steps
+     right on hover once it is live. Submitting shows the thanks line in
+     place of the field. ⚠️ Nothing is sent anywhere yet — there is no
+     backend in this prototype; the thanks is the UI only. */
+  .challenge-form{ display:flex; flex-direction:column; gap:20px; width:100%; }
+  .sr-only{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  .challenge-field{
+    display:block; width:100%;
+    background:none; border:0; border-bottom:1px solid var(--mid-grey);
+    border-radius:0; padding:0 0 12px;
+    font-family:inherit; font-weight:400;
     font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
-    color:var(--f-red); text-decoration:none;
-    width:max-content; max-width:100%;
+    color:var(--ink-footer);
+    transition:border-color .3s var(--ease-out-expo);
   }
-  .challenge-cta:focus-visible{ outline:1px solid var(--f-red); outline-offset:6px; }
+  .challenge-field::placeholder{ color:var(--mid-grey); opacity:1; }
+  .challenge-field:focus{ outline:none; border-bottom-color:var(--ink-footer); }
+  .challenge-submit{
+    background:none; border:0; padding:0;
+    font-family:inherit; font-weight:400;
+    font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
+    color:var(--mid-grey); cursor:default;
+    width:max-content; max-width:100%; text-align:left;
+    transition:color .3s ease;
+  }
+  .challenge-form.ready .challenge-submit{ color:var(--f-red); cursor:pointer; }
+  .challenge-submit:focus-visible{ outline:1px solid currentColor; outline-offset:6px; }
+  .challenge-thanks{
+    display:none;
+    font-weight:400;
+    font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em;
+    color:var(--ink-footer);
+  }
+  .challenge-form.sent .challenge-field,
+  .challenge-form.sent .challenge-submit{ display:none; }
+  .challenge-form.sent .challenge-thanks{ display:block; }
   /* Drawn arrow, as index.html's — the ↗ glyph's solid head doesn't sit
      right against Geist's metrics. */
   .contact-arrow{
@@ -865,8 +902,8 @@
     fill:none; stroke:currentColor; stroke-width:2;
     transition:transform .35s var(--ease-out-expo);
   }
-  .challenge-cta:hover .contact-arrow,
-  .challenge-cta:focus-visible .contact-arrow{ transform:translateX(.16em); }
+  .challenge-form.ready .challenge-submit:hover .contact-arrow,
+  .challenge-form.ready .challenge-submit:focus-visible .contact-arrow{ transform:translateX(.16em); }
   @media (prefers-reduced-motion: reduce){ .contact-arrow, .bp-cta-arrow{ transition:none; } }
 
   /* ------------------------------------------------------------------ *
@@ -1061,15 +1098,16 @@
        block for anything absolute inside it (see its own note). */
     .bp-text{
       position:absolute; left:var(--pad-x); right:var(--pad-x);
-      /* above the CTA (one 24px line — 20px Medium at 1.2) with 25 between
-         — see .bp-cta */
-      top:auto; bottom:calc(50px + var(--vh-gap, 0px) + 24px + 25px);
+      /* above the CTA box (16px SemiBold, cap-trimmed, + 2 x 20 padding =
+         51, measured) with 25 between — see .bp-cta */
+      top:auto; bottom:calc(var(--vh-gap, 0px) + 51px + 25px);
       width:auto;
     }
-    /* The CTA sits under the body copy on mobile (Myles, 4 Sep 2026): same
-       element, moved to the foot's left, with the text block raised over
-       it. */
-    .bp-cta{ right:auto; left:var(--pad-x); bottom:calc(50px + var(--vh-gap, 0px)); }
+    /* The CTA box keeps the corner on mobile, smaller (20 padding, 16px),
+       lifted clear of the URL bar by --vh-gap; the text block is raised
+       over it. (Judgement call, 7 Sep 2026 — the frame has no mobile.) */
+    .bp-cta{ padding:20px; font-size:16px; bottom:var(--vh-gap, 0px); }
+    @supports (text-box: trim-both cap alphabetic){ .bp-cta{ padding:20px; } }
     .bp-card .bp-heading{
       position:static; margin-bottom:25px;
       /* ⚠️ Holds the full 27, not --fs-h4's mobile 21.6. This heading is
@@ -1279,6 +1317,7 @@
             </div>
           </div>
         </div>
+        <a class="bp-cta" href="#challenge" style="--cta-bg:#82C1C0">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5v16"/><path d="M4.6 12.2 12 19.6l7.4-7.4"/></svg></a>
       </section>
 
       <!-- State 2: Understand the demand (frame 3438:5575) -->
@@ -1317,6 +1356,7 @@
             </div>
           </div>
         </div>
+        <a class="bp-cta" href="#challenge" style="--cta-bg:#7EA3FF">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5v16"/><path d="M4.6 12.2 12 19.6l7.4-7.4"/></svg></a>
       </section>
 
       <!-- State 3: Create AI-ready content (frame 3438:6130) -->
@@ -1349,6 +1389,7 @@
             </div>
           </div>
         </div>
+        <a class="bp-cta" href="#challenge" style="--cta-bg:#F67260">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5v16"/><path d="M4.6 12.2 12 19.6l7.4-7.4"/></svg></a>
       </section>
 
       <!-- Four snap markers, one per state, positioned by measure(). They
@@ -1366,7 +1407,6 @@
       <!-- The sub-nav — one element above all three cards, held still
            while they wipe under it; the script drives its opacity and
            current state (see .bp-subnav). Hidden on mobile. -->
-      <a class="bp-cta" id="bpCta" href="#challenge">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5v16"/><path d="M4.6 12.2 12 19.6l7.4-7.4"/></svg></a>
       <nav class="bp-subnav" id="bpSubnav" aria-label="Brand Proximity">
         <button type="button" data-state="1" aria-current="true">Establish the supply</button>
         <button type="button" data-state="2" aria-current="false">Understand the demand</button>
@@ -1402,7 +1442,13 @@
     </div>
     <div class="challenge-copy reveal">
       <p class="challenge-lead">Request a free sample report digging into who your buyers are, what they&rsquo;re looking for, and how your brand shows up with the content they need.</p>
-      <a class="challenge-cta" href="contact.html">Request a free sample report<svg class="contact-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 19.5 19 5"/><path d="M8.6 5H19v10.4"/></svg></a>
+      <form class="challenge-form" id="bpForm" novalidate>
+        <label class="sr-only" for="bpEmail">Email</label>
+        <input class="challenge-field" id="bpEmail" type="email" name="email" autocomplete="email" required
+               placeholder="Enter email to request a free sample report">
+        <button class="challenge-submit" type="submit" aria-disabled="true">Submit<svg class="contact-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M12.5 5.5 19 12l-6.5 6.5"/></svg></button>
+        <p class="challenge-thanks" role="status">Thanks, we&rsquo;ll be in touch shortly.</p>
+      </form>
     </div>
   </section>
 
@@ -1467,7 +1513,7 @@
   const context = document.getElementById("bpContext");
   const cards   = [...pin.querySelectorAll(".bp-card")];
   const subnav  = document.getElementById("bpSubnav");
-  const cta     = document.getElementById("bpCta");
+  const ctas    = [...pin.querySelectorAll(".bp-cta")];
   const snaps   = [...stage.querySelectorAll(".bp-snap")];
   const subBtns = [...subnav.querySelectorAll("button[data-state]")];
   const stages  = cards.map(c => c.querySelector(".bp-mosaic-stage"));
@@ -1563,6 +1609,27 @@
     device.addEventListener("pointerleave", () => { tRx = 0; tRy = 0; kick(); });
 
     window.__ipad = { frame, kick, get: () => ({ rx, ry, tRx, tRy }) };
+  }
+
+  /* The email entry: "Submit →" goes live (red) once the field holds a
+     valid address; submitting swaps the field for the thanks line. ⚠️ No
+     backend — nothing is sent (see the CSS note). */
+  const form = document.getElementById("bpForm");
+  if (form){
+    const field = form.querySelector(".challenge-field");
+    const submit = form.querySelector(".challenge-submit");
+    const sync = () => {
+      const ready = field.value.trim() !== "" && field.validity.valid;
+      form.classList.toggle("ready", ready);
+      submit.setAttribute("aria-disabled", String(!ready));
+    };
+    field.addEventListener("input", sync);
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      if (!form.classList.contains("ready")){ field.focus(); return; }
+      form.classList.add("sent");
+    });
+    sync();
   }
 
   /* ------------------------------------------------------------------ *
@@ -2051,12 +2118,10 @@
     const subOp = smoothstep(clamp01((v - 0.45) / 0.45));
     subnav.style.opacity = subOp.toFixed(3);
     subnav.style.pointerEvents = subOp > 0.85 ? "auto" : "none";
-    // The CTA arrives with the sub-nav. ⚠️ On mobile it sits under the copy,
-    // so it also fades WITH the copy between states (Myles, 4 Sep 2026) —
-    // otherwise the next card's text slid up across it.
-    const ctaOp = isMobile ? subOp * textOpMax : subOp;
-    cta.style.opacity = ctaOp.toFixed(3);
-    cta.style.pointerEvents = ctaOp > 0.85 ? "auto" : "none";
+    // Each card's CTA box slides up once its card has settled (within 0.03
+    // of the state) and stays while the card is on or behind the screen;
+    // it drops back below the edge when the card is scrolled back down.
+    cards.forEach((c, i) => c.classList.toggle("is-settled", v >= (i + 1) - 0.03));
     const nearest = clamp(Math.round(v), 1, STATES);
     subBtns.forEach(b => b.setAttribute("aria-current", String(+b.dataset.state === nearest)));
 
@@ -2144,13 +2209,13 @@
   // The stage's CTA glides down the page to the report section. Longer
   // than a snap — it is a page-length move — and it cancels on input like
   // every glide here.
-  cta.addEventListener("click", e => {
+  ctas.forEach(cta => cta.addEventListener("click", e => {
     e.preventDefault();
     const target = document.getElementById("challenge");
     if (!target) return;
     clearTimeout(snapTimer);
     glideScrollTo(target.getBoundingClientRect().top + window.scrollY, 900);
-  });
+  }));
   ["wheel","touchstart","keydown","pointerdown"].forEach(ev =>
     addEventListener(ev, cancelGlide, { passive:true }));
 

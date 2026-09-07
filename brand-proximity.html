@@ -1126,7 +1126,12 @@
       font-size:27px;
     }
     .bp-card .bp-copy{ position:static; }
-    .bp-overlay{ display:none; }
+    /* The pop-ups run on mobile too (7 Sep 2026 — "on mobile there is no
+       animation like on desktop where it loops and shows the stats"). At
+       a phone's cell (~20px) they are drawn 1.5x bigger in cells, kept
+       inside the screen's padding and the mosaic's band, and their type
+       unit scales with them — see placeOverlays(). */
+    .bp-mosaic-stage{ --u:calc(var(--mosaic-w) / 840 * 1.5); }
 
     /* ⚠️ Native scroll snapping, mobile only — and the strictness is set
        by the SCRIPT, not here: `y mandatory` while the reader is inside
@@ -1781,6 +1786,7 @@
      whole (or quarter, for an overlay) number of cells. See the stage's
      CSS comment for why this is exact rather than merely close. */
   let cell1 = 1, over = 0, cx = 0, cy = 0;
+  let stageX = 0, stageY = 0;     // the stage's screen offset (--mosaic-left/top)
   let mobileBand = [0, 0];        // [top, bottom] the mosaic must stay inside
 
   function fitCanvasBuffer(){
@@ -1849,7 +1855,14 @@
     const innerW = Math.min(W, PAGE_MAX);
     const padX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pad-x")) || 100;
     const contentW = innerW - 2 * padX;
-    dpr = Math.min(window.devicePixelRatio || 1, matchMedia("(pointer:coarse)").matches ? 1.5 : 2);  // 1.5x on a phone — flat squares, half the pixels per frame
+    /* ⚠️ The REAL device ratio (capped at 3), 7 Sep 2026. It was capped at
+       1.5 on phones to halve the morph's pixels — but every phone is 2x or
+       3x, so a 1.5x canvas is resampled onto the screen and every square
+       edge lands between device pixels: a soft line, or a hairline of the
+       ground, on every join. Myles: "no rogue keylines or things not
+       aligning". The grid snapping below is only exact when this IS the
+       screen's ratio. */
+    dpr = Math.min(window.devicePixelRatio || 1, 3);
     let want, mx, my;
     /* ⚠️ The hero mosaic is no longer capped to the fold (7 Sep 2026) — it
        is the frame's 67.08% of the page, full stop (see .bp-hero-mosaic).
@@ -1910,6 +1923,7 @@
     pin.style.setProperty("--mosaic-over", over.toFixed(2) + "px");
     pin.style.setProperty("--mosaic-left", mx.toFixed(2) + "px");
     pin.style.setProperty("--mosaic-top", my.toFixed(2) + "px");
+    stageX = mx; stageY = my;
 
     boxW = mw + 2 * over; boxH = mh + 2 * over;
     fitCanvasBuffer();
@@ -1919,18 +1933,58 @@
 
   /* The overlay cards, placed off the same grid as the squares — see the
      .bp-pop comment. data-cell is "col,row,w,h" in cells of that card's
-     OWN mosaic, which is why the zoom is per card rather than shared. */
+     OWN mosaic, which is why the zoom is per card rather than shared.
+     ⚠️ Mobile (7 Sep 2026): the same cards, on the phone's re-centred and
+     zoomed grid (STATE_CX / MZOOM, as cellsAt), drawn POP_SCALE_MOBILE
+     bigger in cells — scaled about the corner they grow from, rounded to
+     the quarter cell — and then walked back onto the screen (25 in from
+     either edge) and into the mosaic's band above the copy, in WHOLE
+     cells, so every edge still sits on the grid. Every edge is also
+     snapped to a device pixel: a box on a fraction of one showed the
+     ground through as a hairline against the squares. */
+  const POP_SCALE_MOBILE = 1.5;
   function placeOverlays(){
+    const W = innerWidth, padX = 25;
     overlays.forEach((ov, i) => {
       if (!ov) return;
-      const z = isMobile ? 1 : ZOOM[i + 2];
-      const s = Math.max(1, Math.round(cell1 * z * dpr)) / dpr;
+      const zk = isMobile ? MZOOM : ZOOM;
+      const s = Math.max(1, Math.round(cell1 * zk[i + 2] * dpr)) / dpr;
+      const ox = isMobile ? (MOSAIC_BOX.w / 2 - STATE_CX[i + 1]) / MOSAIC_BOX.cell * s : 0;
+      const k = isMobile ? POP_SCALE_MOBILE : 1;
+      // the window the box must stay in, in the canvas's coordinates
+      const minX = isMobile ? padX - stageX + over : -Infinity;
+      const maxX = isMobile ? W - padX - stageX + over : Infinity;
+      const minY = isMobile ? mobileBand[0] - stageY + over : -Infinity;
+      const maxY = isMobile ? mobileBand[1] - stageY + over : Infinity;
       ov.querySelectorAll(".bp-pop").forEach(el => {
         const c = (el.dataset.cell || "0,0,4,4").split(",").map(Number);
-        el.style.left = (cx + (c[0] - 7) * s).toFixed(2) + "px";
-        el.style.top = (cy + (c[1] - 8) * s).toFixed(2) + "px";
-        el.style.width = (c[2] * s).toFixed(2) + "px";
-        el.style.minHeight = (c[3] * s).toFixed(2) + "px";
+        const w0 = c[2] * s, h0 = c[3] * s;
+        const w = Math.round(c[2] * k * 4) / 4 * s;
+        let h = Math.round(c[3] * k * 4) / 4 * s;
+        let x = cx + ox + (c[0] - 7) * s, y = cy + (c[1] - 8) * s;
+        // scale about the corner the box grows from
+        const o = el.dataset.origin || "tl";
+        if (o === "br" || o === "tr") x += w0 - w;
+        if (o === "br" || o === "bl") y += h0 - h;
+        if (x + w > maxX) x -= Math.ceil((x + w - maxX) / s) * s;
+        if (x < minX)     x += Math.ceil((minX - x) / s) * s;
+        if (y + h > maxY) y -= Math.ceil((y + h - maxY) / s) * s;
+        if (y < minY)     y += Math.ceil((minY - y) / s) * s;
+        el.style.width = (snapToDevicePixel(x + w) - snapToDevicePixel(x)).toFixed(2) + "px";
+        el.style.height = "";
+        el.style.minHeight = (snapToDevicePixel(y + h) - snapToDevicePixel(y)).toFixed(2) + "px";
+        // a box its copy outgrows grows by WHOLE cells (then steps back
+        // up into the band if it must), so its bottom edge stays on the
+        // grid too — offsetHeight, which ignores the entry scale
+        const need = el.offsetHeight;
+        if (need > h + 0.5){
+          h = Math.ceil(need / s) * s;
+          el.style.height = (snapToDevicePixel(y + h) - snapToDevicePixel(y)).toFixed(2) + "px";
+          if (y + h > maxY) y -= Math.ceil((y + h - maxY) / s) * s;
+          if (y < minY)     y += Math.ceil((minY - y) / s) * s;
+        }
+        el.style.left = snapToDevicePixel(x).toFixed(2) + "px";
+        el.style.top = snapToDevicePixel(y).toFixed(2) + "px";
       });
     });
   }

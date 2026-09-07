@@ -718,10 +718,10 @@
    * position, on their own layers.
    *
    * ⚠️ Proportions are the iPad Pro 11" (M4): body 249.7 × 177.5mm, screen
-   * 2420 × 1668 (1210:834). Bezel 3.47cqw on a 620 × 440.7 body leaves a
-   * 577 × 397.7 screen — 1.4508, the panel's ratio — and the corners are
-   * concentric: the screen's 18pt display radius (1.4cqw here), the body's
-   * that plus the bezel. Myles' recording should be 2420 × 1668; anything
+   * 2420 × 1668 (1210:834). Bezel 3cqw on a 620 × 438.9 body leaves a
+   * 582.8 × 401.7 screen — 1.4508, the panel's ratio — and the corners are
+   * concentric: the screen's 3.4cqw (the rounding of Apple's product
+   * shots), the body's that plus the bezel. Myles' recording should be 2420 × 1668; anything
    * else is `cover`ed (the current 1920 × 1112 loses its sides). Every
    * dimension is in cqw of the device box so the drawing scales with it.
    *
@@ -767,7 +767,7 @@
   }
   .ipad{
     position:relative;
-    width:100%; aspect-ratio:620 / 440.7;
+    width:100%; aspect-ratio:620 / 438.9;
     transform-style:preserve-3d;
     transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
     will-change:transform;
@@ -775,9 +775,9 @@
   /* Space Black: a flat face with the aluminium band as a hairline rim. */
   .ipad-body{
     position:absolute; inset:0;
-    border-radius:4.87cqw;
+    border-radius:6.4cqw;
     background:#121214;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.22), inset 0 0 0 .22cqw #2a2a2d;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.28);
     transform-style:preserve-3d;
   }
   /* The slab's depth — a darker plate a little behind the face, so a thin
@@ -788,16 +788,18 @@
     transform:translateZ(-.6cqw);
   }
   .ipad-cam{
-    position:absolute; top:1.3cqw; left:50%;
+    position:absolute; top:1.05cqw; left:50%;
     width:.85cqw; height:.85cqw; margin-left:-.425cqw; border-radius:50%;
     background:#0a1016;
     box-shadow:inset 0 0 0 .18cqw #1c2731, 0 0 0 .12cqw rgba(255,255,255,.07);
   }
-  /* 3.47cqw of bezel on 620 × 440.7 leaves a 577 × 397.7 screen — 1.4508,
-     the M4 11" panel. */
+  /* 3cqw of bezel on 620 × 438.9 leaves a 582.8 × 401.7 screen — 1.4508,
+     the M4 11" panel. The screen's corners are the visibly rounded ones
+     of Apple's own product shots (Myles' reference, 7 Sep), the body's
+     radius that plus the bezel, so they stay concentric. */
   .ipad-screen{
-    position:absolute; inset:3.47cqw;
-    border-radius:1.4cqw; overflow:hidden;
+    position:absolute; inset:3cqw;
+    border-radius:3.4cqw; overflow:hidden;
     background:#000;
     transform:translateZ(.2cqw);
   }

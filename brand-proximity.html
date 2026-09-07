@@ -258,10 +258,16 @@
   }
   /* Square — this is the homepage module's mosaic, whose frame is 1:1 (see
      BOX_W in the Mosaic 1 script). The frame's 966 on 1440 is 67.08% of
-     the page; the vh term only eases it down on short windows. */
+     the page, and ⚠️ that is the ONLY thing that sizes it (7 Sep 2026,
+     Myles: "still feels too small on desktop, look at the way it was
+     scaled in the Figma"). It used to be capped by the viewport height
+     (96vh here, and a fold cap in measure() so the wordmark cleared the
+     bottom of the screen on load) — both gone; on a short window the
+     wordmark now sits below the fold, as it does in the frame. Capped by
+     the page's own max width like everything else. */
   .bp-hero-mosaic{
     position:relative;
-    width:min(67.08vw,96vh);
+    width:min(67.08vw, calc(var(--page-max) * .6708));
     aspect-ratio:1;
   }
   .bp-hero-mosaic canvas,
@@ -1754,16 +1760,11 @@
     const contentW = innerW - 2 * padX;
     dpr = Math.min(window.devicePixelRatio || 1, matchMedia("(pointer:coarse)").matches ? 1.5 : 2);  // 1.5x on a phone — flat squares, half the pixels per frame
     let want, mx, my;
-    /* The hero mosaic, capped so the wordmark clears the fold — see
-       WORDMARK_DEEP. Measured with its own width cleared, because its top
-       depends on the headline above it and not on its own size. */
+    /* ⚠️ The hero mosaic is no longer capped to the fold (7 Sep 2026) — it
+       is the frame's 67.08% of the page, full stop (see .bp-hero-mosaic).
+       The cap used WORDMARK_DEEP / WORDMARK_FOOT to keep the name on
+       screen at load; Myles judged the result too small against the Figma. */
     if (heroMosaicEl) heroMosaicEl.style.width = "";
-    if (heroMosaicEl && !isMobile){
-      const top = heroMosaicEl.getBoundingClientRect().top + window.scrollY;
-      const capped = (innerHeight - top - WORDMARK_FOOT) / WORDMARK_DEEP;
-      const natural = heroMosaicEl.offsetWidth;
-      if (capped < natural) heroMosaicEl.style.width = Math.max(240, capped).toFixed(1) + "px";
-    }
 
     if (!isMobile){
       want = Math.min(contentW * 0.4748, H * 0.7475 * MOSAIC_BOX.w / MOSAIC_BOX.h);

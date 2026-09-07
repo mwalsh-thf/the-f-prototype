@@ -708,18 +708,22 @@
    * it on the left (498 wide, 50 between), and a landscape iPad on the
    * right (620 wide), top-aligned with the title, its right edge on the
    * content edge. The iPad is DRAWN — CSS, no image: body, bezel, camera,
-   * screen, status bar, glare — so the video plays inside it and it can
-   * move. It sits in a perspective and the script tilts it: a rest pose,
-   * the pointer on desktop, the scroll on both, a slow idle bob, and the
-   * glare and the shadow follow ("slightly 3D, slightly tilt and shift so
-   * the page feels alive"). Compositor-only: transforms and a background
+   * screen, glare — so the video plays inside it and it can move. It lies
+   * FLAT in a perspective; the only motion is the pointer's: hover the
+   * left half and it tilts left, the right half and it tilts right, a few
+   * degrees, chased, and it settles flat when the pointer leaves. (A first
+   * pass had a skewed rest pose, a scroll lean and an idle bob — "a bit
+   * much", Myles, 7 Sep — so those went, with the heavy shadow and the
+   * iPadOS status bar.) Compositor-only: a transform and a background
    * position, on their own layers.
    *
-   * ⚠️ The screen is 1210:834 — the iPad Pro 11" (M4) panel, 2420 × 1668
-   * — which is what the mockup in the frame measures (572 × 394 = 1.451).
-   * Myles' recording should be that shape; anything else is `cover`ed
-   * (the current 1920 × 1112 loses its sides). Every iPad dimension is in
-   * cqw of the device box so the drawing scales with its width.
+   * ⚠️ Proportions are the iPad Pro 11" (M4): body 249.7 × 177.5mm, screen
+   * 2420 × 1668 (1210:834). Bezel 3.47cqw on a 620 × 440.7 body leaves a
+   * 577 × 397.7 screen — 1.4508, the panel's ratio — and the corners are
+   * concentric: the screen's 18pt display radius (1.4cqw here), the body's
+   * that plus the bezel. Myles' recording should be 2420 × 1668; anything
+   * else is `cover`ed (the current 1920 × 1112 loses its sides). Every
+   * dimension is in cqw of the device box so the drawing scales with it.
    *
    * Markup order is title, device, copy — the mobile stack — and the
    * desktop grid places the three: title and copy in column 1, the iPad
@@ -763,75 +767,56 @@
   }
   .ipad{
     position:relative;
-    width:100%; aspect-ratio:620 / 442;
+    width:100%; aspect-ratio:620 / 440.7;
     transform-style:preserve-3d;
-    transform:translate3d(0, var(--ty, 0px), 0) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
     will-change:transform;
   }
-  .ipad-float{ position:absolute; inset:0; transform-style:preserve-3d; }
-  @media (prefers-reduced-motion: no-preference){
-    .ipad-float{ animation:ipad-float 9s ease-in-out infinite; }
-  }
-  @keyframes ipad-float{
-    0%, 100%{ transform:translate3d(0, 0, 0) rotate(0deg); }
-    50%{ transform:translate3d(0, -1.4cqw, 0) rotate(-.35deg); }
-  }
+  /* Space Black: a flat face with the aluminium band as a hairline rim. */
   .ipad-body{
     position:absolute; inset:0;
-    border-radius:5.8cqw;
-    background:linear-gradient(135deg, #2b2b2e 0%, #151517 45%, #0c0c0d 100%);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.16), inset 0 0 0 .4cqw rgba(0,0,0,.55);
+    border-radius:4.87cqw;
+    background:#121214;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.22), inset 0 0 0 .22cqw #2a2a2d;
     transform-style:preserve-3d;
   }
-  /* The slab's depth — a darker plate a little behind the face, so an edge
-     shows as it turns. */
+  /* The slab's depth — a darker plate a little behind the face, so a thin
+     edge shows as it tilts. */
   .ipad-body::before{
     content:""; position:absolute; inset:0; border-radius:inherit;
-    background:#040405;
-    transform:translateZ(-1.2cqw);
+    background:#08080a;
+    transform:translateZ(-.6cqw);
   }
   .ipad-cam{
-    position:absolute; top:1.55cqw; left:50%;
-    width:.9cqw; height:.9cqw; margin-left:-.45cqw; border-radius:50%;
+    position:absolute; top:1.3cqw; left:50%;
+    width:.85cqw; height:.85cqw; margin-left:-.425cqw; border-radius:50%;
     background:#0a1016;
     box-shadow:inset 0 0 0 .18cqw #1c2731, 0 0 0 .12cqw rgba(255,255,255,.07);
   }
-  /* 3.87cqw of bezel on 620 × 442 leaves a 572 × 394 screen — 1.4518,
-     the M4 11" panel to within a tenth of a percent. */
+  /* 3.47cqw of bezel on 620 × 440.7 leaves a 577 × 397.7 screen — 1.4508,
+     the M4 11" panel. */
   .ipad-screen{
-    position:absolute; inset:3.87cqw;
-    border-radius:2.9cqw; overflow:hidden;
+    position:absolute; inset:3.47cqw;
+    border-radius:1.4cqw; overflow:hidden;
     background:#000;
     transform:translateZ(.2cqw);
   }
   .ipad-screen video{ display:block; width:100%; height:100%; object-fit:cover; }
-  /* iPadOS status bar, as the frame's mockup draws it — Apple's 9:41, Wi-Fi
-     and battery, in Off Black on the assumption that the recording is a
-     light page. Sits over the top 3.6cqw of the video. */
-  .ipad-status{
-    position:absolute; left:0; right:0; top:0; height:3.6cqw;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0 2.4cqw;
-    font-size:1.75cqw; line-height:1; font-weight:500; letter-spacing:-.01em;
-    color:var(--ink-footer);
-    pointer-events:none;
-  }
-  .ipad-status span{ display:flex; align-items:center; gap:.9cqw; }
-  .ipad-status svg{ display:block; height:1.5cqw; width:auto; fill:var(--ink-footer); }
   .ipad-glare{
     position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-    background:linear-gradient(115deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.08) 40%, rgba(255,255,255,.2) 50%, rgba(255,255,255,.07) 60%, rgba(255,255,255,0) 100%);
+    background:linear-gradient(115deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.04) 40%, rgba(255,255,255,.10) 50%, rgba(255,255,255,.035) 60%, rgba(255,255,255,0) 100%);
     background-size:220% 100%;
     background-position:var(--gx, 50%) 0;
     mix-blend-mode:screen;
     transform:translateZ(.3cqw);
   }
-  /* The shadow is outside the 3D element so it stays on the ground. */
+  /* The shadow is outside the 3D element so it stays on the ground. Light:
+     a resting device, not a floating one. */
   .ipad-shadow{
-    position:absolute; left:5%; right:5%; bottom:-7cqw; height:9cqw;
+    position:absolute; left:8%; right:8%; bottom:-3.5cqw; height:6cqw;
     border-radius:50%;
-    background:radial-gradient(closest-side, rgba(31,31,31,.30), rgba(31,31,31,0));
-    filter:blur(1.2cqw);
+    background:radial-gradient(closest-side, rgba(31,31,31,.13), rgba(31,31,31,0));
+    filter:blur(1cqw);
     transform:translate3d(var(--sx, 0px), 0, 0);
     pointer-events:none;
   }
@@ -1402,23 +1387,14 @@
     <div class="challenge-device reveal" id="bpDevice">
       <div class="ipad-shadow" aria-hidden="true"></div>
       <div class="ipad" id="bpIpad">
-        <div class="ipad-float">
-          <div class="ipad-body">
-            <div class="ipad-cam" aria-hidden="true"></div>
-            <div class="ipad-screen">
-              <video id="bpVideo" muted loop playsinline preload="none"
-                     aria-label="A Brand Proximity sample report"
-                     data-src="assets/video/brand-proximity-report-1080.mp4"
-                     data-src-mobile="assets/video/brand-proximity-report-720.mp4"></video>
-              <div class="ipad-status" aria-hidden="true">
-                <span>9:41</span>
-                <span>
-                  <svg viewBox="0 0 16 12" aria-hidden="true"><path d="M8 8.6a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4zm0-3.5c1.7 0 3.2.7 4.3 1.8L11 8.2A4.2 4.2 0 0 0 8 7a4.2 4.2 0 0 0-3 1.2L3.7 6.9A6 6 0 0 1 8 5.1zm0-3.6c2.6 0 5 1 6.8 2.8l-1.3 1.3A7.7 7.7 0 0 0 8 3.3a7.7 7.7 0 0 0-5.5 2.3L1.2 4.3A9.6 9.6 0 0 1 8 1.5z"/></svg>
-                  <svg viewBox="0 0 27 12" aria-hidden="true"><rect x=".6" y=".6" width="22" height="10.8" rx="3" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".5"/><rect x="2.2" y="2.2" width="18.8" height="7.6" rx="1.8"/><path d="M24.3 4v4a2 2 0 0 0 0-4z" opacity=".5"/></svg>
-                </span>
-              </div>
-              <div class="ipad-glare" aria-hidden="true"></div>
-            </div>
+        <div class="ipad-body">
+          <div class="ipad-cam" aria-hidden="true"></div>
+          <div class="ipad-screen">
+            <video id="bpVideo" muted loop playsinline preload="none"
+                   aria-label="A Brand Proximity sample report"
+                   data-src="assets/video/brand-proximity-report-1080.mp4"
+                   data-src-mobile="assets/video/brand-proximity-report-720.mp4"></video>
+            <div class="ipad-glare" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -1549,61 +1525,43 @@
   document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
 
   /* ------------------------------------------------------------------ *
-   * The iPad — a rest pose, the pointer's push (fine pointers only), and
-   * a lean + lift from where it sits in the viewport, chased in one rAF
-   * (only while something is still moving). The glare and the shadow
-   * follow the turn. Reduced motion: none of this — it lies flat.
+   * The iPad — flat at rest; the pointer tilts it. Hover the left half and
+   * the left edge dips away, the right half and the right does, with a
+   * little of the same top-to-bottom — a few degrees, chased in one rAF
+   * (only while it is still moving), settling flat when the pointer
+   * leaves. Fine pointers only; a phone gets a flat iPad. The glare and the
+   * shadow follow the turn. Reduced motion: none of it.
    * ------------------------------------------------------------------ */
   const device = document.getElementById("bpDevice");
   const ipad = document.getElementById("bpIpad");
-  if (device && ipad && !reducedMotion.matches){
-    const REST_RX = 4, REST_RY = -9;      // turned a touch toward the copy, top leaning back
-    const POINT_RX = 6, POINT_RY = 8;     // how far the pointer can push it, either way
-    const SCROLL_RX = 7, SCROLL_Y = 18;   // how far the scroll leans and lifts it
-    const CHASE = 0.09;
-    const finePointer = matchMedia("(pointer:fine)").matches;
-    let pRx = 0, pRy = 0;                 // the pointer's offsets
-    let rx = REST_RX, ry = REST_RY, ty = 0;
-    let raf = 0;
+  if (device && ipad && !reducedMotion.matches && matchMedia("(pointer:fine)").matches){
+    const TILT_RY = 6, TILT_RX = 4;       // degrees at the edges
+    const CHASE = 0.1;
+    let tRx = 0, tRy = 0, rx = 0, ry = 0, raf = 0;
 
-    function targets(){
-      const r = device.getBoundingClientRect();
-      const mid = r.top + r.height / 2;
-      // -1 = a screen below the middle … +1 = a screen above it
-      const p = clamp((innerHeight / 2 - mid) / innerHeight, -1, 1);
-      return { rx: REST_RX + pRx - p * SCROLL_RX, ry: REST_RY + pRy, ty: -p * SCROLL_Y,
-               near: r.bottom > -innerHeight && r.top < innerHeight * 2 };
-    }
     function frame(){
       raf = 0;
-      const t = targets();
-      if (!t.near) return;
-      rx += (t.rx - rx) * CHASE; ry += (t.ry - ry) * CHASE; ty += (t.ty - ty) * CHASE;
+      rx += (tRx - rx) * CHASE; ry += (tRy - ry) * CHASE;
       ipad.style.setProperty("--rx", rx.toFixed(3) + "deg");
       ipad.style.setProperty("--ry", ry.toFixed(3) + "deg");
-      ipad.style.setProperty("--ty", ty.toFixed(2) + "px");
       device.style.setProperty("--gx", (50 - ry * 3).toFixed(1) + "%");
-      device.style.setProperty("--sx", (-ry * 1.4).toFixed(1) + "px");
-      if (Math.abs(t.rx - rx) > 0.02 || Math.abs(t.ry - ry) > 0.02 || Math.abs(t.ty - ty) > 0.05) raf = requestAnimationFrame(frame);
+      device.style.setProperty("--sx", (-ry * 1.2).toFixed(1) + "px");
+      if (Math.abs(tRx - rx) > 0.02 || Math.abs(tRy - ry) > 0.02) raf = requestAnimationFrame(frame);
+      else if (!tRx && !tRy){ ipad.style.removeProperty("--rx"); ipad.style.removeProperty("--ry"); }
     }
     function kick(){ if (!raf) raf = requestAnimationFrame(frame); }
 
-    if (finePointer){
-      const section = document.getElementById("challenge");
-      section.addEventListener("pointermove", e => {
-        const r = ipad.getBoundingClientRect();
-        const nx = clamp((e.clientX - (r.left + r.width / 2)) / r.width, -1, 1);
-        const ny = clamp((e.clientY - (r.top + r.height / 2)) / r.height, -1, 1);
-        pRy = nx * POINT_RY; pRx = -ny * POINT_RX;
-        kick();
-      }, {passive:true});
-      section.addEventListener("pointerleave", () => { pRx = 0; pRy = 0; kick(); });
-    }
-    addEventListener("scroll", kick, {passive:true});
-    addEventListener("resize", kick, {passive:true});
-    kick();
+    device.addEventListener("pointermove", e => {
+      const r = ipad.getBoundingClientRect();
+      const nx = clamp((e.clientX - (r.left + r.width / 2)) / (r.width / 2), -1, 1);
+      const ny = clamp((e.clientY - (r.top + r.height / 2)) / (r.height / 2), -1, 1);
+      tRy = nx * TILT_RY;      // left of centre → negative → the left edge dips away
+      tRx = -ny * TILT_RX;     // above centre → the top dips away
+      kick();
+    }, {passive:true});
+    device.addEventListener("pointerleave", () => { tRx = 0; tRy = 0; kick(); });
 
-    window.__ipad = { frame, kick, get: () => ({ rx, ry, ty, pRx, pRy }) };
+    window.__ipad = { frame, kick, get: () => ({ rx, ry, tRx, tRy }) };
   }
 
   /* ------------------------------------------------------------------ *

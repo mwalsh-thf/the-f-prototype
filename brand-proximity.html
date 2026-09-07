@@ -508,9 +508,11 @@
   }
   .bp-card.is-settled .bp-cta{ transform:none; }
   .bp-cta:focus-visible{ outline:1px solid currentColor; outline-offset:-6px; }
+  /* The arrow is the frame's ↓ glyph's size — a full em (Myles, 7 Sep
+     2026: at .6em it was "a lot smaller than the design"). */
   .bp-cta-arrow{
-    display:inline-block; width:.6em; height:.6em; margin-left:.3em;
-    vertical-align:-.04em;
+    display:inline-block; width:1em; height:1em; margin-left:.25em;
+    vertical-align:-.16em;
     fill:none; stroke:currentColor; stroke-width:2;
     transition:transform .35s var(--ease-out-expo);
   }
@@ -902,6 +904,8 @@
     fill:none; stroke:currentColor; stroke-width:2;
     transition:transform .35s var(--ease-out-expo);
   }
+  /* The submit's → at a full em, as the frame draws it. */
+  .challenge-submit .contact-arrow{ width:1em; height:1em; margin-left:.2em; vertical-align:-.14em; }
   .challenge-form.ready .challenge-submit:hover .contact-arrow,
   .challenge-form.ready .challenge-submit:focus-visible .contact-arrow{ transform:translateX(.16em); }
   @media (prefers-reduced-motion: reduce){ .contact-arrow, .bp-cta-arrow{ transition:none; } }
@@ -1104,9 +1108,11 @@
       width:auto;
     }
     /* The CTA box keeps the corner on mobile, smaller (20 padding, 16px),
-       lifted clear of the URL bar by --vh-gap; the text block is raised
-       over it. (Judgement call, 7 Sep 2026 — the frame has no mobile.) */
-    .bp-cta{ padding:20px; font-size:16px; bottom:var(--vh-gap, 0px); }
+       ON the card's bottom edge — it was lifted by --vh-gap for the URL
+       bar, which left "space underneath" once the bar had collapsed
+       (Myles, 7 Sep 2026). The text block above it keeps the --vh-gap
+       lift so the copy stays clear of the bar when it is up. */
+    .bp-cta{ padding:20px; font-size:16px; bottom:0; }
     @supports (text-box: trim-both cap alphabetic){ .bp-cta{ padding:20px; } }
     .bp-card .bp-heading{
       position:static; margin-bottom:25px;
@@ -1131,7 +1137,10 @@
        scrolling. */
     .bp-snap{ scroll-snap-align:start; }
 
-    .challenge{ display:flex; flex-direction:column; gap:50px; padding:75px var(--pad-x); }
+    /* 100 on top, not 75: the nav is permanent on mobile and the logo sat
+       too close to the title with the section at the top of the screen
+       (Myles, 7 Sep 2026: "add an extra 25px"). */
+    .challenge{ display:flex; flex-direction:column; gap:50px; padding:100px var(--pad-x) 75px; }
     .challenge-copy{ gap:25px; }
     /* The stack is title, iPad, copy — so the reveal order swaps. */
     .challenge-device{ max-width:none; perspective:1100px; }
@@ -1707,6 +1716,18 @@
      no room for the larger cell. */
   const ZOOM = [1, 1, 1, 1.34, 1.34];
   const ZOOM_MAX = 1.34;
+  /* ⚠️ Mobile has its own zoom and CENTRES each state's art (7 Sep 2026,
+     Myles: "the second and third mosaic don't seem centred, and we can
+     scale them up"). Mosaic 2 fills the 14 x 16 box about its centre, but
+     Mosaics 3 and 4 are 12 x 10 and 8 x 10 cells with their centre one
+     cell LEFT of the box's (x 360 of 840) — the frame draws them there and
+     the desktop overlays are placed off that grid, so desktop keeps it.
+     On a phone there are no overlays: the art is shifted to the box's
+     centre (STATE_CX) and zoomed to fill it — 1.15 fits Mosaic 3's 12
+     cells in the 14-wide box, ZOOM_MAX Mosaic 4's 8. Both stay inside the
+     base box, so the canvas overhang is untouched. */
+  const MZOOM = [1, 1, 1, 1.15, 1.34];
+  const STATE_CX = [420, 420, 360, 360];   // each state's art centre, in the box's x
   const OVER_CELLS = 3;                     // the canvas's overhang, in cells
 
   /* ⚠️ How far down the hero mosaic's box the WORDMARK reaches, as a
@@ -1934,10 +1955,15 @@
   function cellsAt(t){
     const leg = FIRST_STATE + Math.min(N_STATES - 1 - FIRST_STATE - 1, Math.floor(t));
     const lt = t - (leg - FIRST_STATE);
-    const z = (isMobile ? 1 : ZOOM[leg + 1] + (ZOOM[leg + 2] - ZOOM[leg + 1]) * lt);
+    const zk = isMobile ? MZOOM : ZOOM;
+    const z = zk[leg + 1] + (zk[leg + 2] - zk[leg + 1]) * lt;
     // a whole number of device pixels at every frame of the morph, so the
     // grid is exact mid-zoom as well as at rest
     const s = Math.max(1, Math.round(cell1 * z * dpr)) / dpr;
+    // mobile re-centres the art (see STATE_CX); the grid origin moves with
+    // it, so the squares still snap to whole cells of the shifted grid
+    const oxA = MOSAIC_BOX.w / 2 - STATE_CX[leg], oxB = MOSAIC_BOX.w / 2 - STATE_CX[leg + 1];
+    const ox = isMobile ? (oxA + (oxB - oxA) * lt) / MOSAIC_BOX.cell * s : 0;
     const cells = MOSAIC_SQUARES.map(row => {
       const ax = row[leg * 2], ay = row[leg * 2 + 1];
       const bx = row[(leg + 1) * 2], by = row[(leg + 1) * 2 + 1];
@@ -1948,13 +1974,13 @@
       // half number of cells, so a square's own edges come out as exact
       // multiples of s from cx/cy
       return {
-        x: cx + (x - MOSAIC_BOX.w / 2) / MOSAIC_BOX.cell * s,
+        x: cx + ox + (x - MOSAIC_BOX.w / 2) / MOSAIC_BOX.cell * s,
         y: cy + (y - MOSAIC_BOX.h / 2) / MOSAIC_BOX.cell * s,
         side: s,
         hex: lt < swapAt ? ac : bc,
       };
     });
-    return { cells, step: s, gx0: cx, gy0: cy };
+    return { cells, step: s, gx0: cx + ox, gy0: cy };
   }
 
   // Mouse gravity: hovering pulls nearby squares toward the cursor, eased
@@ -2295,6 +2321,9 @@
   const TOUCH_SENSITIVITY = 260;  // px of drag per full state
   const FLICK_VELOCITY    = 0.25; // px/ms — above this, a flick advances a state
   const FLICK_STALE_MS    = 120;  // finger paused this long before lifting = not a flick
+  const FLING_CARRY_MS    = 420;  // an away-flick carries on by velocity x this (px/ms x ms)
+  const FLING_MAX_V       = 2.5;  // px/ms cap on that velocity
+  const FLING_MS          = 700;  // and takes this long to ease out
   let engaged = false;
   function syncEngaged(){
     const y = window.scrollY;
@@ -2348,16 +2377,28 @@
     const flick = moving && Math.abs(tVel) > FLICK_VELOCITY;
     if (tV < 0 || tV > STATES){
       // Outside the states. A flick TOWARD the stage, or a lift within a
-      // third of a state of it, snaps in; anything else is handed back to
-      // the page where it is (no momentum — the model owns this zone).
+      // third of a state of it, snaps in; a flick AWAY hands the page back
+      // and carries the fling on (⚠️ 7 Sep 2026: the model swallows the
+      // platform's momentum, so a flick out of the last card used to stop
+      // dead where the finger lifted — and if that was within a third of a
+      // state it was pulled straight back in, which read as "stuck when
+      // leaving". Now the away-flick glides on by its velocity, like a
+      // native fling, and never snaps back.) Anything else is handed back
+      // where it is.
+      const away = flick && ((tV < 0 && tVel < 0) || (tV > STATES && tVel > 0));
       const towardIn = flick && ((tV < 0 && tVel > 0) || (tV > STATES && tVel < 0));
       const nearIn = tV > -0.35 && tV < STATES + 0.35;
-      if (towardIn || nearIn){
+      if (!away && (towardIn || nearIn)){
         window.scrollTo(0, lockY + (tV < 0 ? 0 : STATES) * STEP);
         readScroll();
         return;
       }
       engaged = false; document.documentElement.style.touchAction = "";
+      if (away){
+        const carry = clamp(tVel, -FLING_MAX_V, FLING_MAX_V) * FLING_CARRY_MS;
+        const maxY = document.documentElement.scrollHeight - innerHeight;
+        glideScrollTo(clamp(window.scrollY + carry, 0, maxY), FLING_MS);
+      }
       return;
     }
     let dest = Math.round(tV);

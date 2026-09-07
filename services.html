@@ -239,7 +239,7 @@
      description follow its own title (y=80 after a two-line title, y=49 after
      a one-line one), so its descriptions do NOT share a line. Myles asked for
      them to, which is what the h2 min-height below buys. */
-  .s-icon{ flex:none; height:140px; }
+  .s-icon{ flex:none; height:140px; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
   /* .s-mark is whichever element is carrying the mark: the <img> in the
      markup, or the live <svg> the rollover script swaps in for it. Both
      take the same box and the same build-in, so the CSS never has to know
@@ -1016,10 +1016,46 @@
          into it, as icon 3's traveler does. */
       /* Icons 4, 7 and 10 — the author's own: one path, the whole shape
          interpolated by Flubber, the endpoints pinned to the drawn states. */
+      /* ⚠️ Interpolated SHAPE BY SHAPE (7 Sep 2026). Each of these marks is
+         four or five separate squares in one path string, and
+         `flubber.interpolate` on the whole string keeps only the first
+         ring — mid-morph the other squares simply were not drawn, which is
+         what Myles saw as icons "vanishing and re-appearing" on hover. The
+         string is split into its rings, each ring paired with the nearest
+         ring of the other state (by centroid; when the counts differ, the
+         surplus doubles up on its nearest — two rings that coincide at
+         rest draw as one), and every pair is interpolated on its own. */
       flubber(svg, cfg){
         const p = path(cfg.state1); svg.appendChild(p);
-        const forward = window.flubber.interpolate(cfg.state1, cfg.state2, { maxSegmentLength: 2 });
-        return v => p.setAttribute('d', v <= 0 ? cfg.state1 : v >= 1 ? cfg.state2 : forward(v));
+        const fl = window.flubber;
+        const rings = d => fl.splitPathString(d);
+        // splitPathString normalises to "M120 60L150 60 150 90Z" — bare
+        // numbers, so read them in order and pair them up
+        const centroid = d => {
+          const n = (d.match(/-?\d*\.?\d+/g) || []).map(Number);
+          let x = 0, y = 0, c = 0;
+          for (let i = 0; i + 1 < n.length; i += 2){ x += n[i]; y += n[i + 1]; c++; }
+          return [x / c, y / c];
+        };
+        const A = rings(cfg.state1), B = rings(cfg.state2);
+        const ca = A.map(centroid), cb = B.map(centroid);
+        const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+        const pairs = [];
+        const pairUp = (from, cf, to, ct, flip) => {
+          const used = new Set();
+          from.forEach((f, i) => {
+            let best = -1, bd = Infinity;
+            to.forEach((t, j) => {
+              const d = dist(cf[i], ct[j]) + (used.has(j) ? 1e4 : 0);   // every target once before any doubles up
+              if (d < bd){ bd = d; best = j; }
+            });
+            used.add(best);
+            pairs.push(flip ? [to[best], f] : [f, to[best]]);
+          });
+        };
+        if (A.length >= B.length) pairUp(A, ca, B, cb, false); else pairUp(B, cb, A, ca, true);
+        const fns = pairs.map(([a, b]) => fl.interpolate(a, b, { maxSegmentLength: 2 }));
+        return v => p.setAttribute('d', v <= 0 ? cfg.state1 : v >= 1 ? cfg.state2 : fns.map(f => f(v)).join(' '));
       },
       xform(svg, cfg){
         const wraps = cfg.pieces.map(pc => { const g = group(svg); g.appendChild(path(pc.d)); return g; });
@@ -1075,7 +1111,23 @@
         raf = requestAnimationFrame(frame);
       }
       el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') toggle(); });
-      el.addEventListener('click',        e => { if (e.pointerType !== 'mouse') toggle(); });
+      /* Touch: a TAP toggles (7 Sep 2026 — "on mobile you don't get to see
+         the animations"). Taken on touchend so it fires without the
+         click's delay, ignored when the finger travelled (a scroll over
+         the icon is not a tap), and the click that follows a handled tap
+         is swallowed so it cannot toggle straight back. */
+      let tx = 0, ty = 0, tapAt = 0;
+      el.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, {passive:true});
+      el.addEventListener('touchend', e => {
+        const t = e.changedTouches[0];
+        if (Math.hypot(t.clientX - tx, t.clientY - ty) > 12) return;
+        tapAt = e.timeStamp; toggle();
+      }, {passive:true});
+      el.addEventListener('click', e => {
+        if (e.pointerType === 'mouse') return;
+        if (e.timeStamp - tapAt < 1000) return;   // already handled on touchend
+        toggle();
+      });
       render(0);
     }
 

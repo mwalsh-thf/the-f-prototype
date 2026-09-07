@@ -720,8 +720,9 @@
    * ⚠️ Proportions are the iPad Pro 11" (M4): body 249.7 × 177.5mm, screen
    * 2420 × 1668 (1210:834). Bezel 3cqw on a 620 × 438.9 body leaves a
    * 582.8 × 401.7 screen — 1.4508, the panel's ratio — and the corners are
-   * concentric: the screen's 3.4cqw (the rounding of Apple's product
-   * shots), the body's that plus the bezel. Myles' recording should be 2420 × 1668; anything
+   * concentric: the screen's 4.2cqw of the width, the body's 7.2cqw — the
+   * radii of Apple's product shot (Myles' reference), measured against
+   * the long edge. Myles' recording should be 2420 × 1668; anything
    * else is `cover`ed (the current 1920 × 1112 loses its sides). Every
    * dimension is in cqw of the device box so the drawing scales with it.
    *
@@ -775,7 +776,7 @@
   /* Space Black: a flat face with the aluminium band as a hairline rim. */
   .ipad-body{
     position:absolute; inset:0;
-    border-radius:6.4cqw;
+    border-radius:7.2cqw;
     background:#121214;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.28);
     transform-style:preserve-3d;
@@ -799,11 +800,15 @@
      radius that plus the bezel, so they stay concentric. */
   .ipad-screen{
     position:absolute; inset:3cqw;
-    border-radius:3.4cqw; overflow:hidden;
+    border-radius:4.2cqw; overflow:hidden;
+    /* ⚠️ overflow:hidden + border-radius does NOT clip a child inside a
+       preserve-3d tree in Chrome/Safari — the video's corners stayed square.
+       clip-path does, and the video carries the radius too. */
+    clip-path:inset(0 round 4.2cqw);
     background:#000;
     transform:translateZ(.2cqw);
   }
-  .ipad-screen video{ display:block; width:100%; height:100%; object-fit:cover; }
+  .ipad-screen video{ display:block; width:100%; height:100%; object-fit:cover; border-radius:4.2cqw; }
   .ipad-glare{
     position:absolute; inset:0; border-radius:inherit; pointer-events:none;
     background:linear-gradient(115deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.04) 40%, rgba(255,255,255,.10) 50%, rgba(255,255,255,.035) 60%, rgba(255,255,255,0) 100%);

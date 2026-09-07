@@ -733,7 +733,13 @@
   .challenge{
     position:relative; z-index:20;
     background:var(--bg);
-    padding:200px var(--pad-x);   /* was 100; Myles opened it up, 7 Sep */
+    /* ⚠️ One pixel up over the stage: the section's top lands on a fraction
+       (the hero above is clamp()-sized), so the pixel row it starts in was
+       part red — the last card's bottom edge showing through as "a faint red
+       line" when the CTA glided here. The overlap covers that row; the card
+       is a full screen of red, so a pixel of it is nothing. */
+    margin-top:-1px;
+    padding:201px var(--pad-x) 200px;   /* 200 (was 100; Myles opened it up, 7 Sep) + the pixel */
     display:grid;
     grid-template-columns:minmax(0,4fr) minmax(0,5fr);
     /* ⚠️ Row 2 is flexible so the iPad, which spans both rows, adds its

@@ -98,8 +98,13 @@
        either of which slides the content up over a running experience.
        `released` is added by JS at the end of Momentum, removed on the way
        back up. */
-    overflow:hidden;
-    touch-action:none;
+    /* ⚠️ Since 7 Sep 2026 the document is NOT locked: the experience reads
+       its state off the real scroll position (see "The scroll model" in the
+       script — the developer's build's approach, on Myles' ask). `released`
+       is set at boot and stays; the rule below is kept so nothing else that
+       reads it has to change. */
+    overflow:visible;
+    touch-action:pan-y;
   }
   body.released{ overflow:visible; touch-action:pan-y; }
 
@@ -426,7 +431,13 @@
      container is transparent to pointer events and only its real content
      takes them back. */
   .page{ position:relative; z-index:5; pointer-events:none; }
-  .page-spacer{ height:100vh; }
+  /* ⚠️ The runway: six viewports — one for the intro, one per state
+     (Clarity → Momentum) — and the teaser rises over the Momentum screen
+     through the sixth. The script reads a state per viewport of scroll
+     (scrollY / H − 1). lvh so a phone's toolbar coming and going doesn't
+     re-map the states under the reader's finger; the fixed scene grows with
+     the toolbar on its own. */
+  .page-spacer{ height:600vh; height:calc(6 * 100lvh); }
 
   /* ------------------------------------------------------------------ *
    * Brand Proximity teaser — frame 2895:8393 (4 Sep 2026)
@@ -1399,29 +1410,61 @@
   let   booted = false;        // gates fit()'s re-render until the loop's state exists
   let   isMobile = false;      // kept in sync by fit(), read by render()
   let   releaseT = 0;          // 0..1 — how far the page has scrolled past the experience
+  let   scrollTarget  = INTRO_MIN;   // the mapped scroll position (the page opens on the intro)
+  let   scrollDisplay = INTRO_MIN;   // what is rendered — equal to it, bar reduced motion
+  let   hasInteracted = false;
+  let   running = false;
 
   /* ------------------------------------------------------------------ *
-   * Hand-off between the experience and the page
+   * The scroll model — the document scrolls, the experience reads it
    * ------------------------------------------------------------------
-   * The experience swallows wheel/touch until it reaches Momentum; from
-   * there the document takes over and scrolls normally. Coming back up, the
-   * page scrolls to its top first and only then does the experience pick the
-   * input back up — so the boundary behaves the same in both directions and
-   * there's never a moment where both are moving.
+   * ⚠️ Rebuilt 7 Sep 2026 on the developer's homepage build
+   * (thef-cms-web-96j45.ondigitalocean.app, the "Principles" hero), on
+   * Myles' ask — "seems to work better". The document is never locked and
+   * no wheel or touch event is swallowed: the page is six viewports tall
+   * (.page-spacer) and the experience is a pure function of scrollY.
+   *
+   *   scrollY 0 … H     the intro: display −1 → 0 (icon parks, copy fades)
+   *   H … 5H            the five states, one viewport each. Each viewport
+   *                     HOLDS its state for 15% at either end and morphs
+   *                     through the middle 70% (the developer's
+   *                     --principles-hold), so a stop near a state reads as
+   *                     that state, not a half-blend.
+   *   5H … 6H           the teaser rises over the Momentum screen.
+   *
+   * Once the scroll has been quiet for SNAP_QUIET it glides to the nearest
+   * state (or the top, from the first half of the intro; or whichever end
+   * of the teaser wipe is nearer): the developer's smoothstep glide,
+   * 300–650ms by distance, cancelled by any input. The tiles keep their
+   * per-piece lag, so the icon still arrives as a cascade; everything else
+   * is direct — the icon is where the scrollbar says it is.
    * ------------------------------------------------------------------ */
-  const atExperienceEnd = () =>
-    scrollTarget >= MAX - 0.001 && scrollDisplay >= MAX - 0.02;
-  const pageScrolled    = () => (window.scrollY || 0) > 0;
-  // true when the document — not the experience — should own this gesture
-  const pageOwnsScroll = dir =>
-    atExperienceEnd() && (dir > 0 || pageScrolled());
+  const HOLD = 0.15;                    // of each state's viewport, either end
+  const SNAP_QUIET = 250;               // ms of scroll silence before the snap
+  const GLIDE_MIN = 300, GLIDE_MAX = 650, GLIDE_PER_PX = 1.25;
+  const spacerEl = document.querySelector(".page-spacer");
+  let   H = innerHeight;                // one viewport of runway
+  function measureRunway(){
+    H = spacerEl ? Math.max(1, spacerEl.offsetHeight / (NSTATES + 1)) : innerHeight;
+  }
+  measureRunway();
+
+  // scrollY → display units (−1 … MAX) with the holds
+  function mapScroll(y){
+    const u = y / H - 1;
+    if (u <= 0) return clamp(u, INTRO_MIN, 0);
+    if (u >= MAX) return MAX;
+    const i = Math.floor(u), f = u - i;
+    return i + clamp((f - HOLD) / (1 - 2 * HOLD), 0, 1);
+  }
+  const stateY = i => (i + 1) * H;      // the scrollY a state sits at
+  const atExperienceEnd = () => (window.scrollY || 0) >= stateY(MAX) - 1;
 
   function syncRelease(){
-    const t = clamp((window.scrollY || 0) / Math.max(1, innerHeight), 0, 1);
+    const t = clamp(((window.scrollY || 0) - stateY(MAX)) / H, 0, 1);
     // the logo's ramp is a fraction of this one, so it needs finer steps
     if (Math.abs(t - releaseT) < 0.0002) return;
     releaseT = t;
-    kick();
   }
   /* Semi-sticky nav (desktop only). Hidden on the way down, back on the way
      up, with a dead zone so trackpad jitter can't flicker it and a hold-off
@@ -1436,77 +1479,69 @@
     navEl.classList.toggle("is-hidden", dy > 0 && y > navEl.offsetHeight);
     lastNavY = y;
   }
-  /* ⚠️ Past the first viewport the fixed scene is hidden (see
+  /* ⚠️ Past the teaser wipe the fixed scene is hidden (see
      body.released.scene-past .scene) — it is fully covered by then, and
      hiding it stops it showing through anything translucent further down. */
   function syncScenePast(){
-    document.body.classList.toggle("scene-past", (window.scrollY || 0) >= innerHeight - 1);
+    document.body.classList.toggle("scene-past", (window.scrollY || 0) >= stateY(MAX) + H - 1);
   }
 
-  /* ------------------------------------------------------------------ *
-   * The release snap — the teaser fills the screen or the experience does
-   *
-   * Between the experience (scrollY 0) and the teaser filled (scrollY =
-   * one viewport) the page is a wipe: the teaser rising over the Momentum
-   * screen. A stop anywhere in it leaves the screen split, so once the
-   * scroll goes quiet it glides to whichever end is nearer — the site's
-   * own glide (cubic-bezier(.4,0,.2,1) solved in JS, rAF + timer), ⚠️
-   * never scrollTo({behavior:"smooth"}), and it cancels on any input.
-   * Real scroll has to be glided here rather than jumped, because the
-   * teaser IS the scroll position — unlike Brand Proximity's stuck pin,
-   * an instant jump would show. Touch waits longer (420ms, reset by every
-   * scroll event) so it sits after a fling rather than inside it.
-   * ------------------------------------------------------------------ */
-  const RELEASE_SNAP_MS = 520;
-  const releaseEase = t => {
-    const p1x=.4,p1y=0,p2x=.2,p2y=1;
-    const cx=3*p1x, bx=3*(p2x-p1x)-cx, ax=1-cx-bx;
-    const cy=3*p1y, by=3*(p2y-p1y)-cy, ay=1-cy-by;
-    let u=t;
-    for (let i=0;i<8;i++){
-      const x=((ax*u+bx)*u+cx)*u - t, d=(3*ax*u+2*bx)*u+cx;
-      if (Math.abs(x)<1e-5) break;
-      u -= x/(d||1e-6);
-    }
-    return ((ay*u+by)*u+cy)*u;
-  };
+  /* ---- the glide: the developer's, smoothstep over 300–650ms by distance,
+     ⚠️ never scrollTo({behavior:"smooth"}); cancels on any input ---- */
   let releaseGlide = null, releaseSnapTimer = null;
   function cancelReleaseGlide(){ if (releaseGlide){ releaseGlide.cancelled = true; releaseGlide = null; } }
   function glideScrollTo(targetY){
     cancelReleaseGlide();
     const startY = window.scrollY, delta = targetY - startY;
     if (Math.abs(delta) < 1) return;
+    if (REDUCE){ window.scrollTo(0, targetY); return; }
+    const dur = clamp(Math.abs(delta) * GLIDE_PER_PX, GLIDE_MIN, GLIDE_MAX);
     const g = { cancelled:false }; releaseGlide = g;
     const t0 = performance.now();
     const step = now => {
       if (g.cancelled) return;
-      const t = Math.min(1, (now - t0) / RELEASE_SNAP_MS);
-      window.scrollTo(0, startY + delta * releaseEase(t));
-      if (t < 1) requestAnimationFrame(step); else { releaseGlide = null; syncScenePast(); }
+      const t = Math.min(1, (now - t0) / dur);
+      window.scrollTo(0, startY + delta * smoothstep(t));
+      if (t < 1) requestAnimationFrame(step); else { releaseGlide = null; onScroll(); }
     };
     requestAnimationFrame(step);
-    // the hard landing, and the scene's visibility re-read from it — a
-    // programmatic scroll's own event can arrive a frame later
-    setTimeout(() => { if (!g.cancelled && releaseGlide === g){ window.scrollTo(0, targetY); releaseGlide = null; syncScenePast(); } }, RELEASE_SNAP_MS + 80);
+    // the hard landing, and the state re-read from it — a programmatic
+    // scroll's own event can arrive a frame later
+    setTimeout(() => { if (!g.cancelled && releaseGlide === g){ window.scrollTo(0, targetY); releaseGlide = null; onScroll(); } }, dur + 80);
   }
   ["wheel","touchstart","keydown","pointerdown"].forEach(ev =>
     addEventListener(ev, cancelReleaseGlide, { passive:true }));
+
+  /* Where a quiet scroll should settle. Inside the first half of the intro
+     that is the top; through the states it is the nearest one; in the
+     teaser's wipe it is whichever end is nearer; past that, nowhere. */
+  function snapTargetFor(y){
+    if (y <= 1) return null;
+    if (y < H / 2) return 0;
+    const end = stateY(MAX);
+    if (y <= end + 1) return clamp(Math.round(y / H), 1, MAX + 1) * H;
+    if (y < end + H - 1) return y - end < H / 2 ? end : end + H;
+    return null;
+  }
   function releaseSnapNow(){
-    if (releaseGlide || !atExperienceEnd()) return;
-    const y = window.scrollY || 0, h = innerHeight;
-    if (y <= 1 || y >= h - 1) return;
-    glideScrollTo(y < h / 2 ? 0 : h);
+    if (releaseGlide) return;
+    const dest = snapTargetFor(window.scrollY || 0);
+    if (dest !== null && Math.abs(dest - window.scrollY) > 1) glideScrollTo(dest);
   }
   function scheduleReleaseSnap(){
     clearTimeout(releaseSnapTimer);
-    const touch = matchMedia("(pointer:coarse)").matches;
-    releaseSnapTimer = setTimeout(releaseSnapNow, touch ? 420 : 160);
+    releaseSnapTimer = setTimeout(releaseSnapNow, SNAP_QUIET);
   }
 
-  addEventListener("scroll", () => {
+  function onScroll(){
+    const y = window.scrollY || 0;
+    if (y > 0) markInteracted();
+    scrollTarget = mapScroll(y);
     syncRelease(); syncNav(); syncScenePast();
-    if (atExperienceEnd() && !REDUCE) scheduleReleaseSnap();
-  }, {passive:true});
+    kick();
+    if (!REDUCE && !releaseGlide) scheduleReleaseSnap();
+  }
+  addEventListener("scroll", onScroll, {passive:true});
 
   function fit(){
     const mobile = isMobile = innerWidth <= MOBILE;
@@ -1579,6 +1614,8 @@
     document.documentElement.style.setProperty("--intro-icon-top", (introIconTop * 100) + "%");
     // introParkPx feeds a transform that only render() writes, so a resize
     // has to re-run the loop or the icon keeps the old viewport's offset
+    measureRunway();
+    scrollTarget = mapScroll(window.scrollY || 0);
     if (booted) kick();
   }
   addEventListener("resize", fit, {passive:true});
@@ -1597,12 +1634,11 @@
    *                 the icon sits between states, and letting go just
    *                 lets it glide to rest.
    * ------------------------------------------------------------------ */
-  const EASE_MAIN = REDUCE ? 1 : 0.10;
-
-  let scrollTarget  = INTRO_MIN;   // the page opens on the intro
-  let scrollDisplay = INTRO_MIN;
-  let hasInteracted = false;
-  let running = false;
+  /* ⚠️ No chase on the main value any more: the display IS the mapped
+     scroll position, so the icon sits where the scrollbar says (the tiles
+     keep their own lag — see applyTiles). Reduced motion steps whole states. */
+  // scrollTarget / scrollDisplay / hasInteracted / running are declared with
+  // releaseT above — fit() writes scrollTarget before this point.
 
   function applyTiles(iconProgress){
     for (const t of tiles){
@@ -1671,8 +1707,7 @@
   }
 
   function render(){
-    scrollDisplay += (scrollTarget - scrollDisplay) * EASE_MAIN;
-    if (Math.abs(scrollTarget - scrollDisplay) < 0.0004) scrollDisplay = scrollTarget;
+    scrollDisplay = REDUCE ? Math.round(scrollTarget) : scrollTarget;
 
     const iconProgress = clamp(scrollDisplay, 0, NSTATES - 1);
     applyTiles(iconProgress);
@@ -1682,7 +1717,7 @@
        mark half-morphed for most of the way out. LOGO_RETURN_VH gets it home
        almost as soon as the experience is behind you, still eased. */
     const logoReturn = clamp(
-      (window.scrollY || 0) / Math.max(1, innerHeight * LOGO_RETURN_VH), 0, 1);
+      ((window.scrollY || 0) - stateY(MAX)) / Math.max(1, H * LOGO_RETURN_VH), 0, 1);
     // Mobile holds the plain F. At 40px tall the morphed states read as a
     // smudge rather than a mark, and the nav is permanent there now, so it
     // would be churning away in the corner the whole way down the page.
@@ -1742,13 +1777,8 @@
     if (scene.style.transform || scene.style.opacity)
       scene.style.transform = scene.style.opacity = "";
     scene.style.pointerEvents = releaseT > .05 ? "none" : "";
-    /* touch-action can't be toggled per-gesture, so the body carries it as a
-       class: locked while the experience still owns the input, pan-y once it
-       has handed over. Without this a finger can't scroll the page at all. */
-    document.body.classList.toggle("released", atExperienceEnd());
-
-    let moving = Math.abs(scrollTarget - scrollDisplay) > 0.0004;
-    if (!moving){
+    let moving = false;
+    {
       for (const t of tiles){
         if (Math.abs(t.x - iconProgress) > 0.0004){ moving = true; break; }
       }
@@ -1778,118 +1808,16 @@
     hintEl.classList.add("hide");
   }
 
+  /* Programmatic moves are real scrolls now: a state is a scroll position. */
   function setTarget(v){
-    clearTimeout(snapTimer);
-    scrollTarget = clamp(v, INTRO_MIN, MAX);
-    kick();
+    const d = clamp(v, INTRO_MIN, MAX);
+    glideScrollTo(d <= INTRO_MIN ? 0 : stateY(d));
   }
 
-  /* ------------------------------------------------------------------ *
-   * Snap-to-state
-   * ------------------------------------------------------------------
-   * The continuous drag is still fully live while you're actively
-   * scrolling — no locks, no thresholds, same as before. But once input
-   * stops, sitting at some arbitrary fractional point leaves the icon in
-   * a half-formed blend of two states more often than not, which reads
-   * as broken rather than as an in-between moment. So on wheel, once
-   * ticks stop arriving for SNAP_DELAY, and on touch, the instant the
-   * finger lifts, we round to the nearest whole state (0/1/2, or 3 for
-   * the fully-released footer) and glide the rest of the way there —
-   * same easing, just a guaranteed clean landing.
-   * ------------------------------------------------------------------ */
-  const SNAP_DELAY = 160;
-  let snapTimer = null;
-
-  function scheduleSnap(){
-    clearTimeout(snapTimer);
-    snapTimer = setTimeout(() => { setTarget(Math.round(scrollTarget)); }, SNAP_DELAY);
-  }
-
-  /* ------------------------------------------------------------------ *
-   * Wheel / trackpad — continuous, no locks, no thresholds while moving.
-   * Every notch or momentum tick nudges scrollTarget directly; the easing
-   * in render() is what turns that into a smooth glide. Works no matter
-   * where on the page the cursor is, since the listener is on the window.
-   * ------------------------------------------------------------------ */
-  const WHEEL_SENSITIVITY = 760; // px of wheel travel per full state
-
-  addEventListener("wheel", e => {
-    let d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-    if (e.deltaMode === 1) d *= 16;        // line mode
-    else if (e.deltaMode === 2) d *= innerHeight; // page mode
-    if (pageOwnsScroll(d)) return;         // let the document scroll itself
-    e.preventDefault();
-    markInteracted();
-    setTarget(scrollTarget + d / WHEEL_SENSITIVITY);
-    scheduleSnap();
-  }, {passive:false});
-
-  /* ------------------------------------------------------------------ *
-   * Touch — 1:1 drag, same continuous model, plus a flick
-   * ------------------------------------------------------------------
-   * Rounding to the nearest state on lift means a plain drag has to cross
-   * the halfway point to commit, so at the old 480px-per-state that was a
-   * 240px swipe — most of a phone screen — and a fast short flick did
-   * nothing at all. Two changes: a state is now a shorter drag, and a
-   * flick commits on velocity regardless of distance, the way a pager
-   * does. A slow, deliberate drag still lands wherever it was let go, so
-   * you keep full scrub control.
-   * ------------------------------------------------------------------ */
-  const TOUCH_SENSITIVITY = 260;  // px of drag per full state
-  const FLICK_VELOCITY    = 0.25; // px/ms — above this, a flick advances a state
-  const FLICK_STALE_MS    = 120;  // finger paused this long before lifting = not a flick
-  let touchY = null, touchFrom = 0, touchVel = 0, touchLastT = 0;
-
-  addEventListener("touchstart", e => {
-    touchY = e.touches[0].clientY;
-    touchFrom = scrollTarget;   // the state the gesture began from
-    touchVel = 0;
-    touchLastT = e.timeStamp;
-    clearTimeout(snapTimer);
-  }, {passive:true});
-  addEventListener("touchmove", e => {
-    if (touchY === null) return;
-    markInteracted();
-    const cur = e.touches[0].clientY;
-    const d = touchY - cur;
-    if (pageOwnsScroll(d)){ touchY = cur; return; }  // document scrolls itself
-    const dt = Math.max(1, e.timeStamp - touchLastT);
-    // smoothed so one jittery sample can't decide whether it was a flick
-    touchVel = touchVel * 0.7 + (d / dt) * 0.3;
-    touchY = cur;
-    touchLastT = e.timeStamp;
-    setTarget(scrollTarget + d / TOUCH_SENSITIVITY);
-  }, {passive:true});
-  addEventListener("touchend", e => {
-    touchY = null;
-    if (pageOwnsScroll(0)) return;      // page is scrolling; leave it alone
-    let dest = Math.round(scrollTarget);
-    const moving = e.timeStamp - touchLastT < FLICK_STALE_MS;
-    if (moving && Math.abs(touchVel) > FLICK_VELOCITY){
-      // carry at least one whole state in the direction of the flick,
-      // without undoing a longer drag that already went further
-      const dir = touchVel > 0 ? 1 : -1;
-      const atLeast = Math.round(touchFrom) + dir;
-      dest = dir > 0 ? Math.max(dest, atLeast) : Math.min(dest, atLeast);
-    }
-    setTarget(dest);
-  }, {passive:true});
-
-  /* ---- keyboard: discrete jumps, still glides via the same easing ---- */
-  addEventListener("keydown", e => {
-    const k = e.key;
-    if (k === "ArrowDown" || k === "PageDown" || k === " "){
-      e.preventDefault(); markInteracted();
-      setTarget(Math.round(scrollTarget) + 1);
-    } else if (k === "ArrowUp" || k === "PageUp"){
-      e.preventDefault(); markInteracted();
-      setTarget(Math.round(scrollTarget) - 1);
-    } else if (k === "Home"){
-      e.preventDefault(); markInteracted(); setTarget(INTRO_MIN);
-    } else if (k === "End"){
-      e.preventDefault(); markInteracted(); setTarget(NSTATES - 1);
-    }
-  });
+  /* ⚠️ No wheel, touch or keyboard handlers: the browser scrolls the page
+     and the model reads it (see "The scroll model"). Arrow keys, space,
+     PageDown, Home and End are the browser's own, and the settle-snap
+     tidies a landing. */
 
   /* ---- sub-menu: jump straight to a state, same smooth glide ---- */
   menuBtns.forEach(b => {
@@ -1911,6 +1839,8 @@
       setTarget(clamp(Math.round(scrollDisplay) + 1, 0, NSTATES - 1));
     }
   });
+  /* ⚠️ The teaser's copy goes on that line too: on this page the intro's
+     "Scroll ↓" and the teaser sit on real scroll now, so nothing else to do. */
 
   /* ------------------------------------------------------------------ *
    * Work cards — lift in on arrival, left before right
@@ -2048,20 +1978,26 @@
      freezes rAF, so this is the only way to drive the release snap and read
      the experience's state from the console. Costs nothing. */
   window.__home = {
-    releaseSnapNow, glideScrollTo, atExperienceEnd, setTarget, render,
+    releaseSnapNow, glideScrollTo, atExperienceEnd, setTarget, render, onScroll, mapScroll, snapTargetFor,
     get target(){ return scrollTarget; },
     get display(){ return scrollDisplay; },
-    get glide(){ return releaseGlide; }
+    get glide(){ return releaseGlide; },
+    get H(){ return H; }
   };
 
-  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-  addEventListener("pageshow", () => { if (!atExperienceEnd()) window.scrollTo(0, 0); });
+  /* A reload comes back where it left off, like any page — the experience
+     is a function of the scroll position now, so it simply renders that
+     state. (It used to force the top, because the locked document could
+     not show anything else.) */
+  if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+  document.body.classList.add("released");
 
   function boot(){
     // the intro's own "Scroll ↓" is the cue now, so the old bottom-centre
     // hint stays hidden (see the markup) and isn't revealed on a timer
     booted = true;
     fit();     // re-measure once fonts are in, then paint the intro
+    onScroll();
     render();
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot);

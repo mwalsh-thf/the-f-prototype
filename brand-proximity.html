@@ -702,59 +702,139 @@
 
   /* ------------------------------------------------------------------ *
    * 3. The report — "See what Brand Proximity could do for your business
-   * today" (frame 3438:6370, redesigned 4 Sep 2026)
+   * today" (frame 3655:3221, redesigned 7 Sep 2026 after feedback)
    *
-   * The frame draws the title (H3, 601 wide) beside a right-hand column
-   * (498 wide: the 27px lead, 50 down, the red 20px link) with the video
-   * below both. ⚠️ Myles asked for the ORDER changed — title, then the
-   * video, then the copy — so it stacks: the title on the left, the video
-   * on the full content width, then the copy block in the frame's own
-   * right column so its placement survives the re-order. 100 between
-   * each, the frame's rhythm.
+   * The frame: the title (H3) with the lead and the red link stacked under
+   * it on the left (498 wide, 50 between), and a landscape iPad on the
+   * right (620 wide), top-aligned with the title, its right edge on the
+   * content edge. The iPad is DRAWN — CSS, no image: body, bezel, camera,
+   * screen, status bar, glare — so the video plays inside it and it can
+   * move. It sits in a perspective and the script tilts it: a rest pose,
+   * the pointer on desktop, the scroll on both, a slow idle bob, and the
+   * glare and the shadow follow ("slightly 3D, slightly tilt and shift so
+   * the page feels alive"). Compositor-only: transforms and a background
+   * position, on their own layers.
    *
-   * The video is Myles' own screen recording of the report (assets/video,
-   * H.264 at 1080 and 720, 19MB / 13MB — a screen recording, so the
-   * 720 is for phones). Ambient: muted, looping, inline, no controls —
-   * and ⚠️ LAZY: it has no src until it is within 300px of the viewport
-   * (see the observer in the script), or the page would pull 19MB before
-   * the reader has scrolled past the hero. Reduced motion gets the
-   * controls and no autoplay.
+   * ⚠️ The screen is 1210:834 — the iPad Pro 11" (M4) panel, 2420 × 1668
+   * — which is what the mockup in the frame measures (572 × 394 = 1.451).
+   * Myles' recording should be that shape; anything else is `cover`ed
+   * (the current 1920 × 1112 loses its sides). Every iPad dimension is in
+   * cqw of the device box so the drawing scales with its width.
+   *
+   * Markup order is title, device, copy — the mobile stack — and the
+   * desktop grid places the three: title and copy in column 1, the iPad
+   * spanning both rows in column 2.
    * ------------------------------------------------------------------ */
-  /* Desktop is the frame's own layout: the title beside the copy column,
-     the video under both. ⚠️ The MARKUP order is title, video, copy —
-     that is the mobile stack (Myles: "title first then the video then
-     the body copy") and the grid places the three explicitly here, so
-     both breakpoints read as designed from one source. */
   .challenge{
     position:relative; z-index:20;
     background:var(--bg);
     padding:100px var(--pad-x);
     display:grid;
-    grid-template-columns:minmax(0,601px) minmax(0,498px);
-    justify-content:space-between; align-items:start;
-    column-gap:30px; row-gap:100px;
+    grid-template-columns:minmax(0,4fr) minmax(0,5fr);
+    /* ⚠️ Row 2 is flexible so the iPad, which spans both rows, adds its
+       height to row 2 and not row 1 — otherwise the copy drops to 84
+       under the title instead of the frame's 50. */
+    grid-template-rows:auto 1fr;
+    align-items:start;
+    column-gap:60px; row-gap:50px;
   }
   .challenge-title{ grid-column:1; grid-row:1; }
-  .challenge-copy{ grid-column:2; grid-row:1; }
-  .challenge-video{ grid-column:1 / -1; grid-row:2; }
+  .challenge-copy{ grid-column:1; grid-row:2; }
+  .challenge-device{ grid-column:2; grid-row:1 / 3; justify-self:end; }
   .challenge-title{
     font-weight:300;
     font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
     color:var(--ink-footer);
-    max-width:601px;
+    max-width:498px;
   }
   @supports (text-box: trim-both cap alphabetic){
     .challenge-title{ text-box:trim-both cap alphabetic; }
   }
-  /* ⚠️ No ground behind the video and the frame cropped in by ~1%: the
-     recording is 1920 x 1112 (1.7266) against the frame's 1241:718
-     (1.7284), so cover left a hairline of the box showing along one edge —
-     "a faint line around the video". */
-  .challenge-video{
-    width:100%; aspect-ratio:1241/718;
-    overflow:hidden;
+  /* The reveal order is the frame's: title, then the copy, then the iPad. */
+  .js .challenge-copy.reveal{ transition-delay:var(--reveal-stagger); }
+  .js .challenge-device.reveal{ transition-delay:calc(var(--reveal-stagger) * 2); }
+
+  /* ---- The iPad ---- */
+  .challenge-device{
+    position:relative;
+    width:100%; max-width:620px;
+    container-type:inline-size;
+    perspective:1600px;
   }
-  .challenge-video video{ display:block; width:100%; height:100%; object-fit:cover; transform:scale(1.012); }
+  .ipad{
+    position:relative;
+    width:100%; aspect-ratio:620 / 442;
+    transform-style:preserve-3d;
+    transform:translate3d(0, var(--ty, 0px), 0) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    will-change:transform;
+  }
+  .ipad-float{ position:absolute; inset:0; transform-style:preserve-3d; }
+  @media (prefers-reduced-motion: no-preference){
+    .ipad-float{ animation:ipad-float 9s ease-in-out infinite; }
+  }
+  @keyframes ipad-float{
+    0%, 100%{ transform:translate3d(0, 0, 0) rotate(0deg); }
+    50%{ transform:translate3d(0, -1.4cqw, 0) rotate(-.35deg); }
+  }
+  .ipad-body{
+    position:absolute; inset:0;
+    border-radius:5.8cqw;
+    background:linear-gradient(135deg, #2b2b2e 0%, #151517 45%, #0c0c0d 100%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.16), inset 0 0 0 .4cqw rgba(0,0,0,.55);
+    transform-style:preserve-3d;
+  }
+  /* The slab's depth — a darker plate a little behind the face, so an edge
+     shows as it turns. */
+  .ipad-body::before{
+    content:""; position:absolute; inset:0; border-radius:inherit;
+    background:#040405;
+    transform:translateZ(-1.2cqw);
+  }
+  .ipad-cam{
+    position:absolute; top:1.55cqw; left:50%;
+    width:.9cqw; height:.9cqw; margin-left:-.45cqw; border-radius:50%;
+    background:#0a1016;
+    box-shadow:inset 0 0 0 .18cqw #1c2731, 0 0 0 .12cqw rgba(255,255,255,.07);
+  }
+  /* 3.87cqw of bezel on 620 × 442 leaves a 572 × 394 screen — 1.4518,
+     the M4 11" panel to within a tenth of a percent. */
+  .ipad-screen{
+    position:absolute; inset:3.87cqw;
+    border-radius:2.9cqw; overflow:hidden;
+    background:#000;
+    transform:translateZ(.2cqw);
+  }
+  .ipad-screen video{ display:block; width:100%; height:100%; object-fit:cover; }
+  /* iPadOS status bar, as the frame's mockup draws it — Apple's 9:41, Wi-Fi
+     and battery, in Off Black on the assumption that the recording is a
+     light page. Sits over the top 3.6cqw of the video. */
+  .ipad-status{
+    position:absolute; left:0; right:0; top:0; height:3.6cqw;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 2.4cqw;
+    font-size:1.75cqw; line-height:1; font-weight:500; letter-spacing:-.01em;
+    color:var(--ink-footer);
+    pointer-events:none;
+  }
+  .ipad-status span{ display:flex; align-items:center; gap:.9cqw; }
+  .ipad-status svg{ display:block; height:1.5cqw; width:auto; fill:var(--ink-footer); }
+  .ipad-glare{
+    position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background:linear-gradient(115deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.08) 40%, rgba(255,255,255,.2) 50%, rgba(255,255,255,.07) 60%, rgba(255,255,255,0) 100%);
+    background-size:220% 100%;
+    background-position:var(--gx, 50%) 0;
+    mix-blend-mode:screen;
+    transform:translateZ(.3cqw);
+  }
+  /* The shadow is outside the 3D element so it stays on the ground. */
+  .ipad-shadow{
+    position:absolute; left:5%; right:5%; bottom:-7cqw; height:9cqw;
+    border-radius:50%;
+    background:radial-gradient(closest-side, rgba(31,31,31,.30), rgba(31,31,31,0));
+    filter:blur(1.2cqw);
+    transform:translate3d(var(--sx, 0px), 0, 0);
+    pointer-events:none;
+  }
   .challenge-copy{
     display:flex; flex-direction:column; gap:50px;
   }
@@ -1008,6 +1088,10 @@
 
     .challenge{ display:flex; flex-direction:column; gap:50px; padding:75px var(--pad-x); }
     .challenge-copy{ gap:25px; }
+    /* The stack is title, iPad, copy — so the reveal order swaps. */
+    .challenge-device{ max-width:none; perspective:1100px; }
+    .js .challenge-device.reveal{ transition-delay:var(--reveal-stagger); }
+    .js .challenge-copy.reveal{ transition-delay:calc(var(--reveal-stagger) * 2); }
 
     .related{ padding:75px var(--pad-x); }
     .related h2{ margin-bottom:50px; }
@@ -1312,13 +1396,32 @@
   <!-- ---------- 3. Contact ---------- -->
   <section class="challenge" id="challenge" aria-label="Request a free sample report">
     <h2 class="challenge-title reveal">See what Brand Proximity could do for your business today</h2>
-    <div class="challenge-video reveal">
-      <!-- src is set by the script once this is near the viewport; the two
-           files are the same recording at 1080 and 720. -->
-      <video id="bpVideo" muted loop playsinline preload="none"
-             aria-label="A Brand Proximity sample report"
-             data-src="assets/video/brand-proximity-report-1080.mp4"
-             data-src-mobile="assets/video/brand-proximity-report-720.mp4"></video>
+    <!-- The iPad: drawn in CSS (see the .ipad rules); the script tilts it.
+         src is set by the script once this is near the viewport; the two
+         files are the same recording at 1080 and 720. -->
+    <div class="challenge-device reveal" id="bpDevice">
+      <div class="ipad-shadow" aria-hidden="true"></div>
+      <div class="ipad" id="bpIpad">
+        <div class="ipad-float">
+          <div class="ipad-body">
+            <div class="ipad-cam" aria-hidden="true"></div>
+            <div class="ipad-screen">
+              <video id="bpVideo" muted loop playsinline preload="none"
+                     aria-label="A Brand Proximity sample report"
+                     data-src="assets/video/brand-proximity-report-1080.mp4"
+                     data-src-mobile="assets/video/brand-proximity-report-720.mp4"></video>
+              <div class="ipad-status" aria-hidden="true">
+                <span>9:41</span>
+                <span>
+                  <svg viewBox="0 0 16 12" aria-hidden="true"><path d="M8 8.6a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4zm0-3.5c1.7 0 3.2.7 4.3 1.8L11 8.2A4.2 4.2 0 0 0 8 7a4.2 4.2 0 0 0-3 1.2L3.7 6.9A6 6 0 0 1 8 5.1zm0-3.6c2.6 0 5 1 6.8 2.8l-1.3 1.3A7.7 7.7 0 0 0 8 3.3a7.7 7.7 0 0 0-5.5 2.3L1.2 4.3A9.6 9.6 0 0 1 8 1.5z"/></svg>
+                  <svg viewBox="0 0 27 12" aria-hidden="true"><rect x=".6" y=".6" width="22" height="10.8" rx="3" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".5"/><rect x="2.2" y="2.2" width="18.8" height="7.6" rx="1.8"/><path d="M24.3 4v4a2 2 0 0 0 0-4z" opacity=".5"/></svg>
+                </span>
+              </div>
+              <div class="ipad-glare" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="challenge-copy reveal">
       <p class="challenge-lead">Request a free sample report digging into who your buyers are, what they&rsquo;re looking for, and how your brand shows up with the content they need.</p>
@@ -1444,6 +1547,64 @@
     }
   }, { rootMargin: "0px 0px -12% 0px", threshold: 0.1 });
   document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+
+  /* ------------------------------------------------------------------ *
+   * The iPad — a rest pose, the pointer's push (fine pointers only), and
+   * a lean + lift from where it sits in the viewport, chased in one rAF
+   * (only while something is still moving). The glare and the shadow
+   * follow the turn. Reduced motion: none of this — it lies flat.
+   * ------------------------------------------------------------------ */
+  const device = document.getElementById("bpDevice");
+  const ipad = document.getElementById("bpIpad");
+  if (device && ipad && !reducedMotion.matches){
+    const REST_RX = 4, REST_RY = -9;      // turned a touch toward the copy, top leaning back
+    const POINT_RX = 6, POINT_RY = 8;     // how far the pointer can push it, either way
+    const SCROLL_RX = 7, SCROLL_Y = 18;   // how far the scroll leans and lifts it
+    const CHASE = 0.09;
+    const finePointer = matchMedia("(pointer:fine)").matches;
+    let pRx = 0, pRy = 0;                 // the pointer's offsets
+    let rx = REST_RX, ry = REST_RY, ty = 0;
+    let raf = 0;
+
+    function targets(){
+      const r = device.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      // -1 = a screen below the middle … +1 = a screen above it
+      const p = clamp((innerHeight / 2 - mid) / innerHeight, -1, 1);
+      return { rx: REST_RX + pRx - p * SCROLL_RX, ry: REST_RY + pRy, ty: -p * SCROLL_Y,
+               near: r.bottom > -innerHeight && r.top < innerHeight * 2 };
+    }
+    function frame(){
+      raf = 0;
+      const t = targets();
+      if (!t.near) return;
+      rx += (t.rx - rx) * CHASE; ry += (t.ry - ry) * CHASE; ty += (t.ty - ty) * CHASE;
+      ipad.style.setProperty("--rx", rx.toFixed(3) + "deg");
+      ipad.style.setProperty("--ry", ry.toFixed(3) + "deg");
+      ipad.style.setProperty("--ty", ty.toFixed(2) + "px");
+      device.style.setProperty("--gx", (50 - ry * 3).toFixed(1) + "%");
+      device.style.setProperty("--sx", (-ry * 1.4).toFixed(1) + "px");
+      if (Math.abs(t.rx - rx) > 0.02 || Math.abs(t.ry - ry) > 0.02 || Math.abs(t.ty - ty) > 0.05) raf = requestAnimationFrame(frame);
+    }
+    function kick(){ if (!raf) raf = requestAnimationFrame(frame); }
+
+    if (finePointer){
+      const section = document.getElementById("challenge");
+      section.addEventListener("pointermove", e => {
+        const r = ipad.getBoundingClientRect();
+        const nx = clamp((e.clientX - (r.left + r.width / 2)) / r.width, -1, 1);
+        const ny = clamp((e.clientY - (r.top + r.height / 2)) / r.height, -1, 1);
+        pRy = nx * POINT_RY; pRx = -ny * POINT_RX;
+        kick();
+      }, {passive:true});
+      section.addEventListener("pointerleave", () => { pRx = 0; pRy = 0; kick(); });
+    }
+    addEventListener("scroll", kick, {passive:true});
+    addEventListener("resize", kick, {passive:true});
+    kick();
+
+    window.__ipad = { frame, kick, get: () => ({ rx, ry, ty, pRx, pRy }) };
+  }
 
   /* ------------------------------------------------------------------ *
    * The mosaic data — Mosaics 1–4

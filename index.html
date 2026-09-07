@@ -1985,11 +1985,13 @@
     get H(){ return H; }
   };
 
-  /* A reload comes back where it left off, like any page — the experience
-     is a function of the scroll position now, so it simply renders that
-     state. (It used to force the top, because the locked document could
-     not show anything else.) */
-  if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+  /* ⚠️ The page always opens at the top, as it always did. A restored scroll
+     position drops the visitor into the middle of the experience — the icon
+     at its locked size, no intro — which read as "the hero is too small"
+     the first time it happened (Myles, 7 Sep, straight after the port). */
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  addEventListener("pageshow", () => window.scrollTo(0, 0));
+  window.scrollTo(0, 0);
   document.body.classList.add("released");
 
   function boot(){

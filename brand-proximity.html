@@ -493,7 +493,9 @@
     position:absolute; z-index:4;
     right:max(var(--pad-x), calc((100% - var(--page-max)) / 2 + var(--pad-x)));
     bottom:clamp(40px,11.1vh,100px);
-    font-size:var(--fs-details); line-height:1.2; letter-spacing:-.02em;
+    /* Medium at 20px (Myles, 7 Sep 2026 — feedback that the CTA "isn't
+       visible enough"; Details Regular before). The ink stays 40%. */
+    font-size:20px; font-weight:500; line-height:1.2; letter-spacing:-.02em;
     /* 40% ink resting, full on hover — the sub-nav's own treatment (Myles,
        4 Sep 2026; it went red before). Done as ink alpha rather than
        opacity because the script already drives this element's opacity
@@ -1059,8 +1061,9 @@
        block for anything absolute inside it (see its own note). */
     .bp-text{
       position:absolute; left:var(--pad-x); right:var(--pad-x);
-      /* above the CTA (one 18px line) with 25 between — see .bp-cta */
-      top:auto; bottom:calc(50px + var(--vh-gap, 0px) + 18px + 25px);
+      /* above the CTA (one 24px line — 20px Medium at 1.2) with 25 between
+         — see .bp-cta */
+      top:auto; bottom:calc(50px + var(--vh-gap, 0px) + 24px + 25px);
       width:auto;
     }
     /* The CTA sits under the body copy on mobile (Myles, 4 Sep 2026): same

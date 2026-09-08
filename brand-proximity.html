@@ -1095,7 +1095,12 @@
       padding-top:calc(var(--nav-h) + 25px);
       padding-bottom:50px;
     }
-    .bp-context-copy{ width:auto; }
+    /* ⚠️ 100%, not auto: the block is a centred flex item, and `auto` let
+       the CTA's max-content width (437px at 32px) size it — it ran off
+       both edges of a 375 screen and read as "the padding has gone"
+       (Myles, 7 Sep 2026). */
+    .bp-context-copy{ width:100%; }
+    .bp-context-cta{ width:auto; white-space:normal; margin-top:30px; }
     .bp-stats{ width:auto; grid-template-columns:1fr; row-gap:50px; }
     .bp-stat-fig{ margin-bottom:16px; }
 
@@ -1978,7 +1983,7 @@
       ov.querySelectorAll(".bp-pop").forEach(el => {
         const c = (el.dataset.cell || "0,0,4,4").split(",").map(Number);
         const w0 = c[2] * s, h0 = c[3] * s;
-        const w = Math.round(c[2] * k * 4) / 4 * s;
+        let w = Math.round(c[2] * k * 4) / 4 * s;
         let h = Math.round(c[3] * k * 4) / 4 * s;
         let x = cx + ox + (c[0] - 7) * s, y = cy + (c[1] - 8) * s;
         // scale about the corner the box grows from
@@ -1989,16 +1994,29 @@
         if (x < minX)     x += Math.ceil((minX - x) / s) * s;
         if (y + h > maxY) y -= Math.ceil((y + h - maxY) / s) * s;
         if (y < minY)     y += Math.ceil((minY - y) / s) * s;
-        el.style.width = (snapToDevicePixel(x + w) - snapToDevicePixel(x)).toFixed(2) + "px";
-        el.style.height = "";
+        // ⚠️ Minimums only, never a fixed height or an overflow clip: a box
+        // its copy outgrows grows by WHOLE cells — width too, for a nowrap
+        // label — so its edges stay on the grid; and if it outgrows the
+        // measurement later (the webfont arriving after a fallback face
+        // was measured), the box simply grows with its copy rather than
+        // cropping it. placeOverlays() is re-run on document.fonts.ready
+        // for that reason. offsetWidth/Height ignore the entry scale.
+        el.style.width = ""; el.style.height = ""; el.style.minHeight = "";
+        el.style.minWidth = (snapToDevicePixel(x + w) - snapToDevicePixel(x)).toFixed(2) + "px";
+        el.style.maxWidth = (snapToDevicePixel(x + w) - snapToDevicePixel(x)).toFixed(2) + "px";
+        let needW = el.scrollWidth;
+        if (needW > el.clientWidth + 0.5){
+          let w2 = Math.ceil((w + (needW - el.clientWidth)) / s) * s;
+          w2 = Math.min(w2, Math.floor((maxX - minX) / s) * s);
+          if (w2 > w){ w = w2; if (x + w > maxX) x -= Math.ceil((x + w - maxX) / s) * s; if (x < minX) x += Math.ceil((minX - x) / s) * s; }
+          el.style.minWidth = (snapToDevicePixel(x + w) - snapToDevicePixel(x)).toFixed(2) + "px";
+          el.style.maxWidth = el.style.minWidth;
+        }
         el.style.minHeight = (snapToDevicePixel(y + h) - snapToDevicePixel(y)).toFixed(2) + "px";
-        // a box its copy outgrows grows by WHOLE cells (then steps back
-        // up into the band if it must), so its bottom edge stays on the
-        // grid too — offsetHeight, which ignores the entry scale
         const need = el.offsetHeight;
         if (need > h + 0.5){
           h = Math.ceil(need / s) * s;
-          el.style.height = (snapToDevicePixel(y + h) - snapToDevicePixel(y)).toFixed(2) + "px";
+          el.style.minHeight = (snapToDevicePixel(y + h) - snapToDevicePixel(y)).toFixed(2) + "px";
           if (y + h > maxY) y -= Math.ceil((y + h - maxY) / s) * s;
           if (y < minY)     y += Math.ceil((minY - y) / s) * s;
         }
@@ -2144,6 +2162,10 @@
     } else els.forEach(el => el.classList.add("is-in"));
   }
   function resetPops(){ popState.forEach((_, i) => setCardPops(i, false)); }
+  // the boxes were measured against whatever face was loaded; re-measure
+  // once the webfont is in (and again on load, for a slow connection)
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => placeOverlays());
+  addEventListener("load", () => placeOverlays(), { once:true });
 
   /* ------------------------------------------------------------------ *
    * The scroll model — the homepage's, on real scroll

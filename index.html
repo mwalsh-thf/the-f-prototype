@@ -610,7 +610,7 @@
      element. See the note on --sbw for why the scrollbar gutter has to be
      subtracted — 100vw counts it, the page's content box doesn't. */
   .logos{
-    padding:clamp(70px,11vh,130px) 0;
+    padding:100px 0;   /* the frame's 100 above and below the marks (7 Sep 2026) */
     width:calc(100vw - var(--sbw));
     margin-inline:calc(50% - 50vw + var(--sbw) / 2);
     overflow:hidden;
@@ -641,8 +641,12 @@
    * "Fancy a challenge?" (491px on the 1440 artboard) rather than guessing,
    * which puts it at ~58px; the vw term reproduces that and scales down.
    * ------------------------------------------------------------------ */
+  /* No top padding (7 Sep 2026, frame 2895:8393 — Myles: "the gap feels
+     weird"): the client marks' own 100 below is the whole gap to "Fancy a
+     challenge?", measured 100 from the marks' row to the cap. It was
+     that plus 117 of its own. */
   .contact{
-    padding:clamp(90px,13vh,190px) var(--edge-x) clamp(90px,13vh,190px);
+    padding:0 var(--edge-x) clamp(90px,13vh,190px);
   }
   /* H3 — 40 Light on 1.15 — since 7 Sep 2026 (frame 2895:8393); it was 62.
      The statement above the client marks is the same style. */

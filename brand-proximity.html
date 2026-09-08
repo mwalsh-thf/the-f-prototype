@@ -327,7 +327,11 @@
        hold it and the reader scrolls it before the cards lock, which is
        what measure() has always allowed for (see ctxH / lockY). */
     gap:100px;
-    padding-top:200px;
+    /* 75 on top, not the frame's 200: with the mosaic ending flush on
+       the hero's bottom edge the two read as 244 apart (the copy's own
+       44 of leading is in that), "way too much" — Myles, 7 Sep 2026:
+       "reduce that by 50%" — so 119 now. The 200 below stays. */
+    padding-top:75px;
     padding-bottom:200px;
     color:var(--ink-footer);
     align-items:center;
@@ -1059,7 +1063,11 @@
        the URL bar hidden — so the Context stays off-screen in both bar
        states; svh would let it creep in the moment the bar collapsed.
        The content stays top-aligned and the slack falls under the mosaic. */
-    .bp-hero{ padding:calc(var(--logo-bottom) + 50px) 0 0; min-height:100vh; }
+    /* No min-height:100vh any more — it left ~160px of empty ground under
+       the mosaic, which with the Context's own padding put the copy 317
+       below the art; the Context's 115 alone is 159, half (Myles, 7 Sep
+       2026: "reduce that by 50%"). */
+    .bp-hero{ padding:calc(var(--logo-bottom) + 50px) 0 0; }
     .bp-hero-band{ display:block; }
     .bp-hero-headline{
       position:static;
@@ -2190,6 +2198,14 @@
    * states, as the homepage does.
    * ------------------------------------------------------------------ */
   const EASE_MAIN = reducedMotion.matches ? 1 : 0.10;
+  /* Mobile's own speeds (7 Sep 2026): while the finger is down the drawn
+     state tracks it closely (EASE_DRAG), and on lift it lands a touch
+     quicker than the wheel's glide (EASE_LAND) — "extremely fluid, smooth
+     and sticky: you scroll and it snaps". The touch handlers set easeNow;
+     desktop never changes it. */
+  const EASE_DRAG = reducedMotion.matches ? 1 : 0.32;
+  const EASE_LAND = reducedMotion.matches ? 1 : 0.14;
+  let easeNow = EASE_MAIN;
   const MORPH_HOLD = 0.35;
   let vTarget = 0, vShown = 0, morphDirty = true;
   let lastMorph = -1;
@@ -2206,7 +2222,7 @@
 
   function frame(){
     const moving = Math.abs(vTarget - vShown) > 0.0005;
-    if (moving) vShown += (vTarget - vShown) * EASE_MAIN;
+    if (moving) vShown += (vTarget - vShown) * easeNow;
     else vShown = vTarget;
     const v = vShown;
 
@@ -2430,8 +2446,13 @@
     // third early and a quarter late still catch a fling that lands near the
     // stage, and the mandatory snap in syncSnap() catches one that lands
     // further out.)
+    // (7 Sep 2026: the third-of-a-screen head start above the stage made
+    // the last of the Context copy drag dead, with no momentum, and a
+    // lift there was pulled down into the stage — "sticking when I scroll
+    // back up". Now only the last 15% of a screen above it is the
+    // model's; the mandatory snap still lands a fling from further up.)
     const want = isMobile && !document.body.classList.contains("menu-open")
-      && y >= lockY - H * 0.35 && y <= lockY + STATES * STEP + H * 0.25;
+      && y >= lockY - H * 0.15 && y <= lockY + STATES * STEP + H * 0.25;
     if (want === engaged) return;
     engaged = want;
     document.documentElement.style.touchAction = want ? "none" : "";
@@ -2444,6 +2465,7 @@
     tY = e.touches[0].clientY;
     tV0 = (window.scrollY - lockY) / STEP; tV = tV0;
     tVel = 0; tLast = e.timeStamp;
+    easeNow = EASE_DRAG;
     clearTimeout(snapTimer); cancelGlide();
   }, { passive:true });
   addEventListener("touchmove", e => {
@@ -2455,10 +2477,15 @@
     tVel = tVel * 0.7 + (d / dt) * 0.3;             // smoothed, as index.html
     tY = cur; tLast = e.timeStamp;
     tV += d / TOUCH_SENSITIVITY;
-    let y;
-    if (tV < 0)           y = lockY + tV * TOUCH_SENSITIVITY;                              // 1:1 above
-    else if (tV > STATES) y = lockY + STATES * STEP + (tV - STATES) * TOUCH_SENSITIVITY;   // 1:1 below
-    else                  y = lockY + tV * STEP;
+    /* ⚠️ Inside the states the finger drives the DRAWN state directly
+       (7 Sep 2026): the pin is stuck, so scrolling the document here moved
+       nothing the reader could see and only fired scroll events into the
+       snap-type and touch-action toggles mid-gesture, which is what made
+       the drag feel loose. The document is put on the state once, on
+       lift. Outside the states it is a real 1:1 scroll, as before. */
+    if (tV >= 0 && tV <= STATES){ vTarget = tV; return; }
+    const y = tV < 0 ? lockY + tV * TOUCH_SENSITIVITY
+                     : lockY + STATES * STEP + (tV - STATES) * TOUCH_SENSITIVITY;
     window.scrollTo(0, y);
     readScroll();
   }, { passive:false });
@@ -2466,6 +2493,7 @@
     touching = false;
     if (!tOwn){ scheduleSnap(); return; }
     tOwn = false; tY = null;
+    easeNow = EASE_LAND;
     const moving = e.timeStamp - tLast < FLICK_STALE_MS;
     const flick = moving && Math.abs(tVel) > FLICK_VELOCITY;
     if (tV < 0 || tV > STATES){
@@ -2478,7 +2506,12 @@
       // leaving". Now the away-flick glides on by its velocity, like a
       // native fling, and never snaps back.) Anything else is handed back
       // where it is.
-      const away = flick && ((tV < 0 && tVel < 0) || (tV > STATES && tVel > 0));
+      // A gesture that BEGAN on an end state and went out is the reader
+      // leaving — however slowly. It is never pulled back in (7 Sep 2026:
+      // a short drag up from the Context screen used to snap straight
+      // back down, "sticking when I scroll back up").
+      const leaving = (tV0 <= 0.02 && tV < 0) || (tV0 >= STATES - 0.02 && tV > STATES);
+      const away = leaving || (flick && ((tV < 0 && tVel < 0) || (tV > STATES && tVel > 0)));
       const towardIn = flick && ((tV < 0 && tVel > 0) || (tV > STATES && tVel < 0));
       const nearIn = tV > -0.35 && tV < STATES + 0.35;
       if (!away && (towardIn || nearIn)){
@@ -2486,8 +2519,8 @@
         readScroll();
         return;
       }
-      engaged = false; document.documentElement.style.touchAction = "";
-      if (away){
+      engaged = false; document.documentElement.style.touchAction = ""; easeNow = EASE_MAIN;
+      if (away && Math.abs(tVel) > 0.05){
         const carry = clamp(tVel, -FLING_MAX_V, FLING_MAX_V) * FLING_CARRY_MS;
         const maxY = document.documentElement.scrollHeight - innerHeight;
         glideScrollTo(clamp(window.scrollY + carry, 0, maxY), FLING_MS);

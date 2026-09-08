@@ -327,11 +327,10 @@
        hold it and the reader scrolls it before the cards lock, which is
        what measure() has always allowed for (see ctxH / lockY). */
     gap:100px;
-    /* 75 on top, not the frame's 200: with the mosaic ending flush on
-       the hero's bottom edge the two read as 244 apart (the copy's own
-       44 of leading is in that), "way too much" — Myles, 7 Sep 2026:
-       "reduce that by 50%" — so 119 now. The 200 below stays. */
-    padding-top:75px;
+    /* The frame's 200 above (it went to 75 for an hour on 7 Sep 2026 —
+       the "reduce the gap by 50%" ask was for MOBILE only; Myles put
+       desktop back). */
+    padding-top:200px;
     padding-bottom:200px;
     color:var(--ink-footer);
     align-items:center;
@@ -2208,8 +2207,8 @@
      quicker than the wheel's glide (EASE_LAND) — "extremely fluid, smooth
      and sticky: you scroll and it snaps". The touch handlers set easeNow;
      desktop never changes it. */
-  const EASE_DRAG = reducedMotion.matches ? 1 : 0.32;
-  const EASE_LAND = reducedMotion.matches ? 1 : 0.14;
+  const EASE_DRAG = reducedMotion.matches ? 1 : 0.26;
+  const EASE_LAND = reducedMotion.matches ? 1 : 0.10;   // was 0.14 — "a little bit fast" between cards
   let easeNow = EASE_MAIN;
   const MORPH_HOLD = 0.35;
   let vTarget = 0, vShown = 0, morphDirty = true;

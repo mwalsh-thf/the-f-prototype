@@ -474,21 +474,24 @@
   }
   .bpt-mosaic canvas, .bpt-mosaic svg{ position:absolute; inset:0; width:100%; height:100%; }
   .bpt-mosaic .bp-mosaic-text{ pointer-events:none; }
+  /* Re-measured off Myles' 7 Sep 2026 frame (3567:3075, a 394 column): the
+     wordmark 100 x 41, 30 to the headline — 36 Light on 1.15, two lines —
+     30 to the Details copy, 30 to the Details link. One 30 rhythm, cap
+     trimmed. */
+  .bpt-text, .bpt-head, .bpt-body{ display:flex; flex-direction:column; gap:30px; }
   .bpt-text{
     position:absolute; right:var(--edge-x); top:clamp(60px,11.1vh,100px);
-    width:min(393px, 42%);
-    display:flex; flex-direction:column; gap:40px;
+    width:min(394px, 42%);
   }
-  /* the stacked "brand / proximity" mark, as the frame sets it */
-  .bpt-mark{ font-size:22px; line-height:.95; letter-spacing:-.02em; font-weight:400; }
+  .bpt-mark{ display:block; width:100px; height:auto; fill:currentColor; }
   .bpt-text h2{
     font-weight:300;
-    font-size:clamp(28px,2.78vw,40px); line-height:1.15; letter-spacing:-.02em;
+    font-size:clamp(26px,2.5vw,36px); line-height:1.15; letter-spacing:-.02em;
     margin:0;
   }
+  @supports (text-box: trim-both cap alphabetic){ .bpt-text h2{ text-box:trim-both cap alphabetic; } }
   .bpt-text p{ font-size:15px; line-height:1.2; letter-spacing:-.02em; margin:0; }
   .bpt-link{
-    margin-top:-12px;                 /* the frame's 28 rather than the 40 */
     font-size:15px; line-height:1.2; letter-spacing:-.02em;
     color:#1F1F1F; text-decoration:none; width:max-content;
     transition:color .35s var(--ease-out-expo);
@@ -501,16 +504,16 @@
   }
   .bpt-link:hover .bpt-arrow{ transform:translateX(.16em); }
   /* the site's reveal, one item after another, once the screen has filled */
-  .js .bpt-text > *{
+  .js .bpt-head > *, .js .bpt-body > *{
     opacity:0; transform:translate3d(0, var(--reveal-shift, 44px), 0);
     transition:opacity var(--reveal-dur) var(--ease-out-expo), transform var(--reveal-dur) var(--ease-out-expo);
   }
-  .js .bpt-text > :nth-child(2){ transition-delay:calc(1 * var(--reveal-stagger, .26s)); }
-  .js .bpt-text > :nth-child(3){ transition-delay:calc(2 * var(--reveal-stagger, .26s)); }
-  .js .bpt-text > :nth-child(4){ transition-delay:calc(3 * var(--reveal-stagger, .26s)); }
-  .js .bpt.in .bpt-text > *{ opacity:1; transform:none; }
+  .js .bpt-head > :nth-child(2){ transition-delay:calc(1 * var(--reveal-stagger, .26s)); }
+  .js .bpt-body > :nth-child(1){ transition-delay:calc(2 * var(--reveal-stagger, .26s)); }
+  .js .bpt-body > :nth-child(2){ transition-delay:calc(3 * var(--reveal-stagger, .26s)); }
+  .js .bpt.in .bpt-head > *, .js .bpt.in .bpt-body > *{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
-    .js .bpt-text > *{ opacity:1; transform:none; transition:none; }
+    .js .bpt-head > *, .js .bpt-body > *{ opacity:1; transform:none; transition:none; }
     .bpt-arrow{ transition:none; }
   }
   .page > section, .page > footer{
@@ -783,11 +786,17 @@
     /* The teaser stacks: the mosaic full-bleed and square at the top, the
        copy under it on the 25px grid. Still at least a screen tall, so it
        still fills the view and still snaps. */
-    .page > section.bpt{ height:auto; min-height:100vh; padding-bottom:50px; }
-    .bpt-mosaic{ position:relative; top:auto; transform:none; width:100%; }
-    .bpt-text{ position:static; width:auto; padding:50px var(--edge-x) 0; gap:25px; }
-    .bpt-text h2{ font-size:32px; }
-    .bpt-link{ margin-top:0; }
+    /* Mobile (Myles, 7 Sep 2026): the mark and headline at the top, the
+       mosaic in the middle, the copy and link underneath. The section is a
+       column and .bpt-text dissolves (display:contents) so its two halves
+       can sit either side of the mosaic. */
+    .page > section.bpt{ height:auto; min-height:100vh; padding:50px 0; display:flex; flex-direction:column; gap:30px; }
+    .bpt-text{ display:contents; }
+    .bpt-head{ order:0; padding:0 var(--edge-x); gap:25px; }
+    .bpt-mosaic{ order:1; position:relative; top:auto; transform:none; width:100%; }
+    .bpt-body{ order:2; padding:0 var(--edge-x); gap:25px; }
+    .bpt-mark{ width:80px; }
+    .bpt-text h2{ font-size:28px; }
     :root{
       --nav-h:clamp(72px,11vh,92px);
       --edge-x:clamp(16px,5.5vw,24px);
@@ -825,9 +834,13 @@
       gap:10px clamp(10px,3vw,18px);
     }
     .submenu button{ font-size:clamp(11px,3.4vw,14px); }
+    /* The project highlight is gone on a phone (Myles, 7 Sep 2026: "not
+       enough space"), and the copy runs at the mobile Body — 16 on 1.3 —
+       across the width it frees, not Details 13. */
+    .highlight{ display:none; }
     .copy{
-      width:min(210px,42vw);
-      font-size:13px;
+      width:min(340px, calc(100% - 2 * var(--edge-x)));
+      font-size:16px; line-height:1.3;
     }
     .hi-inner{
       /* scaled so .cap's font-size (15px × .867 ≈ 13px) matches .copy's
@@ -1117,11 +1130,19 @@
         </g>
           </svg>
     </div>
+    <!-- Two halves so mobile can put the mosaic between them: the mark and
+         the headline above it, the copy and the link below (Myles, 7 Sep
+         2026). Desktop stacks all four in the right-hand column. The mark
+         is the wordmark from Figma (node 3567:3075) — it was set as text. -->
     <div class="bpt-text">
-      <p class="bpt-mark">brand<br>proximity</p>
-      <h2>Show up and stand out in AI search</h2>
-      <p>If you want buyers to choose you, you have to show up when they need you &ndash; and demonstrate what you&rsquo;re capable of. Discover a managed service that gets you closer to the people who matter.</p>
-      <a class="bpt-link" href="brand-proximity.html">Explore Brand Proximity<svg class="bpt-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 12h16"/><path d="M12.2 4.6 19.6 12l-7.4 7.4"/></svg></a>
+      <div class="bpt-head">
+        <svg class="bpt-mark" viewBox="0 0 100 41.0747" role="img" aria-label="Brand Proximity"><path d="M88.4989 41.0745V39.0088H90.2018C90.7228 39.0088 91.1043 38.925 91.3463 38.7575C91.6068 38.6087 91.8022 38.3574 91.9325 38.0038L92.4629 36.6081H91.6533L86.2378 22.0921H88.806L93.2166 34.4307L97.4318 22.0921H100L93.9982 38.7575C93.7191 39.5578 93.3003 40.144 92.742 40.5162C92.1837 40.8884 91.4114 41.0745 90.4251 41.0745H88.4989Z"/><path d="M84.5643 36.8872C83.2243 36.8872 82.2287 36.5802 81.5773 35.966C80.9446 35.3519 80.6282 34.3935 80.6282 33.0908V18.6307H82.9731V33.0349C82.9731 33.7049 83.122 34.1702 83.4198 34.4307C83.7175 34.6913 84.1735 34.8215 84.7876 34.8215H86.9092V36.8872H84.5643ZM78.4508 24.1579V22.0922H86.9092V24.1579H78.4508Z"/><path d="M74.392 36.8872V22.0921H76.7369V36.8872H74.392Z"/><path d="M52.6579 36.8872V22.0921H54.8074L54.8911 25.8327L54.5561 25.7211C54.7236 24.9022 55.0121 24.2044 55.4215 23.6274C55.8495 23.0319 56.3706 22.576 56.9848 22.2596C57.5989 21.9246 58.2782 21.7571 59.0226 21.7571C60.3067 21.7571 61.3488 22.1107 62.1491 22.8179C62.9679 23.5251 63.4797 24.5114 63.6844 25.7769L63.2378 25.749C63.3867 24.8929 63.6565 24.1764 64.0473 23.5995C64.4567 23.004 64.9778 22.5481 65.6106 22.2317C66.2433 21.9153 66.9691 21.7571 67.788 21.7571C68.8487 21.7571 69.742 21.9804 70.4678 22.4271C71.1936 22.8551 71.7426 23.4879 72.1148 24.3253C72.487 25.1628 72.6731 26.177 72.6731 27.3681V36.8872H70.3283V27.8706C70.3283 26.5306 70.0677 25.5257 69.5466 24.8557C69.0255 24.1671 68.2532 23.8228 67.2297 23.8228C66.5411 23.8228 65.9363 23.9903 65.4152 24.3253C64.9127 24.6603 64.5219 25.1442 64.2427 25.7769C63.9636 26.3911 63.824 27.1448 63.824 28.0381V36.8872H61.4791V28.0381C61.4791 26.7167 61.2465 25.6839 60.7812 24.9395C60.316 24.1951 59.5344 23.8228 58.4364 23.8228C57.7478 23.8228 57.143 23.9903 56.6219 24.3253C56.1194 24.6603 55.7193 25.1442 55.4215 25.7769C55.1424 26.4097 55.0028 27.1634 55.0028 28.0381V36.8872H52.6579Z"/><path d="M48.3751 36.8872V22.0921H50.72V36.8872H48.3751Z"/><path d="M33.6172 36.8872L39.0607 29.2943L33.8964 22.0921H36.6321L40.5123 27.6752L44.2808 22.0921H47.0724L41.9639 29.3501L47.3236 36.8872H44.5879L40.5123 30.9133L36.4087 36.8872H33.6172Z"/><path d="M27.6588 37.2222C26.3003 37.2222 25.1092 36.9058 24.0857 36.273C23.0621 35.6403 22.2712 34.747 21.7129 33.5932C21.1546 32.4207 20.8754 31.0529 20.8754 29.4896C20.8754 27.9078 21.1546 26.5399 21.7129 25.3861C22.2712 24.2323 23.0621 23.339 24.0857 22.7062C25.1092 22.0735 26.3003 21.7571 27.6588 21.7571C29.0174 21.7571 30.1991 22.0735 31.2041 22.7062C32.2276 23.339 33.0186 24.2323 33.5769 25.3861C34.1352 26.5399 34.4143 27.9078 34.4143 29.4896C34.4143 31.0529 34.1352 32.4207 33.5769 33.5932C33.0186 34.747 32.2276 35.6403 31.2041 36.273C30.1991 36.9058 29.0174 37.2222 27.6588 37.2222ZM27.6588 34.9889C29.0174 34.9889 30.0688 34.5051 30.8132 33.5374C31.5763 32.551 31.9578 31.2018 31.9578 29.4896C31.9578 27.7775 31.5763 26.4376 30.8132 25.4698C30.0688 24.4835 29.0174 23.9903 27.6588 23.9903C26.3003 23.9903 25.2395 24.4835 24.4765 25.4698C23.7135 26.4376 23.332 27.7775 23.332 29.4896C23.332 31.2018 23.7135 32.551 24.4765 33.5374C25.2395 34.5051 26.3003 34.9889 27.6588 34.9889Z"/><path d="M14.3739 36.8872V22.0921H16.4396L16.5512 25.8328L16.3279 25.749C16.514 24.4835 16.9141 23.5623 17.5283 22.9854C18.161 22.3899 18.9985 22.0921 20.0406 22.0921H21.4922V24.3254H20.0686C19.3242 24.3254 18.7007 24.4649 18.1982 24.7441C17.7144 25.0046 17.3422 25.4047 17.0816 25.9444C16.8397 26.4655 16.7187 27.1355 16.7187 27.9543V36.8872H14.3739Z"/><path d="M0 41.0745V22.0921H2.17739L2.23322 25.2744L1.89824 25.107C2.27044 24.009 2.88458 23.1808 3.74064 22.6225C4.61532 22.0456 5.62027 21.7571 6.75549 21.7571C8.22569 21.7571 9.42605 22.12 10.3566 22.8458C11.3057 23.5716 12.0036 24.5207 12.4502 25.6932C12.9155 26.8656 13.1481 28.1311 13.1481 29.4896C13.1481 30.8482 12.9155 32.1137 12.4502 33.2861C12.0036 34.4586 11.3057 35.4077 10.3566 36.1335C9.42605 36.8593 8.22569 37.2222 6.75549 37.2222C5.99247 37.2222 5.27598 37.0919 4.60602 36.8314C3.95466 36.5708 3.39636 36.2079 2.9311 35.7427C2.48446 35.2774 2.17739 34.7284 2.0099 34.0957L2.34488 33.7048V41.0745H0ZM6.53217 34.9889C7.81627 34.9889 8.83052 34.5051 9.57493 33.5374C10.3193 32.5696 10.6915 31.2204 10.6915 29.4896C10.6915 27.7589 10.3193 26.4097 9.57493 25.4419C8.83052 24.4742 7.81627 23.9903 6.53217 23.9903C5.6761 23.9903 4.93169 24.1951 4.29895 24.6045C3.68481 25.0139 3.20095 25.628 2.84736 26.4469C2.51237 27.2657 2.34488 28.28 2.34488 29.4896C2.34488 30.6993 2.51237 31.7136 2.84736 32.5324C3.18234 33.3513 3.6662 33.9654 4.29895 34.3748C4.93169 34.7842 5.6761 34.9889 6.53217 34.9889Z"/><path d="M54.3828 20.1548C53.0986 20.1548 51.982 19.8384 51.0329 19.2057C50.1024 18.5729 49.3859 17.6797 48.8834 16.5258C48.381 15.372 48.1297 14.0042 48.1297 12.4223C48.1297 10.8404 48.381 9.47257 48.8834 8.31874C49.3859 7.16491 50.1024 6.27163 51.0329 5.63888C51.982 5.00613 53.0986 4.68976 54.3828 4.68976C55.3691 4.68976 56.2717 4.90378 57.0905 5.33181C57.9094 5.74124 58.5235 6.32746 58.9329 7.09047V0H61.2778V19.8198H59.1563L59.0725 17.5866C58.6631 18.3868 58.0396 19.0196 57.2022 19.4848C56.3647 19.9315 55.4249 20.1548 54.3828 20.1548ZM54.8573 17.9216C55.732 17.9216 56.4671 17.6983 57.0626 17.2516C57.6767 16.805 58.142 16.1722 58.4584 15.3534C58.7748 14.5159 58.9329 13.5389 58.9329 12.4223C58.9329 11.2685 58.7748 10.2821 58.4584 9.46327C58.142 8.64442 57.6767 8.02098 57.0626 7.59295C56.4671 7.1463 55.732 6.92298 54.8573 6.92298C53.5546 6.92298 52.5124 7.41615 51.7308 8.40249C50.9678 9.37022 50.5863 10.7102 50.5863 12.4223C50.5863 14.1158 50.9678 15.4557 51.7308 16.4421C52.5124 17.4284 53.5546 17.9216 54.8573 17.9216Z"/><path d="M35.1906 19.8199V5.02482H37.3401L37.4238 8.79338L37.1447 8.54214C37.3308 7.66746 37.6565 6.95097 38.1217 6.39267C38.587 5.81575 39.1453 5.38772 39.7966 5.10857C40.4666 4.82941 41.1831 4.68984 41.9461 4.68984C43.0813 4.68984 44.0118 4.94107 44.7376 5.44355C45.482 5.94602 46.031 6.62529 46.3846 7.48136C46.7568 8.31882 46.9429 9.25863 46.9429 10.3008V19.8199H44.598V10.9708C44.598 10.0589 44.4864 9.29585 44.2631 8.68172C44.0583 8.04897 43.7234 7.57441 43.2581 7.25804C42.7929 6.92306 42.188 6.75557 41.4436 6.75557C40.3084 6.75557 39.3686 7.11846 38.6242 7.84426C37.8984 8.55145 37.5355 9.59362 37.5355 10.9708V19.8199H35.1906Z"/><path d="M25.8723 20.1549C24.3462 20.1549 23.1273 19.8013 22.2154 19.0941C21.3221 18.3869 20.8754 17.4006 20.8754 16.1351C20.8754 14.8696 21.2476 13.874 21.992 13.1482C22.7364 12.4224 23.9182 11.9106 25.5373 11.6128L30.7853 10.6358C30.7853 9.3889 30.4876 8.4584 29.892 7.84426C29.3151 7.23012 28.4405 6.92306 27.268 6.92306C26.2445 6.92306 25.4349 7.15568 24.8394 7.62094C24.2439 8.06758 23.8344 8.71894 23.6111 9.57501L21.1267 9.3796C21.4058 7.98384 22.0758 6.85792 23.1366 6.00185C24.2159 5.12718 25.5931 4.68984 27.268 4.68984C29.1663 4.68984 30.6178 5.22953 31.6228 6.30892C32.6277 7.3697 33.1302 8.8399 33.1302 10.7195V16.833C33.1302 17.168 33.186 17.4099 33.2977 17.5588C33.428 17.689 33.6327 17.7542 33.9118 17.7542H34.4981V19.8199C34.4236 19.8385 34.3027 19.8478 34.1352 19.8478C33.9677 19.8664 33.7909 19.8757 33.6048 19.8757C32.9348 19.8757 32.3858 19.7734 31.9578 19.5687C31.5484 19.3453 31.2506 19.0104 31.0645 18.5637C30.8784 18.0985 30.7853 17.4936 30.7853 16.7492L31.0645 16.8051C30.9342 17.4378 30.6178 18.0147 30.1154 18.5358C29.6129 19.0383 28.9895 19.4384 28.245 19.7362C27.5006 20.0153 26.7097 20.1549 25.8723 20.1549ZM26.0956 18.0892C27.0819 18.0892 27.9194 17.9031 28.6079 17.5309C29.3151 17.14 29.8548 16.619 30.227 15.9676C30.5992 15.2976 30.7853 14.5532 30.7853 13.7344V12.6736L25.9839 13.5669C24.979 13.753 24.2811 14.0414 23.8903 14.4323C23.5181 14.8045 23.332 15.2976 23.332 15.9118C23.332 16.6003 23.5739 17.14 24.0578 17.5309C24.5602 17.9031 25.2395 18.0892 26.0956 18.0892Z"/><path d="M14.3739 19.8199V5.02485H16.4396L16.5512 8.76549L16.3279 8.68175C16.514 7.41626 16.9141 6.49505 17.5283 5.91814C18.161 5.32261 18.9985 5.02485 20.0406 5.02485H21.4922V7.25807H20.0686C19.3242 7.25807 18.7007 7.39764 18.1982 7.6768C17.7144 7.93734 17.3422 8.33746 17.0816 8.87715C16.8397 9.39824 16.7187 10.0682 16.7187 10.8871V19.8199H14.3739Z"/><path d="M6.78361 20.1548C5.76005 20.1548 4.84815 19.9315 4.04792 19.4849C3.24768 19.0196 2.63354 18.3869 2.20551 17.5866L2.12176 19.8198H0.000204086V2.02619e-05H2.34509V7.09049C2.71729 6.47636 3.2942 5.92736 4.07583 5.44349C4.85746 4.94102 5.76005 4.68978 6.78361 4.68978C8.08632 4.68978 9.21224 5.00615 10.1614 5.6389C11.1105 6.27165 11.8456 7.16493 12.3667 8.31876C12.8877 9.4726 13.1483 10.8404 13.1483 12.4223C13.1483 14.0042 12.8877 15.372 12.3667 16.5258C11.8456 17.6797 11.1105 18.573 10.1614 19.2057C9.21224 19.8385 8.08632 20.1548 6.78361 20.1548ZM6.64403 17.9216C7.89091 17.9216 8.87725 17.4284 9.60305 16.4421C10.3288 15.4558 10.6917 14.1158 10.6917 12.4223C10.6917 10.7102 10.3288 9.37024 9.60305 8.40251C8.87725 7.41617 7.90952 6.923 6.69986 6.923C5.78797 6.923 5.00634 7.14632 4.35498 7.59297C3.70363 8.021 3.20115 8.64444 2.84756 9.46329C2.51258 10.2821 2.34509 11.2685 2.34509 12.4223C2.34509 13.5389 2.51258 14.5159 2.84756 15.3534C3.20115 16.1723 3.69432 16.805 4.32707 17.2516C4.97842 17.6983 5.75075 17.9216 6.64403 17.9216Z"/></svg>
+        <h2>Show up and stand out in AI search</h2>
+      </div>
+      <div class="bpt-body">
+        <p>If you want buyers to choose you, you have to show up when they need you &ndash; and demonstrate what you&rsquo;re capable of. Discover a managed service that gets you closer to the people who matter.</p>
+        <a class="bpt-link" href="brand-proximity.html">Explore Brand Proximity<svg class="bpt-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 12h16"/><path d="M12.2 4.6 19.6 12l-7.4 7.4"/></svg></a>
+      </div>
     </div>
   </section>
 

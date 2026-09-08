@@ -321,14 +321,29 @@
   .bp-context{
     min-height:100vh;
     display:flex; flex-direction:column; justify-content:center;
-    gap:clamp(40px,10vh,90px);
-    /* 20 under the nav's box — 24 clear of the logo's ink — so the block
-       fits a 900 screen (the frame's 100 + 100 padding would not). */
-    padding-top:calc(var(--nav-h) - 20px);
-    padding-bottom:40px;
+    /* ⚠️ The frame's own 200 / 100 / 200 (Myles opened it from 100 on
+       7 Sep 2026: "the nav was sometimes getting too close to the
+       content"). The block no longer fits a 900 screen — the pin grows to
+       hold it and the reader scrolls it before the cards lock, which is
+       what measure() has always allowed for (see ctxH / lockY). */
+    gap:100px;
+    padding-top:200px;
+    padding-bottom:200px;
     color:var(--ink-footer);
     align-items:center;
   }
+  /* The Context's CTA (frame 3752:735, 7 Sep 2026): the copy's own size,
+     50 under it, at half ink — and it "fills in black" on hover. Glides
+     to the report section, as the cards' boxes do. */
+  .bp-context-cta{
+    display:block; width:max-content; max-width:100%;
+    margin-top:50px;
+    color:rgba(31,31,31,.5); text-decoration:none;
+    transition:color .5s var(--ease-out-expo);
+  }
+  .bp-context-cta:hover, .bp-context-cta:focus-visible{ color:var(--ink-footer); outline:none; }
+  .bp-context-cta .bp-cta-arrow{ width:.9em; height:.9em; margin-left:.2em; vertical-align:-.08em; }
+  .bp-context-cta:hover .bp-cta-arrow{ transform:translateX(.16em); }
   /* ⚠️ The frame CENTRES this block (items-center on the section) and
      holds it at 1021 — it starts ~211 in at 1440, not on the 100 margin.
      Capped at the frame's own measure rather than a ratio of the content
@@ -516,7 +531,7 @@
     fill:none; stroke:currentColor; stroke-width:2;
     transition:transform .35s var(--ease-out-expo);
   }
-  .bp-cta:hover .bp-cta-arrow{ transform:translateY(.16em); }
+  .bp-cta:hover .bp-cta-arrow{ transform:translateX(.16em); }   /* → since 7 Sep 2026; it was ↓ */
   @media (prefers-reduced-motion: reduce){ .bp-cta{ transition:none; } }
 
   /* ---- The card's text is a SCROLL LAYER, not a one-shot reveal ----
@@ -987,7 +1002,7 @@
      height instead: at 720 the copy runs at 30px and the figures at 47,
      and the block measures ~670. The frame's sizes return at 900. */
   @media (max-height:760px) and (min-width:768px){
-    .bp-context{ gap:clamp(30px,8vh,60px); padding-bottom:30px; }
+    .bp-context{ gap:clamp(60px,8vh,100px); }
     .bp-context-copy{ font-size:min(var(--fs-h3), 4.2vh); }
     .bp-stat-fig{ font-size:min(var(--fs-h2), 6.5vh); }
   }
@@ -1132,6 +1147,9 @@
        inside the screen's padding and the mosaic's band, and their type
        unit scales with them — see placeOverlays(). */
     .bp-mosaic-stage{ --u:calc(var(--mosaic-w) / 840 * 1.5); }
+    /* one at a time here, so no stagger */
+    .bp-pop.is-in{ transition-delay:0s; }
+    .bp-pop.is-in > *{ transition-delay:.22s; }
 
     /* ⚠️ Native scroll snapping, mobile only — and the strictness is set
        by the SCRIPT, not here: `y mandatory` while the reader is inside
@@ -1281,6 +1299,7 @@
         <div class="bp-context-copy">
           <p>Most B2B buyers use AI to assess their options and guide their decisions. Visibility in these searches can make or break your brand. So why not turn the tools to your advantage.</p>
           <p>We help B2B brands embrace the new world of AI discovery with Brand Proximity, an AI-powered managed service. We&rsquo;ll show you exactly how you show up in AI search &ndash; then improve it, so you can get closer to your audience with answers that speak to real human needs.</p>
+          <a class="bp-context-cta" href="#challenge">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M12.5 5.5 19 12l-6.5 6.5"/></svg></a>
         </div>
         <div class="bp-stats">
           <div class="bp-stat" style="--i:0">
@@ -1309,14 +1328,14 @@
                Mosaic 2 is the state on screen. Positions are the frame's,
                converted to the art's units (1 unit = 42.052/60 px at 1440). -->
           <div class="bp-overlay" id="bpPops" aria-hidden="true">
-            <div class="bp-pop" data-origin="br" data-cell="0.75,1,4.25,3" style="background:#7EA3FF;">
+            <div class="bp-pop" data-origin="br" data-cell="0.75,1,4.25,3" style="--k:0; background:#7EA3FF;">
               <p>180 topics in 51 clusters, built from 1101 of your sources</p>
             </div>
-            <div class="bp-pop" data-origin="bl" data-cell="12,5,4,4" style="background:#F45944; --fig:57;">
+            <div class="bp-pop" data-origin="bl" data-cell="12,5,4,4" style="--k:1; background:#F45944; --fig:57;">
               <p class="bp-pop-fig">41.5%</p>
               <p>Your Brand Proximity score</p>
             </div>
-            <div class="bp-pop" data-origin="tr" data-cell="-1.5,11,4.5,4" style="background:#368F8E; --fig:38.5;">
+            <div class="bp-pop" data-origin="tr" data-cell="-1.5,11,4.5,4" style="--k:2; background:#368F8E; --fig:38.5;">
               <p class="bp-pop-fig">34%</p>
               <p>of your published expertise talks about Healthcare</p>
             </div>
@@ -1331,7 +1350,7 @@
             </div>
           </div>
         </div>
-        <a class="bp-cta" href="#challenge" style="--cta-bg:#82C1C0">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5v16"/><path d="M4.6 12.2 12 19.6l7.4-7.4"/></svg></a>
+        <a class="bp-cta" href="#challenge" style="--cta-bg:#82C1C0">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M12.5 5.5 19 12l-6.5 6.5"/></svg></a>
       </section>
 
       <!-- State 2: Understand the demand (frame 3438:5575) -->
@@ -1370,7 +1389,7 @@
             </div>
           </div>
         </div>
-        <a class="bp-cta" href="#challenge" style="--cta-bg:#7EA3FF">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5v16"/><path d="M4.6 12.2 12 19.6l7.4-7.4"/></svg></a>
+        <a class="bp-cta" href="#challenge" style="--cta-bg:#7EA3FF">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M12.5 5.5 19 12l-6.5 6.5"/></svg></a>
       </section>
 
       <!-- State 3: Create AI-ready content (frame 3438:6130) -->
@@ -1403,7 +1422,7 @@
             </div>
           </div>
         </div>
-        <a class="bp-cta" href="#challenge" style="--cta-bg:#F67260">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5v16"/><path d="M4.6 12.2 12 19.6l7.4-7.4"/></svg></a>
+        <a class="bp-cta" href="#challenge" style="--cta-bg:#F67260">Request a free sample report<svg class="bp-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M12.5 5.5 19 12l-6.5 6.5"/></svg></a>
       </section>
 
       <!-- Four snap markers, one per state, positioned by measure(). They
@@ -1527,7 +1546,7 @@
   const context = document.getElementById("bpContext");
   const cards   = [...pin.querySelectorAll(".bp-card")];
   const subnav  = document.getElementById("bpSubnav");
-  const ctas    = [...pin.querySelectorAll(".bp-cta")];
+  const ctas    = [...pin.querySelectorAll(".bp-cta, .bp-context-cta")];
   const snaps   = [...stage.querySelectorAll(".bp-snap")];
   const subBtns = [...subnav.querySelectorAll("button[data-state]")];
   const stages  = cards.map(c => c.querySelector(".bp-mosaic-stage"));
@@ -2098,35 +2117,33 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * The overlays
+   * The overlays (restructured 7 Sep 2026, Myles)
    *
-   * Card 1's three pop-ups cycle one at a time (POP_HOLD apart) while
-   * Mosaic 2 is the state on screen, as the first build had them. Cards
-   * 2 and 3 show their three cards together, staggered by --k, once the
-   * card has locked, and collapse the moment the state moves on.
+   * Every card's mosaic animates in and THEN shows its pop-ups. Desktop
+   * shows a card's three together, staggered by --k; mobile shows one at
+   * a time and cycles them POP_HOLD apart — the same for all three cards
+   * (card 1 used to cycle on desktop too, and the mobile overlays were
+   * off altogether). They collapse the moment the state moves on, and a
+   * breakpoint change resets them (resetPops(), from the resize handler)
+   * so the mode is always the current one.
    * ------------------------------------------------------------------ */
   const POP_HOLD = 4000;
-  const pops = (() => {
-    const els = overlays[0] ? [...overlays[0].querySelectorAll(".bp-pop")] : [];
-    let i = 0, timer = null, active = false;
-    function show(n){ els.forEach((el, k) => el.classList.toggle("is-in", k === n)); }
-    function tick(){ i = (i + 1) % els.length; show(i); timer = setTimeout(tick, POP_HOLD); }
-    return {
-      setActive(on){
-        if (!els.length || on === active) return;
-        active = on;
-        if (on){ i = 0; show(0); timer = setTimeout(tick, POP_HOLD); }
-        else { clearTimeout(timer); timer = null; els.forEach(el => el.classList.remove("is-in")); }
-      },
-    };
-  })();
-  const cardPops = overlays.slice(1).map(o => o ? [...o.querySelectorAll(".bp-pop")] : []);
-  const cardPopsOn = [false, false];
+  const cardPops = overlays.map(o => o ? [...o.querySelectorAll(".bp-pop")] : []);
+  const popState = cardPops.map(() => ({ active:false, i:0, timer:null }));
   function setCardPops(idx, on){
-    if (cardPopsOn[idx] === on) return;
-    cardPopsOn[idx] = on;
-    cardPops[idx].forEach(el => el.classList.toggle("is-in", on));
+    const st = popState[idx], els = cardPops[idx];
+    if (!els.length || st.active === on) return;
+    st.active = on;
+    clearTimeout(st.timer); st.timer = null;
+    if (!on){ els.forEach(el => el.classList.remove("is-in")); return; }
+    if (isMobile){
+      st.i = 0;
+      const show = () => els.forEach((el, k) => el.classList.toggle("is-in", k === st.i));
+      const tick = () => { st.i = (st.i + 1) % els.length; show(); st.timer = setTimeout(tick, POP_HOLD); };
+      show(); st.timer = setTimeout(tick, POP_HOLD);
+    } else els.forEach(el => el.classList.add("is-in"));
   }
+  function resetPops(){ popState.forEach((_, i) => setCardPops(i, false)); }
 
   /* ------------------------------------------------------------------ *
    * The scroll model — the homepage's, on real scroll
@@ -2221,9 +2238,9 @@
 
     // Overlays: card 1's cycle while Mosaic 2 is the state on screen and
     // the card has locked; cards 2/3 while they are the settled state.
-    pops.setActive(v >= 0.98 && mt < 0.02);
-    setCardPops(0, Math.abs(v - 2) < 0.02 && mt > 0.98 && mt < 1.02);
-    setCardPops(1, v > 2.98 && mt > 1.98);
+    setCardPops(0, Math.abs(v - 1) < 0.02 && mt < 0.02);
+    setCardPops(1, Math.abs(v - 2) < 0.02 && mt > 0.98 && mt < 1.02);
+    setCardPops(2, v > 2.98 && mt > 1.98);
   }
   function loop(){ frame(); requestAnimationFrame(loop); }
 
@@ -2493,7 +2510,7 @@
     if (coarse && w === lastW && Math.abs(h - lastH) < h * 0.25) return;
     lastW = w; lastH = h;
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { measure(); readScroll(); syncEngaged(); syncSnap(); }, 150);
+    resizeTimer = setTimeout(() => { resetPops(); measure(); readScroll(); syncEngaged(); syncSnap(); }, 150);
   });
   if ("ResizeObserver" in window){
     new ResizeObserver(() => {

@@ -1102,16 +1102,19 @@
     .bp-context{
       min-height:0;
       justify-content:flex-start;
-      gap:50px;
+      /* one rhythm: 50 between the stats, so 50 under the copy to the CTA
+         and 75 from the CTA to the first stat (Myles, 7 Sep 2026: "way
+         too tight … the same spacing the stats have between them") */
+      gap:75px;
       padding-top:calc(var(--nav-h) + 25px);
-      padding-bottom:50px;
+      padding-bottom:75px;
     }
     /* ⚠️ 100%, not auto: the block is a centred flex item, and `auto` let
        the CTA's max-content width (437px at 32px) size it — it ran off
        both edges of a 375 screen and read as "the padding has gone"
        (Myles, 7 Sep 2026). */
     .bp-context-copy{ width:100%; }
-    .bp-context-cta{ width:auto; white-space:normal; margin-top:30px; padding:20px; font-size:16px; }
+    .bp-context-cta{ width:auto; white-space:normal; margin-top:50px; padding:20px; font-size:16px; }
     @supports (text-box: trim-both cap alphabetic){ .bp-context-cta{ padding:20px; } }
     .bp-stats{ width:auto; grid-template-columns:1fr; row-gap:50px; }
     .bp-stat-fig{ margin-bottom:16px; }

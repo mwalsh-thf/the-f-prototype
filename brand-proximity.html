@@ -255,7 +255,7 @@
      It was the H2 at 60 on three lines with no copy. */
   .bp-hero-text{
     position:relative;
-    width:min(498px, 42%); flex:none;
+    width:min(421px, 36%); flex:none;   /* 421 in the frame since 9 Sep (was 498) */
     display:flex; flex-direction:column; gap:50px;
   }
   .bp-hero-headline{
@@ -290,8 +290,9 @@
      the page's own max width like everything else. */
   .bp-hero-mosaic{
     position:relative; flex:none;
-    /* the frame's 710 on 1440 — 49.3% of the page, capped with the page */
-    width:min(49.3vw, calc(var(--page-max) * .493));
+    /* the frame's 819 on 1440 — 56.9% of the page, capped with the page
+       (Myles made it bigger on 9 Sep 2026; it was 710) */
+    width:min(56.9vw, calc(var(--page-max) * .569));
     aspect-ratio:1;
   }
   .bp-hero-mosaic canvas,

@@ -226,11 +226,18 @@
   .bp-hero{
     background:var(--hero-bg);
     color:var(--ink-footer);
-    padding:calc(var(--logo-bottom) + 100px) 0 0;
+    /* frame 3841:4652 (9 Sep 2026): 50 under the nav's box — which is 100
+       under the logo's ink, as before — and 50 below the mosaic */
+    padding:calc(var(--logo-bottom) + 100px) 0 50px;
   }
+  /* Re-laid 9 Sep 2026 (Myles' frame 3841:4652): a row — the text block
+     on the left (498), the mosaic on the right (710 of 1440, flush to the
+     content edge), both top-aligned. The mosaic was centred under a
+     headline before. */
   .bp-hero-band{
     position:relative;
-    display:flex; justify-content:center;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    gap:40px;
   }
   /* ⚠️ The breaks are REAL <br>s now, not a width that happens to wrap
      there (Myles, 3 Sep 2026: "keep it so it breaks like the figma to keep
@@ -247,9 +254,9 @@
      Proximity, a managed service that transforms LLM discoverability."
      It was the H2 at 60 on three lines with no copy. */
   .bp-hero-text{
-    position:absolute; left:0; top:0;
-    width:226px;
-    display:flex; flex-direction:column; gap:40px;
+    position:relative;
+    width:min(498px, 42%); flex:none;
+    display:flex; flex-direction:column; gap:50px;
   }
   .bp-hero-headline{
     width:max-content; max-width:100%;
@@ -258,7 +265,8 @@
     margin:0;
   }
   .bp-hero-copy{
-    font-size:18px; line-height:1.3; letter-spacing:-.02em; margin:0;
+    font-size:var(--fs-h5); line-height:1.2; letter-spacing:-.02em; margin:0;
+    max-width:391px;
   }
   @supports (text-box: trim-both cap alphabetic){
     .bp-hero-headline, .bp-hero-copy{ text-box:trim-both cap alphabetic; }
@@ -281,8 +289,9 @@
      wordmark now sits below the fold, as it does in the frame. Capped by
      the page's own max width like everything else. */
   .bp-hero-mosaic{
-    position:relative;
-    width:min(67.08vw, calc(var(--page-max) * .6708));
+    position:relative; flex:none;
+    /* the frame's 710 on 1440 — 49.3% of the page, capped with the page */
+    width:min(49.3vw, calc(var(--page-max) * .493));
     aspect-ratio:1;
   }
   .bp-hero-mosaic canvas,
@@ -1311,7 +1320,7 @@
            together as "Show upand stand". -->
         <div class="bp-hero-text">
           <h1 class="bp-hero-headline">Show up <br>and stand out</h1>
-          <p class="bp-hero-copy">Learn more about Brand Proximity, a managed service that transforms LLM discoverability.</p>
+          <p class="bp-hero-copy">Learn more about Brand Proximity, a new managed service that transforms LLM discoverability.</p>
         </div>
         <div class="bp-hero-mosaic">
           <!-- ⚠️ The developer's mosaic (thef-cms-web-96j45.ondigitalocean.app,

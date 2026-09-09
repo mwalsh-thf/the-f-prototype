@@ -240,18 +240,33 @@
      on a narrow desktop, where 300px would fit "Show up and" on one line.
      Breaks travel with the copy instead, so the shape is the same at every
      size. Width is now only a guard against the box catching the mosaic. */
-  .bp-hero-headline{
+  /* Re-set 9 Sep 2026 to Myles' frame 3788:1017 (hero 3824:1620): a 226
+     block at the top left — the cards' own text width — with the headline
+     at H3 (40 Light on 1.15, "Show up / and stand out", one break) and 40
+     under it the Body (18 Regular on 1.3): "Learn more about Brand
+     Proximity, a managed service that transforms LLM discoverability."
+     It was the H2 at 60 on three lines with no copy. */
+  .bp-hero-text{
     position:absolute; left:0; top:0;
-    width:max-content; max-width:min(420px,32vw);
+    width:226px;
+    display:flex; flex-direction:column; gap:40px;
+  }
+  .bp-hero-headline{
+    width:max-content; max-width:100%;
     font-weight:300;
-    font-size:var(--fs-h2); line-height:1.15; letter-spacing:-.02em;
+    font-size:var(--fs-h3); line-height:1.15; letter-spacing:-.02em;
+    margin:0;
+  }
+  .bp-hero-copy{
+    font-size:18px; line-height:1.3; letter-spacing:-.02em; margin:0;
   }
   @supports (text-box: trim-both cap alphabetic){
-    .bp-hero-headline{ text-box:trim-both cap alphabetic; }
+    .bp-hero-headline, .bp-hero-copy{ text-box:trim-both cap alphabetic; }
   }
   /* The masthead load-in — the site's own, verbatim from work.html. */
   @media (prefers-reduced-motion: no-preference){
     .bp-hero-headline{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) backwards; }
+    .bp-hero-copy{ animation:reveal-in var(--reveal-dur) var(--ease-out-expo) var(--reveal-stagger) backwards; }
   }
   @keyframes reveal-in{
     from{ opacity:0; transform:translate3d(0, var(--reveal-shift), 0); }
@@ -1072,11 +1087,13 @@
        2026: "reduce that by 50%"). */
     .bp-hero{ padding:calc(var(--logo-bottom) + 50px) 0 0; }
     .bp-hero-band{ display:block; }
-    .bp-hero-headline{
+    .bp-hero-text{
       position:static;
-      width:auto; max-width:none;
+      width:auto; gap:25px;
       margin-bottom:75px;           /* the mobile section unit (was 50) */
     }
+    .bp-hero-headline{ width:auto; max-width:none; }
+    .bp-hero-copy{ font-size:16px; }
     /* ⚠️ The title RUNS THE FULL WIDTH here: the frame's three hard lines
        are a desktop shape, and at 48px on a 325 column they cost ~85px of
        height that the mosaic wants. Hiding the <br>s wraps it naturally
@@ -1292,7 +1309,10 @@
            breaks (see .bp-hero-headline br) and `display:none` takes the
            whitespace with them, so without these the words would run
            together as "Show upand stand". -->
-        <h1 class="bp-hero-headline">Show up <br>and stand <br>out</h1>
+        <div class="bp-hero-text">
+          <h1 class="bp-hero-headline">Show up <br>and stand out</h1>
+          <p class="bp-hero-copy">Learn more about Brand Proximity, a managed service that transforms LLM discoverability.</p>
+        </div>
         <div class="bp-hero-mosaic">
           <!-- ⚠️ The developer's mosaic (thef-cms-web-96j45.ondigitalocean.app,
                the homepage's Brand Proximity section), verbatim — 7 Sep 2026,

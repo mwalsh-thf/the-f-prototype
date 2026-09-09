@@ -880,8 +880,13 @@
     /* the mobile H3 — 32 on 1.15, as every H3 on the phone — for the
        contact block and the statement above the marks, and 50 of air above
        "Fancy a challenge?" (Myles, 7 Sep 2026) */
-    .contact-head, .contact-cta, .clients-statement{ font-size:32px; line-height:1.15; }
-    .contact{ padding-top:50px; }
+    .contact-head, .contact-cta, .clients-statement{ font-size:32px; line-height:1.15; letter-spacing:-.02em; }
+    /* the phone's 50 rhythm (Myles, 9 Sep 2026: "the spacing is way too
+       much"): 50 from the statement to the marks, 50 under them, 25 more
+       above "Fancy a challenge?" — 75 in all, against the desktop's 100 */
+    .clients-intro{ padding-top:75px; }
+    .logos{ padding:50px 0; }
+    .contact{ padding-top:25px; }
     .card-title{ font-size:clamp(18px,5.4vw,22px); }
     .card-meta{ display:block }
     .card-tag{ margin-top:8px }
